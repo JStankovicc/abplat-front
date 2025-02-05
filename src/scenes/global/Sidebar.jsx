@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ProSidebar, Menu, MenuItem } from "react-pro-sidebar";
-import { Box, IconButton, Typography, useTheme } from "@mui/material";
+import { Box, IconButton, Typography, useTheme, useMediaQuery } from "@mui/material";
 import { Link } from "react-router-dom";
 import "react-pro-sidebar/dist/css/styles.css";
 import { tokens } from "../../theme";
@@ -19,6 +19,11 @@ import MapOutlinedIcon from "@mui/icons-material/MapOutlined";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
 import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
+import { ColorModeContext } from "../../theme";
+import { useContext } from "react";
+import LightModeOutlinedIcon from "@mui/icons-material/LightModeOutlined";
+import DarkModeOutlinedIcon from "@mui/icons-material/DarkModeOutlined";
+import NotificationsOutlinedIcon from "@mui/icons-material/NotificationsOutlined";
 
 const Item = ({ title, to, icon, selected, setSelected, onClick }) => {
     const theme = useTheme();
@@ -26,9 +31,7 @@ const Item = ({ title, to, icon, selected, setSelected, onClick }) => {
     return (
         <MenuItem
             active={selected === title}
-            style={{
-                color: colors.grey[100],
-            }}
+            style={{ color: colors.grey[100] }}
             onClick={() => {
                 setSelected(title);
                 if (onClick) onClick();
@@ -46,187 +49,247 @@ const Sidebar = () => {
     const colors = tokens(theme.palette.mode);
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [selected, setSelected] = useState("Dashboard");
+    const isMobile = useMediaQuery("(max-width:600px)");
+    const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
     const handleLogout = () => {
         localStorage.removeItem("token");
         window.location.href = "/login";
     };
 
+    useEffect(() => {
+        if (!isMobile) {
+            setIsMobileSidebarOpen(false);
+        }
+    }, [isMobile]);
 
     return (
-        <Box
-            sx={{
-                "& .pro-sidebar-inner": {
-                    background: `${colors.primary[400]} !important`,
-                },
-                "& .pro-icon-wrapper": {
-                    backgroundColor: "transparent !important",
-                },
-                "& .pro-inner-item": {
-                    padding: "5px 35px 5px 20px !important",
-                },
-                "& .pro-inner-item:hover": {
-                    color: "#868dfb !important",
-                },
-                "& .pro-menu-item.active": {
-                    color: "#6870fa !important",
-                },
-                position: "relative", // Required for fixed positioning of the logout button
-                height: "100vh", // Ensures sidebar occupies full screen height
-            }}
-        >
-            <ProSidebar collapsed={isCollapsed}>
-                <Menu iconShape="square">
-                    {/* START OF LOGO AND MENU ICON */}
-                    <MenuItem
-                        onClick={() => setIsCollapsed(!isCollapsed)}
-                        icon={isCollapsed ? <MenuOutlinedIcon /> : undefined}
-                        style={{
-                            margin: "10px 0 20px 0",
-                            color: colors.grey[100],
-                        }}
-                    >
-                        {!isCollapsed && (
-                            <Box
-                                display="flex"
-                                justifyContent="space-between"
-                                alignItems="center"
-                                ml="15px"
-                            >
-                                <img
-                                    src={
-                                        theme.palette.mode === "dark"
-                                            ? "../../assets/ABPlatLogoInline.png"
-                                            : "../../assets/ABPlatLogoInlineDark.png"
-                                    }
-                                    alt="ABPlat"
-                                    style={{height: "25px", cursor: "pointer"}}
-                                />
+        <>
+            {isMobile && (
+                <IconButton
+                    onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
+                    sx={{
+                        position: 'fixed',
+                        top: 10,
+                        left: 10,
+                        zIndex: 9999,
+                        backgroundColor: colors.primary[400],
+                        '&:hover': { backgroundColor: colors.primary[300] }
+                    }}
+                >
+                    <MenuOutlinedIcon />
+                </IconButton>
+            )}
 
-                                <IconButton onClick={() => setIsCollapsed(!isCollapsed)}>
-                                    <MenuOutlinedIcon/>
-                                </IconButton>
+            <Box
+                sx={{
+                    "& .pro-sidebar-inner": {
+                        background: `${colors.primary[400]} !important`,
+                    },
+                    "& .pro-icon-wrapper": { backgroundColor: "transparent !important" },
+                    "& .pro-inner-item": { padding: "5px 35px 5px 20px !important" },
+                    "& .pro-inner-item:hover": { color: "#868dfb !important" },
+                    "& .pro-menu-item.active": { color: "#6870fa !important" },
+                    position: "relative",
+                    height: "100vh",
+                    ...(isMobile && {
+                        position: 'fixed',
+                        left: isMobileSidebarOpen ? 0 : '-270px',
+                        transition: 'left 0.3s ease-in-out',
+                        zIndex: 9998,
+                        width: '270px',
+                        height: '100vh',
+                    }),
+                }}
+            >
+                <ProSidebar collapsed={!isMobile && isCollapsed}>
+                    <Menu iconShape="square">
+                        {!isMobile && (
+                            <MenuItem
+                                onClick={() => setIsCollapsed(!isCollapsed)}
+                                icon={isCollapsed ? <MenuOutlinedIcon /> : undefined}
+                                style={{ margin: "10px 0 20px 0", color: colors.grey[100] }}
+                            >
+                                {!isCollapsed && (
+                                    <Box display="flex" justifyContent="space-between" alignItems="center" ml="15px">
+                                        <img
+                                            src={theme.palette.mode === "dark"
+                                                ? "../../assets/ABPlatLogoInline.png"
+                                                : "../../assets/ABPlatLogoInlineDark.png"}
+                                            alt="ABPlat"
+                                            style={{ height: "25px", cursor: "pointer" }}
+                                        />
+                                        <IconButton onClick={() => setIsCollapsed(!isCollapsed)}>
+                                            <MenuOutlinedIcon />
+                                        </IconButton>
+                                    </Box>
+                                )}
+                            </MenuItem>
+                        )}
+
+                        {/* PROFILE SEKCIJA */}
+                        {(isMobile || !isCollapsed) && (
+                            <Box mb="25px">
+                                <Box display="flex" justifyContent="center" alignItems="center">
+                                    <img
+                                        alt="profile-user"
+                                        width="100px"
+                                        height="100px"
+                                        src="../../assets/testSpiderman.png"
+                                        style={{
+                                            cursor: "pointer",
+                                            borderRadius: "50%",
+                                            objectFit: "cover"
+                                        }}
+                                    />
+                                </Box>
+                                <Box textAlign="center">
+                                    <Typography
+                                        variant="h3"
+                                        color={colors.grey[100]}
+                                        fontWeight="bold"
+                                        sx={{ m: "10px 0 0 0", fontSize: isMobile ? "1.5rem" : "1.75rem" }}
+                                    >
+                                        Jovan Stanković
+                                    </Typography>
+                                    <Typography
+                                        variant="h5"
+                                        color={colors.greenAccent[500]}
+                                        sx={{ fontSize: isMobile ? "0.9rem" : "1.1rem" }}
+                                    >
+                                        ABPlat Developer
+                                    </Typography>
+                                </Box>
                             </Box>
                         )}
-                    </MenuItem>
 
-                    {/* START OF PROFILE SECTION */}
-                    {!isCollapsed && (
-                        <Box mb="25px">
-                            <Box display="flex" justifyContent="center" alignItems="center">
-                                <img
-                                    alt="profile-user"
-                                    width="100px"
-                                    height="100px"
-                                    src={`../../assets/testSpiderman.png`}
-                                    style={{ cursor: "pointer", borderRadius: "50%" }}
-                                />
-                            </Box>
-                            <Box textAlign="center">
-                                <Typography
-                                    variant="h3"
-                                    color={colors.grey[100]}
-                                    fontWeight="bold"
-                                    sx={{ m: "10px 0 0 0" }}
-                                >
-                                    Jovan Stanković
-                                </Typography>
-                                <Typography variant="h5" color={colors.greenAccent[500]}>
-                                    ABPlat Developer
-                                </Typography>
-                            </Box>
-                        </Box>
-                    )}
-
-                    {/* START OF MENU ITEMS */}
-                    <Box paddingLeft={isCollapsed ? undefined : "10%"}>
-                        <Item
-                            title="Dashboard"
-                            to="/"
-                            icon={<HomeOutlinedIcon />}
-                            selected={selected}
-                            setSelected={setSelected}
-                        />
-
-                        <Item
-                            title="Inbox"
-                            to="/messages"
-                            icon={<EmailOutlinedIcon />}
-                            selected={selected}
-                            setSelected={setSelected}
-                        />
-                        <Item
-                            title="Kalendar"
-                            to="/calendar"
-                            icon={<CalendarTodayOutlinedIcon />}
-                            selected={selected}
-                            setSelected={setSelected}
-                        />
-
-                        <Typography
-                            variant="h6"
-                            color={colors.grey[300]}
-                            sx={{ m: "15px 0 5px 20px" }}
-                        >
-                            Admin
-                        </Typography>
-                        <Item
-                            title="Upravljanje korisnicima"
-                            to="/team"
-                            icon={<PeopleOutlinedIcon />}
-                            selected={selected}
-                            setSelected={setSelected}
-                        />
-                        <Item
-                            title="Podesavanja kompanije"
-                            to="/contacts"
-                            icon={<SettingsOutlinedIcon />}
-                            selected={selected}
-                            setSelected={setSelected}
-                        />
-                        <Item
-                            title="Pregled kompanije"
-                            to="/invoices"
-                            icon={<ReceiptOutlinedIcon />}
-                            selected={selected}
-                            setSelected={setSelected}
-                        />
-
-                        <Typography
-                            variant="h6"
-                            color={colors.grey[300]}
-                            sx={{ m: "15px 0 5px 20px" }}
-                        >
-                            Prodaja
-                        </Typography>
-                        <Item
-                            title="Upravljanje timom"
-                            to="/form"
-                            icon={<PersonOutlinedIcon />}
-                            selected={selected}
-                            setSelected={setSelected}
-                        />
-                        <Item
-                            title="Strategije prodaje"
-                            to="/calendar"
-                            icon={<CalendarTodayOutlinedIcon />}
-                            selected={selected}
-                            setSelected={setSelected}
-                        />
-
-                        {/* START OF LOGOUT BUTTON */}
-                        <Box mt="30px">
+                        <Box paddingLeft={isCollapsed && !isMobile ? undefined : "10%"}>
                             <Item
-                                title="Logout"
-                                icon={<LogoutOutlinedIcon />}
+                                title="Dashboard"
+                                to="/"
+                                icon={<HomeOutlinedIcon />}
                                 selected={selected}
                                 setSelected={setSelected}
-                                onClick={handleLogout}
+                                onClick={() => isMobile && setIsMobileSidebarOpen(false)}
                             />
+
+                            <Item
+                                title="Inbox"
+                                to="/messages"
+                                icon={<EmailOutlinedIcon />}
+                                selected={selected}
+                                setSelected={setSelected}
+                                onClick={() => isMobile && setIsMobileSidebarOpen(false)}
+                            />
+
+                            <Item
+                                title="Kalendar"
+                                to="/calendar"
+                                icon={<CalendarTodayOutlinedIcon />}
+                                selected={selected}
+                                setSelected={setSelected}
+                                onClick={() => isMobile && setIsMobileSidebarOpen(false)}
+                            />
+
+                            <Typography variant="h6" color={colors.grey[300]} sx={{ m: "15px 0 5px 20px" }}>
+                                Admin
+                            </Typography>
+                            <Item
+                                title="Upravljanje korisnicima"
+                                to="/team"
+                                icon={<PeopleOutlinedIcon />}
+                                selected={selected}
+                                setSelected={setSelected}
+                                onClick={() => isMobile && setIsMobileSidebarOpen(false)}
+                            />
+                            <Item
+                                title="Podesavanja kompanije"
+                                to="/contacts"
+                                icon={<SettingsOutlinedIcon />}
+                                selected={selected}
+                                setSelected={setSelected}
+                                onClick={() => isMobile && setIsMobileSidebarOpen(false)}
+                            />
+                            <Item
+                                title="Pregled kompanije"
+                                to="/invoices"
+                                icon={<ReceiptOutlinedIcon />}
+                                selected={selected}
+                                setSelected={setSelected}
+                                onClick={() => isMobile && setIsMobileSidebarOpen(false)}
+                            />
+
+                            <Typography variant="h6" color={colors.grey[300]} sx={{ m: "15px 0 5px 20px" }}>
+                                Prodaja
+                            </Typography>
+                            <Item
+                                title="Upravljanje timom"
+                                to="/form"
+                                icon={<PersonOutlinedIcon />}
+                                selected={selected}
+                                setSelected={setSelected}
+                                onClick={() => isMobile && setIsMobileSidebarOpen(false)}
+                            />
+                            <Item
+                                title="Strategije prodaje"
+                                to="/calendar"
+                                icon={<CalendarTodayOutlinedIcon />}
+                                selected={selected}
+                                setSelected={setSelected}
+                                onClick={() => isMobile && setIsMobileSidebarOpen(false)}
+                            />
+
+                            {isMobile && (
+                                <Item
+                                    title="Podesavanja"
+                                    to="/settings"
+                                    icon={<SettingsOutlinedIcon />}
+                                    selected={selected}
+                                    setSelected={setSelected}
+                                    onClick={() => setIsMobileSidebarOpen(false)}
+                                />
+                            )}
+
+                            <Box mt="30px">
+                                <Item
+                                    title="Logout"
+                                    icon={<LogoutOutlinedIcon />}
+                                    selected={selected}
+                                    setSelected={setSelected}
+                                    onClick={() => {
+                                        handleLogout();
+                                        isMobile && setIsMobileSidebarOpen(false);
+                                    }}
+                                />
+                            </Box>
                         </Box>
-                    </Box>
-                </Menu>
-            </ProSidebar>
+                    </Menu>
+                </ProSidebar>
+            </Box>
+        </>
+    );
+};
+
+const Topbar = () => {
+    const theme = useTheme();
+    const colors = tokens(theme.palette.mode);
+    const colorMode = useContext(ColorModeContext);
+    const isMobile = useMediaQuery("(max-width:600px)");
+
+    if (isMobile) return null;
+
+    return (
+        <Box display="flex" justifyContent="right" p={2}>
+            <Box display="flex">
+                <IconButton onClick={colorMode.toggleColorMode}>
+                    {theme.palette.mode === "dark" ?
+                        <DarkModeOutlinedIcon /> :
+                        <LightModeOutlinedIcon />}
+                </IconButton>
+                <IconButton><NotificationsOutlinedIcon /></IconButton>
+                <IconButton><SettingsOutlinedIcon /></IconButton>
+                <IconButton><PersonOutlinedIcon /></IconButton>
+            </Box>
         </Box>
     );
 };
