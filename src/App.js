@@ -22,6 +22,7 @@ import LoginPage from "./scenes/public/login";
 import { CssBaseline, ThemeProvider } from "@mui/material";
 import { ColorModeContext, useMode } from "./theme";
 import ChatInterface from "./scenes/chat/ChatInterface";
+import UserDetails from "./scenes/user";
 
 function App() {
     const [theme, colorMode] = useMode();
@@ -131,6 +132,14 @@ function App() {
                                 element={
                                     <PrivateRoute>
                                         <Team />
+                                    </PrivateRoute>
+                                }
+                            />
+                            <Route
+                                path="/user/:userId"
+                                element={
+                                    <PrivateRoute>
+                                        <UserDetails />
                                     </PrivateRoute>
                                 }
                             />
