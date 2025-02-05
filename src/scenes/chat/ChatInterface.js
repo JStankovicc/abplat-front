@@ -314,7 +314,7 @@ const ChatInterface = () => {
                     <Box
                         sx={{
                             width: "100%",
-                            height: "100%",
+                            height: "100vh",
                             position: "absolute",
                             left: selectedChat ? "-100%" : "0",
                             transition: "left 0.3s ease",
@@ -322,6 +322,7 @@ const ChatInterface = () => {
                             p: 2,
                             overflowY: "auto",
                             zIndex: 1,
+                            paddingTop: "50px"
                         }}
                     >
                         <Typography variant="h5" mb={2} display="flex" justifyContent="space-between">
@@ -389,7 +390,7 @@ const ChatInterface = () => {
                     <Box
                         sx={{
                             width: "100%",
-                            height: "100%",
+                            height: "100vh",
                             position: "absolute",
                             left: selectedChat ? "0" : "100%",
                             transition: "left 0.3s ease",
@@ -402,7 +403,7 @@ const ChatInterface = () => {
                     >
                         {selectedChat && (
                             <>
-                                <Box display="flex" alignItems="center" mb={2}>
+                                <Box display="flex" alignItems="center" mb={2} paddingTop="50px">
                                     <IconButton onClick={() => setSelectedChat(null)} sx={{ mr: 1 }}>
                                         <ArrowBackIcon />
                                     </IconButton>

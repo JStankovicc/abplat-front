@@ -142,17 +142,17 @@ const Team = () => {
                     "& .MuiDataGrid-root": { border: "none" },
                     "& .MuiDataGrid-cell": {
                         borderBottom: "none",
-                        fontSize: isMobile ? "12px" : "14px",
-                        padding: isMobile ? "5px" : "8px 16px"
+                        fontSize: isMobile ? "10px" : "14px",
+                        padding: isMobile ? "4px" : "8px 16px"
                     },
                     "& .name-column--cell": {
                         color: colors.greenAccent[300],
-                        fontSize: isMobile ? "14px" : "16px"
+                        fontSize: isMobile ? "12px" : "16px"
                     },
                     "& .MuiDataGrid-columnHeaders": {
                         backgroundColor: colors.blueAccent[700],
                         borderBottom: "none",
-                        fontSize: isMobile ? "12px" : "14px"
+                        fontSize: isMobile ? "10px" : "14px"
                     },
                     "& .MuiDataGrid-virtualScroller": {
                         backgroundColor: colors.primary[400],
