@@ -21,7 +21,9 @@ import {
     Dialog,
     DialogTitle,
     DialogContent,
-    DialogActions
+    DialogActions,
+    DialogContentText,
+    CircularProgress
 } from "@mui/material";
 import { tokens } from "../../theme";
 import { mockDataTeam } from "../../data/mockData";
@@ -40,10 +42,13 @@ const UserDetails = () => {
     const navigate = useNavigate();
     const isMobile = useMediaQuery(theme.breakpoints.down("md"));
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [reportOpen, setReportOpen] = useState(false);
+    const [reportData, setReportData] = useState(null);
+    const [loading, setLoading] = useState(false);
 
     const user = mockDataTeam.find(user => user.id === Number(userId));
 
-    // State management
+    // MOCK DATA
     const [notes, setNotes] = useState([
         {
             id: 1,
@@ -58,15 +63,11 @@ const UserDetails = () => {
         { id: 2, title: "Optimizacija baze", difficulty: "low", status: "U toku", dueDate: "2023-11-10" },
         { id: 3, title: "Responsive dizajn", difficulty: "medium", status: "Završen", dueDate: "2023-10-30" },
     ]);
-
-    // Pie chart data
     const difficultyData = [
         { id: "high", label: "Visok prioritet", value: tasks.filter(t => t.difficulty === "high").length },
         { id: "medium", label: "Srednji prioritet", value: tasks.filter(t => t.difficulty === "medium").length },
         { id: "low", label: "Nizak prioritet", value: tasks.filter(t => t.difficulty === "low").length },
     ];
-
-    // Statistics
     const totalTasks = tasks.length;
     const activeTasks = tasks.filter(t => t.status !== "Završen").length;
     const averageCompletionTime = "2.3 dana";
@@ -84,18 +85,32 @@ const UserDetails = () => {
     };
 
     const handleDeleteUser = () => {
-        // Dodati logiku za brisanje korisnika
         console.log("Brisanje korisnika:", user.id);
         setDeleteDialogOpen(false);
         navigate("/team");
     };
 
     const handleGenerateReport = () => {
-        // Dodati logiku za generisanje izveštaja
+        setLoading(true);
+        setReportOpen(true);
+
         console.log("Generisanje izveštaja za korisnika:", user.id);
+
+        setTimeout(() => {
+            setReportData({
+                username: "Jovan Stankovic",
+                content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus lobortis risus ex, a efficitur arcu ultrices sit amet. Nullam interdum euismod quam non sollicitudin. Sed posuere ipsum ac urna condimentum pellentesque. Fusce tellus ante, malesuada sed erat et, rutrum hendrerit sapien. Nulla pellentesque mattis sodales. Donec sit amet nibh leo. In vel ex neque. Praesent ac dolor felis. Vivamus eleifend gravida accumsan. Aenean ut est rutrum, pharetra nisl ut, sodales nulla. Aenean tincidunt sed nulla a faucibus. Praesent tempus eleifend volutpat. In molestie urna non interdum porttitor. Aenean tellus nisl, volutpat et fringilla ut, euismod sed nunc."
+            });
+            setLoading(false);
+        }, 1000);
     };
 
-    // Stilovi
+    const handleCloseReport = () => {
+        setReportOpen(false);
+        setReportData(null);
+        setLoading(false);
+    };
+
     const sectionStyleTopRow = {
         p: "20px",
         borderRadius: "8px",
@@ -143,6 +158,35 @@ const UserDetails = () => {
                 </DialogActions>
             </Dialog>
 
+            {/* Report Dialog */}
+            <Dialog open={reportOpen} onClose={handleCloseReport}>
+                <DialogTitle sx={{ py: 2 }}>
+                    Izveštaj o {reportData?.username || user.username}
+                </DialogTitle>
+
+                <DialogContent sx={{ py: 3, minHeight: '150px' }}>
+                    {loading ? (
+                        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                            <CircularProgress />
+                        </Box>
+                    ) : (
+                        <DialogContentText>
+                            {reportData?.content || 'Učitavanje podataka...'}
+                        </DialogContentText>
+                    )}
+                </DialogContent>
+
+                <DialogActions sx={{ px: 3, py: 2 }}>
+                    <Button
+                        onClick={handleCloseReport}
+                        variant="contained"
+                        color="primary"
+                    >
+                        Zatvori
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
             {/* Header */}
             <Box mb="20px" display="flex" gap={2} flexDirection={isMobile ? "column" : "row"} justifyContent="space-between">
                 <Button
@@ -176,6 +220,7 @@ const UserDetails = () => {
                 </Box>
             </Box>
 
+            {/* Main Content */}
             <Grid container spacing={3} mt={5}>
                 {/* Osnovne informacije */}
                 <Grid item xs={12} md={6} lg={4}>
