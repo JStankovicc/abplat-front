@@ -204,7 +204,7 @@ const Sidebar = () => {
                             />
                             <Item
                                 title="Podesavanja kompanije"
-                                to="/contacts"
+                                to="/companySettings"
                                 icon={<SettingsOutlinedIcon />}
                                 selected={selected}
                                 setSelected={setSelected}
