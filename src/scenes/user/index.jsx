@@ -31,6 +31,7 @@ import PieChart from "../../components/PieChart";
 import PersonIcon from "@mui/icons-material/Person";
 import EventIcon from "@mui/icons-material/Event";
 import DeleteIcon from "@mui/icons-material/Delete";
+import AssistantIcon from '@mui/icons-material/Assistant';
 
 const UserDetails = () => {
     const { userId } = useParams();
@@ -89,6 +90,11 @@ const UserDetails = () => {
         navigate("/team");
     };
 
+    const handleGenerateReport = () => {
+        // Dodati logiku za generisanje izveštaja
+        console.log("Generisanje izveštaja za korisnika:", user.id);
+    };
+
     // Stilovi
     const sectionStyleTopRow = {
         p: "20px",
@@ -137,7 +143,7 @@ const UserDetails = () => {
                 </DialogActions>
             </Dialog>
 
-            {/* Header i dugmad */}
+            {/* Header */}
             <Box mb="20px" display="flex" gap={2} flexDirection={isMobile ? "column" : "row"} justifyContent="space-between">
                 <Button
                     startIcon={<ArrowBackIosIcon />}
@@ -148,21 +154,30 @@ const UserDetails = () => {
                 >
                     Nazad
                 </Button>
-                <Button
-                    startIcon={<DeleteIcon />}
-                    onClick={() => setDeleteDialogOpen(true)}
-                    variant="contained"
-                    color="error"
-                    size={isMobile ? "small" : "medium"}
-                >
-                    Obriši korisnika
-                </Button>
+                <Box display="flex" gap={2} flexDirection={isMobile ? "column" : "row"}>
+                    <Button
+                        startIcon={<DeleteIcon />}
+                        onClick={() => setDeleteDialogOpen(true)}
+                        variant="contained"
+                        color="error"
+                        size={isMobile ? "small" : "medium"}
+                    >
+                        Obriši korisnika
+                    </Button>
+                    <Button
+                        startIcon={<AssistantIcon />}
+                        onClick={handleGenerateReport}
+                        variant="contained"
+                        color="secondary"
+                        size={isMobile ? "small" : "medium"}
+                    >
+                        Napravi izveštaj
+                    </Button>
+                </Box>
             </Box>
 
-            <Header title="Detalji o korisniku" />
-
-            <Grid container spacing={3} mt={2}>
-                {/* Gornji red - Osnovne informacije */}
+            <Grid container spacing={3} mt={5}>
+                {/* Osnovne informacije */}
                 <Grid item xs={12} md={6} lg={4}>
                     <Box sx={sectionStyleTopRow}>
                         <Typography variant="h5" mb="15px">Lične informacije</Typography>
@@ -175,6 +190,7 @@ const UserDetails = () => {
                     </Box>
                 </Grid>
 
+                {/* Profil */}
                 <Grid item xs={12} md={6} lg={4}>
                     <Box sx={sectionStyleTopRow}>
                         <Typography variant="h5" mb="15px">Profil</Typography>
@@ -201,6 +217,7 @@ const UserDetails = () => {
                     </Box>
                 </Grid>
 
+                {/* Dozvole */}
                 <Grid item xs={12} lg={4}>
                     <Box sx={sectionStyleTopRow}>
                         <Typography variant="h5" mb="15px">Dozvole</Typography>
@@ -213,7 +230,7 @@ const UserDetails = () => {
                     </Box>
                 </Grid>
 
-                {/* Donji red - Komentari, Taskovi i Statistika */}
+                {/* Komentari */}
                 <Grid item xs={12} lg={4}>
                     <Box sx={sectionStyleBottomRow}>
                         <Typography variant="h5" mb="15px">Komentari ({notes.length})</Typography>
@@ -238,22 +255,54 @@ const UserDetails = () => {
                         </Box>
                         <Box sx={scrollableContent}>
                             {notes.map(note => (
-                                <Box key={note.id} mb={2} p={2} borderRadius="4px" bgcolor={colors.primary[500]}>
+                                <Box
+                                    key={note.id}
+                                    mb={2}
+                                    p={2}
+                                    borderRadius="4px"
+                                    sx={{
+                                        backgroundColor: theme.palette.mode === 'dark'
+                                            ? colors.primary[500]
+                                            : colors.grey[800],
+                                        color: theme.palette.mode === 'dark'
+                                            ? colors.grey[100]
+                                            : colors.grey[300],
+                                        transition: 'all 0.3s ease',
+                                        '&:hover': {
+                                            backgroundColor: theme.palette.mode === 'dark'
+                                                ? colors.primary[800]
+                                                : colors.primary[500],
+                                            color: theme.palette.mode === 'dark'
+                                                ? colors.grey[300]
+                                                : colors.grey[900]
+                                        }
+                                    }}
+                                >
                                     <Grid container spacing={2}>
                                         <Grid item xs={8}>
-                                            <Typography variant="body1">{note.content}</Typography>
+                                            <Typography variant="body1">
+                                                {note.content}
+                                            </Typography>
                                         </Grid>
                                         <Grid item xs={4}>
                                             <Stack alignItems="flex-end">
                                                 <Box display="flex" alignItems="center" gap={1}>
-                                                    <Avatar sx={{ width: 28, height: 28, bgcolor: colors.blueAccent[700] }}>
+                                                    <Avatar sx={{
+                                                        width: 28,
+                                                        height: 28,
+                                                        bgcolor: colors.blueAccent[700]
+                                                    }}>
                                                         <PersonIcon fontSize="small" />
                                                     </Avatar>
-                                                    <Typography variant="caption">{note.author}</Typography>
+                                                    <Typography variant="caption">
+                                                        {note.author}
+                                                    </Typography>
                                                 </Box>
                                                 <Box display="flex" alignItems="center" gap={1} mt={1}>
                                                     <EventIcon fontSize="small" />
-                                                    <Typography variant="caption">{note.date}</Typography>
+                                                    <Typography variant="caption">
+                                                        {note.date}
+                                                    </Typography>
                                                 </Box>
                                             </Stack>
                                         </Grid>
@@ -264,14 +313,32 @@ const UserDetails = () => {
                     </Box>
                 </Grid>
 
+                {/* Taskovi */}
                 <Grid item xs={12} lg={4}>
-                    <Box sx={sectionStyleBottomRow}>
+                    <Box sx={{
+                        ...sectionStyleBottomRow
+                    }}>
                         <Typography variant="h5" mb="15px">Taskovi ({activeTasks}/{totalTasks})</Typography>
                         <Box sx={scrollableContent}>
-                            <TableContainer component={Paper} sx={{ bgcolor: colors.primary[500] }}>
+                            <TableContainer component={Paper} sx={{
+                                bgcolor: 'transparent',
+                                transition: 'all 0.3s ease',
+                                '& .MuiTable-root': {
+                                    backgroundColor: 'inherit'
+                                }
+                            }}>
                                 <Table size={isMobile ? "small" : "medium"}>
                                     <TableHead>
-                                        <TableRow>
+                                        <TableRow sx={{
+                                            backgroundColor: theme.palette.mode === 'dark'
+                                                ? colors.primary[600]
+                                                : colors.primary[600],
+                                            '& .MuiTableCell-root': {
+                                                color: theme.palette.mode === 'dark'
+                                                    ? colors.grey[100]
+                                                    : colors.primary[800]
+                                            }
+                                        }}>
                                             <TableCell>Naziv</TableCell>
                                             <TableCell align="right">Prioritet</TableCell>
                                             <TableCell align="right">Status</TableCell>
@@ -280,7 +347,22 @@ const UserDetails = () => {
                                     </TableHead>
                                     <TableBody>
                                         {tasks.map(task => (
-                                            <TableRow key={task.id}>
+                                            <TableRow
+                                                key={task.id}
+                                                sx={{
+                                                    backgroundColor: 'inherit',
+                                                    color: 'inherit',
+                                                    transition: 'all 0.3s ease',
+                                                    '&:hover': {
+                                                        backgroundColor: theme.palette.mode === 'dark'
+                                                            ? colors.primary[400]
+                                                            : colors.primary[500],
+                                                        color: theme.palette.mode === 'dark'
+                                                            ? colors.grey[300]
+                                                            : colors.primary[900]
+                                                    }
+                                                }}
+                                            >
                                                 <TableCell>{task.title}</TableCell>
                                                 <TableCell align="right">
                                                     <Chip
@@ -291,7 +373,8 @@ const UserDetails = () => {
                                                                 task.difficulty === "high" ? colors.redAccent[600] :
                                                                     task.difficulty === "medium" ? colors.blueAccent[600] :
                                                                         colors.greenAccent[600],
-                                                            color: "white"
+                                                            color: "white",
+                                                            transition: 'all 0.3s ease'
                                                         }}
                                                     />
                                                 </TableCell>
@@ -306,6 +389,7 @@ const UserDetails = () => {
                     </Box>
                 </Grid>
 
+                {/* Statistika */}
                 <Grid item xs={12} lg={4}>
                     <Box sx={sectionStyleBottomRow}>
                         <Typography variant="h5" mb="15px">Statistika</Typography>
