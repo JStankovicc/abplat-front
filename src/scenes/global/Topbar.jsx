@@ -18,29 +18,36 @@ const Topbar = () => {
   if (isMobile) return null;
 
   return (
-    <Box display="flex" justifyContent="right" p={2}>
+      <Box display="flex" justifyContent="space-between" p={2}>
+        {/* Logo Section */}
+        <Box display="flex" alignItems="center">
+          <img
+              src="https://img.logoipsum.com/288.svg"
+              alt="Logo"
+              style={{ height: "40px", marginRight: "10px" }}
+          />
+        </Box>
 
-
-      {/* ICONS */}
-      <Box display="flex">
-        <IconButton onClick={colorMode.toggleColorMode}>
-          {theme.palette.mode === "dark" ? (
-            <DarkModeOutlinedIcon />
-          ) : (
-            <LightModeOutlinedIcon />
-          )}
-        </IconButton>
-        <IconButton>
-          <NotificationsOutlinedIcon />
-        </IconButton>
-        <IconButton>
-          <SettingsOutlinedIcon />
-        </IconButton>
-        <IconButton>
-          <PersonOutlinedIcon />
-        </IconButton>
+        {/* ICONS Section */}
+        <Box display="flex">
+          <IconButton onClick={colorMode.toggleColorMode}>
+            {theme.palette.mode === "dark" ? (
+                <DarkModeOutlinedIcon />
+            ) : (
+                <LightModeOutlinedIcon />
+            )}
+          </IconButton>
+          <IconButton>
+            <NotificationsOutlinedIcon />
+          </IconButton>
+          <IconButton>
+            <SettingsOutlinedIcon />
+          </IconButton>
+          <IconButton>
+            <PersonOutlinedIcon />
+          </IconButton>
+        </Box>
       </Box>
-    </Box>
   );
 };
 
