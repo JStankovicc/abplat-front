@@ -27,7 +27,6 @@ import {
 } from "@mui/material";
 import { tokens } from "../../theme";
 import { mockDataTeam } from "../../data/mockData";
-import Header from "../../components/Header";
 import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
 import PieChart from "../../components/PieChart";
 import PersonIcon from "@mui/icons-material/Person";

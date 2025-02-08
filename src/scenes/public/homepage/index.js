@@ -1,5 +1,4 @@
 import { Box, Typography } from "@mui/material";
-import PublicNavbar from "../../global/PublicNavbar"
 const HomePage = () => {
     return (
         <>

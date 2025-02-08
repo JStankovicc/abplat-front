@@ -3,7 +3,6 @@ import { Box, Button, IconButton, useTheme } from "@mui/material";
 import { ColorModeContext } from "../../theme";
 import LightModeOutlinedIcon from "@mui/icons-material/LightModeOutlined";
 import DarkModeOutlinedIcon from "@mui/icons-material/DarkModeOutlined";
-import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
 
 const PublicNavbar = () => {
     const theme = useTheme();

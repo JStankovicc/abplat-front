@@ -1,9 +1,7 @@
-// components/Team.jsx
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
     Box,
-    Typography,
     useTheme,
     IconButton,
     useMediaQuery,
