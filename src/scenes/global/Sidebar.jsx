@@ -212,7 +212,7 @@ const Sidebar = () => {
                             />
                             <Item
                                 title="Pregled kompanije"
-                                to="/invoices"
+                                to="/team"
                                 icon={<ReceiptOutlinedIcon />}
                                 selected={selected}
                                 setSelected={setSelected}
@@ -224,7 +224,7 @@ const Sidebar = () => {
                             </Typography>
                             <Item
                                 title="Upravljanje timom"
-                                to="/form"
+                                to="/team"
                                 icon={<PersonOutlinedIcon />}
                                 selected={selected}
                                 setSelected={setSelected}
@@ -232,7 +232,7 @@ const Sidebar = () => {
                             />
                             <Item
                                 title="Strategije prodaje"
-                                to="/calendar"
+                                to="/team"
                                 icon={<CalendarTodayOutlinedIcon />}
                                 selected={selected}
                                 setSelected={setSelected}
