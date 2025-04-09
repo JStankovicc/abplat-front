@@ -234,7 +234,7 @@ const Sidebar = () => {
                             </Typography>
                             <Item
                                 title="Upravljanje projektima"
-                                to="/team"
+                                to="/project-management"
                                 icon={<PersonOutlinedIcon />}
                                 selected={selected}
                                 setSelected={setSelected}

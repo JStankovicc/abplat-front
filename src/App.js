@@ -25,7 +25,7 @@ import ChatInterface from "./scenes/chat/ChatInterface";
 import UserDetails from "./scenes/user";
 import CompanySettings from "./scenes/companySettings";
 import ProjectView from "./scenes/project/ProjectView";
-
+import ProjectManagement from "./scenes/project/ProjectManagement";
 function App() {
     const [theme, colorMode] = useMode();
     const [token, setToken] = useState(localStorage.getItem("token"));
@@ -137,6 +137,14 @@ function App() {
                                     </PrivateRoute>
                                 }
                             />
+                            <Route 
+                                path="/project-management" 
+                                element={
+                                    <PrivateRoute>
+                                        <ProjectManagement />
+                                    </PrivateRoute>
+                            } 
+                            /> 
                             <Route
                                 path="/project"
                                 element={
