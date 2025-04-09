@@ -228,6 +228,30 @@ const Sidebar = () => {
                                 onClick={() => isMobile && setIsMobileSidebarOpen(false)}
                             />
 
+                            {/* Project sekcija */}
+                            <Typography variant="h6" color={colors.grey[300]} sx={{ m: "15px 0 5px 20px" }}>
+                                Projekti
+                            </Typography>
+                            <Item
+                                title="Upravljanje projektima"
+                                to="/team"
+                                icon={<PersonOutlinedIcon />}
+                                selected={selected}
+                                setSelected={setSelected}
+                                onClick={() => isMobile && setIsMobileSidebarOpen(false)}
+                            />
+                            <Item
+                                title="Projekat X"
+                                to="/project"
+                                icon={<CalendarTodayOutlinedIcon />}
+                                selected={selected}
+                                setSelected={setSelected}
+                                onClick={() => isMobile && setIsMobileSidebarOpen(false)}
+                            />
+
+
+
+
                             {isMobile && (
                                 <Item
                                     title="Podesavanja"

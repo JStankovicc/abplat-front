@@ -24,6 +24,7 @@ import { ColorModeContext, useMode } from "./theme";
 import ChatInterface from "./scenes/chat/ChatInterface";
 import UserDetails from "./scenes/user";
 import CompanySettings from "./scenes/companySettings";
+import ProjectView from "./scenes/project/ProjectView";
 
 function App() {
     const [theme, colorMode] = useMode();
@@ -133,6 +134,14 @@ function App() {
                                 element={
                                     <PrivateRoute>
                                         <Team />
+                                    </PrivateRoute>
+                                }
+                            />
+                            <Route
+                                path="/project"
+                                element={
+                                    <PrivateRoute>
+                                        <ProjectView />
                                     </PrivateRoute>
                                 }
                             />
