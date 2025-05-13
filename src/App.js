@@ -27,7 +27,7 @@ import CompanySettings from "./scenes/companySettings";
 import ProjectView from "./scenes/project/ProjectView";
 import ProjectManagement from "./scenes/project/ProjectManagement";
 import SalesView from "./scenes/sales/SalesView";
-import SalesManagement from "./scenes/sales/SalesManagement";
+import SalesManagement from "./scenes/sales/SalesManagement";  
 function App() {
     const [theme, colorMode] = useMode();
     const [token, setToken] = useState(localStorage.getItem("token"));

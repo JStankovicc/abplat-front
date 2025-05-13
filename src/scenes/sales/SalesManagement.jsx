@@ -1,18 +1,51 @@
 import { useState } from "react";
 import {
     Box,
-    Typography,
-    Paper,
-    Grid,
+    IconButton,
     useTheme,
-    useMediaQuery
+    useMediaQuery,
+    Tabs,
+    Tab,
+    Typography
 } from "@mui/material";
 import { tokens } from "../../theme";
+import {
+    Menu as MenuIcon,
+    People as TeamIcon,
+    Flag as GoalIcon,
+    AccountTree as StrategyIcon,
+    AttachMoney as PricingIcon,
+    Analytics as AnalyticsIcon
+} from "@mui/icons-material";
+import TeamManagement from "../../components/sales-management/TeamManagement";
+import GoalTracker from "../../components/sales-management/GoalTracker";
+import StrategyConfig from "../../components/sales-management/StrategyConfig";
+import PricingEngine from "../../components/sales-management/PricingEngine";
+import UnifiedLeadsTable from "../../components/sales-management/UnifiedLeadsTable";
+import PerformanceDashboard from "../../components/sales-management/PerformanceDashboard";
+import PredictiveAnalytics from "../../components/sales-management/PredictiveAnalytics";
+import MobileMenu from "../../components/sales-management/MobileMenu";
 
-const SalesManagement = () => {
+const sections = [
+    { id: 0, label: "Tim", icon: <TeamIcon />, component: <TeamManagement /> },
+    { id: 1, label: "Ciljevi", icon: <GoalIcon />, component: <GoalTracker /> },
+    { id: 2, label: "Strategija", icon: <StrategyIcon />, component: <StrategyConfig /> },
+    { id: 3, label: "Cene", icon: <PricingIcon />, component: <PricingEngine /> },
+    { id: 4, label: "Kontakti", icon: <TeamIcon />, component: <UnifiedLeadsTable /> },
+    { id: 5, label: "Analitika", icon: <AnalyticsIcon />, component: <PerformanceDashboard /> },
+];
+
+const SalesManagementView = () => {
     const theme = useTheme();
     const colors = tokens(theme.palette.mode);
-    const isMobile = useMediaQuery("(max-width:768px)");
+    const isMobile = useMediaQuery("(max-width:900px)");
+    const [activeSection, setActiveSection] = useState(0);
+    const [mobileOpen, setMobileOpen] = useState(false);
+
+    const handleSectionChange = (event, newValue) => {
+        setActiveSection(newValue);
+        setMobileOpen(false);
+    };
 
     return (
         <Box 
@@ -24,7 +57,7 @@ const SalesManagement = () => {
                 p: "10px"
             }}
         >
-            {/* Header */}
+            {/* Header sa navigacijom */}
             <Box 
                 sx={{
                     backgroundColor: colors.primary[400],
@@ -48,47 +81,95 @@ const SalesManagement = () => {
                 >
                     Upravljanje prodajom
                 </Typography>
+                {!isMobile ? (
+                    <Tabs
+                        value={activeSection}
+                        onChange={handleSectionChange}
+                        textColor="inherit"
+                        sx={{
+                            minHeight: "25px",
+                            '& .MuiTabs-indicator': {
+                                backgroundColor: colors.greenAccent[500],
+                                height: 2
+                            }
+                        }}
+                    >
+                        {sections.map((section) => (
+                            <Tab
+                                key={section.id}
+                                icon={section.icon}
+                                label={section.label}
+                                iconPosition="start"
+                                sx={{
+                                    minWidth: 100,
+                                    minHeight: "25px",
+                                    color: colors.grey[100],
+                                    '&.Mui-selected': {
+                                        color: colors.greenAccent[500],
+                                    },
+                                    '& .MuiTab-iconWrapper': {
+                                        mr: 1,
+                                        fontSize: "1rem"
+                                    }
+                                }}
+                            />
+                        ))}
+                    </Tabs>
+                ) : (
+                    <IconButton
+                        size="small"
+                        onClick={() => setMobileOpen(true)}
+                        sx={{ color: colors.grey[100] }}
+                    >
+                        <MenuIcon />
+                    </IconButton>
+                )}
             </Box>
+
+            {/* Mobilni meni */}
+            <MobileMenu
+                open={mobileOpen}
+                onClose={() => setMobileOpen(false)}
+                sections={sections}
+                activeSection={activeSection}
+                onChangeSection={(sectionId) => setActiveSection(sectionId)}
+                colors={colors}
+            />
 
             {/* Glavni sadržaj */}
             <Box
-                sx={{
+                sx={(theme) => ({
                     flex: 1,
                     backgroundColor: colors.primary[400],
                     borderRadius: "4px",
                     p: "20px",
                     overflow: "auto",
-                    boxShadow: 1
-                }}
+                    boxShadow: 1,
+                    minHeight: 0,
+                    '& .MuiCardContent-root': {
+                        backgroundColor: theme.palette.mode === 'dark' ? colors.primary[600] : colors.primary[800],
+                        transition: 'all 0.3s ease'
+                    },
+                    '& .MuiPaper-root': {
+                        backgroundColor: theme.palette.mode === 'dark' ? colors.primary[600] : colors.primary[800],
+                        transition: 'all 0.3s ease',
+                        '--Paper-shadow': 'none',
+                        '--Paper-overlay': 'unset',
+                        boxShadow: 'none'
+                    },
+                    '& .MuiCard-root': {
+                        backgroundColor: theme.palette.mode === 'dark' ? colors.primary[600] : colors.primary[800],
+                        transition: 'all 0.3s ease',
+                        '--Paper-shadow': 'none',
+                        '--Paper-overlay': 'unset',
+                        boxShadow: 'none'
+                    }
+                })}
             >
-                <Grid container spacing={2}>
-                    {/* Ovde će biti dodate komponente za upravljanje prodajom */}
-                    <Grid item xs={12}>
-                        <Paper
-                            sx={{
-                                p: 2,
-                                backgroundColor: colors.primary[600],
-                                color: colors.grey[100]
-                            }}
-                        >
-                            <Typography variant="h6" gutterBottom>
-                                Upravljanje prodajom
-                            </Typography>
-                            <Typography variant="body1">
-                                Ova sekcija će sadržati funkcionalnosti za upravljanje prodajom, uključujući:
-                            </Typography>
-                            <ul>
-                                <li>Upravljanje prodajnim timom</li>
-                                <li>Definisanje ciljeva prodaje</li>
-                                <li>Podešavanje strategija prodaje</li>
-                                <li>Upravljanje cenama i popustima</li>
-                            </ul>
-                        </Paper>
-                    </Grid>
-                </Grid>
+                {sections[activeSection].component}
             </Box>
         </Box>
     );
 };
 
-export default SalesManagement; 
+export default SalesManagementView; 
