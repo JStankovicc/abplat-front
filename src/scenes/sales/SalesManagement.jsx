@@ -35,7 +35,7 @@ const sections = [
     { id: 5, label: "Analitika", icon: <AnalyticsIcon />, component: <PerformanceDashboard /> },
 ];
 
-const SalesManagementView = () => {
+const SalesManagement = () => {
     const theme = useTheme();
     const colors = tokens(theme.palette.mode);
     const isMobile = useMediaQuery("(max-width:900px)");
@@ -172,4 +172,4 @@ const SalesManagementView = () => {
     );
 };
 
-export default SalesManagementView; 
+export default SalesManagement; 
