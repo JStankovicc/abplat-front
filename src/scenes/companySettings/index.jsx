@@ -151,7 +151,7 @@ const CompanySettings = () => {
                     <Grid container spacing={2}>
                         <Grid item xs={12} md={4} sx={{ textAlign: "center" }}>
                             <img
-                                src="https://img.logoipsum.com/288.svg"
+                                src="/assets/logoipsum-378.svg"
                                 alt="Company Logo"
                                 style={{
                                     maxWidth: "200px",

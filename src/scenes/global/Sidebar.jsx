@@ -13,6 +13,9 @@ import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
 import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
+import DashboardOutlinedIcon from '@mui/icons-material/DashboardOutlined';
+import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined';
+import TrendingUpOutlinedIcon from '@mui/icons-material/TrendingUpOutlined';
 
 const Item = ({ title, to, icon, selected, setSelected, onClick }) => {
     const theme = useTheme();
@@ -212,17 +215,17 @@ const Sidebar = () => {
                                 Prodaja
                             </Typography>
                             <Item
-                                title="Upravljanje timom"
-                                to="/team"
-                                icon={<PersonOutlinedIcon />}
+                                title="Upravljanje prodajom"
+                                to="/sales-management"
+                                icon={<StorefrontOutlinedIcon />}
                                 selected={selected}
                                 setSelected={setSelected}
                                 onClick={() => isMobile && setIsMobileSidebarOpen(false)}
                             />
                             <Item
-                                title="Strategije prodaje"
-                                to="/team"
-                                icon={<CalendarTodayOutlinedIcon />}
+                                title="Prodaja"
+                                to="/sales"
+                                icon={<TrendingUpOutlinedIcon />}
                                 selected={selected}
                                 setSelected={setSelected}
                                 onClick={() => isMobile && setIsMobileSidebarOpen(false)}

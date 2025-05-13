@@ -19,7 +19,7 @@ const Topbar = () => {
         {/* Logo Section */}
         <Box display="flex" alignItems="center">
           <img
-              src="https://img.logoipsum.com/338.svg"
+              src="/assets/logoipsum-378.svg"
               alt="Logo"
               style={{ height: "40px", marginRight: "10px" }}
           />
