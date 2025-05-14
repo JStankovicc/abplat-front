@@ -16,6 +16,7 @@ import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
 import DashboardOutlinedIcon from '@mui/icons-material/DashboardOutlined';
 import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined';
 import TrendingUpOutlinedIcon from '@mui/icons-material/TrendingUpOutlined';
+import DirectionsCarIcon from '@mui/icons-material/DirectionsCar';
 
 const Item = ({ title, to, icon, selected, setSelected, onClick }) => {
     const theme = useTheme();
@@ -252,8 +253,34 @@ const Sidebar = () => {
                                 onClick={() => isMobile && setIsMobileSidebarOpen(false)}
                             />
 
-
-
+                            {/* Imovina sekcija */}
+                            <Typography variant="h6" color={colors.grey[300]} sx={{ m: "15px 0 5px 20px" }}>
+                                Imovina
+                            </Typography>
+                            <Item
+                                title="Inventar"
+                                to="/inventar"
+                                icon={<StorefrontOutlinedIcon />}
+                                selected={selected}
+                                setSelected={setSelected}
+                                onClick={() => isMobile && setIsMobileSidebarOpen(false)}
+                            />
+                            <Item
+                                title="Imovina"
+                                to="/imovina"
+                                icon={<DashboardOutlinedIcon />}
+                                selected={selected}
+                                setSelected={setSelected}
+                                onClick={() => isMobile && setIsMobileSidebarOpen(false)}
+                            />
+                            <Item
+                                title="Vozila"
+                                to="/vozila"
+                                icon={<DirectionsCarIcon />}
+                                selected={selected}
+                                setSelected={setSelected}
+                                onClick={() => isMobile && setIsMobileSidebarOpen(false)}
+                            />
 
                             {isMobile && (
                                 <Item
@@ -285,7 +312,5 @@ const Sidebar = () => {
         </>
     );
 };
-
-
 
 export default Sidebar;
