@@ -48,7 +48,7 @@ const ReturnsSection = () => {
             customer: "Kompanija A",
             orderId: "ORD-001",
             reason: "Oštećen proizvod",
-            status: "Pending",
+            status: "Na čekanju",
             items: [
                 { name: "Laptop Dell XPS 13", quantity: 1, price: "€1,234.56" }
             ],
@@ -60,7 +60,7 @@ const ReturnsSection = () => {
             customer: "Kompanija B",
             orderId: "ORD-002",
             reason: "Pogrešan proizvod",
-            status: "Approved",
+            status: "Odobren",
             items: [
                 { name: "iPhone 14 Pro", quantity: 2, price: "€999.99" }
             ],
@@ -79,11 +79,11 @@ const ReturnsSection = () => {
 
     const getStatusColor = (status) => {
         switch (status) {
-            case "Approved":
+            case "Odobren":
                 return colors.greenAccent[500];
-            case "Pending":
+            case "Na čekanju":
                 return colors.blueAccent[500];
-            case "Rejected":
+            case "Odbijen":
                 return colors.redAccent[500];
             default:
                 return colors.grey[500];
@@ -92,11 +92,11 @@ const ReturnsSection = () => {
 
     const getStatusIcon = (status) => {
         switch (status) {
-            case "Approved":
+            case "Odobren":
                 return <ApprovedIcon />;
-            case "Pending":
+            case "Na čekanju":
                 return <PendingIcon />;
-            case "Rejected":
+            case "Odbijen":
                 return <RejectedIcon />;
             default:
                 return null;

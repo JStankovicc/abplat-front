@@ -13,7 +13,6 @@ import {
     Menu as MenuIcon,
     Dashboard as DashboardIcon,
     Inventory as InventoryIcon,
-    Category as CategoryIcon,
     ShoppingCart as OrderIcon,
     LocalShipping as SupplierIcon,
     AssignmentReturn as ReturnsIcon,
@@ -23,16 +22,14 @@ import MobileMenu from "../../components/inventory/MobileMenu";
 
 import DashboardSection from "../../components/inventory/DashboardSection";
 import StockTrackingSection from "../../components/inventory/StockTrackingSection";
-import CategoriesSection from "../../components/inventory/CategoriesSection";
 import OrdersSection from "../../components/inventory/OrdersSection";
 import SuppliersSection from "../../components/inventory/SuppliersSection";
 import ReturnsSection from "../../components/inventory/ReturnsSection";
 import AnalyticsSection from "../../components/inventory/AnalyticsSection";
 
 const sections = [
-    { id: "dashboard", label: "Dashboard", icon: <DashboardIcon />, component: <DashboardSection /> },
+    { id: "dashboard", label: "Pregled", icon: <DashboardIcon />, component: <DashboardSection /> },
     { id: "stock", label: "Stanje", icon: <InventoryIcon />, component: <StockTrackingSection /> },
-    { id: "categories", label: "Kategorije", icon: <CategoryIcon />, component: <CategoriesSection /> },
     { id: "orders", label: "Porudžbine", icon: <OrderIcon />, component: <OrdersSection /> },
     { id: "suppliers", label: "Dobavljači", icon: <SupplierIcon />, component: <SuppliersSection /> },
     { id: "returns", label: "Povrati", icon: <ReturnsIcon />, component: <ReturnsSection /> },
@@ -45,6 +42,14 @@ const InventoryView = () => {
     const isMobile = useMediaQuery(theme.breakpoints.down("md"));
     const [activeSection, setActiveSection] = useState("dashboard");
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+    const handleSectionChange = (event, newValue) => {
+        setActiveSection(newValue);
+    };
+
+    const handleMobileMenuToggle = () => {
+        setMobileMenuOpen(!mobileMenuOpen);
+    };
 
     return (
         <Box 
@@ -80,10 +85,18 @@ const InventoryView = () => {
                 >
                     Upravljanje Inventarom
                 </Typography>
-                {!isMobile ? (
+                {isMobile ? (
+                    <IconButton
+                        size="small"
+                        onClick={handleMobileMenuToggle}
+                        sx={{ color: colors.grey[100] }}
+                    >
+                        <MenuIcon />
+                    </IconButton>
+                ) : (
                     <Tabs
                         value={activeSection}
-                        onChange={(e, newValue) => setActiveSection(newValue)}
+                        onChange={handleSectionChange}
                         textColor="inherit"
                         variant="scrollable"
                         scrollButtons="auto"
@@ -117,14 +130,6 @@ const InventoryView = () => {
                             />
                         ))}
                     </Tabs>
-                ) : (
-                    <IconButton
-                        size="small"
-                        onClick={() => setMobileMenuOpen(true)}
-                        sx={{ color: colors.grey[100] }}
-                    >
-                        <MenuIcon />
-                    </IconButton>
                 )}
             </Box>
 
@@ -163,10 +168,10 @@ const InventoryView = () => {
 
             <MobileMenu
                 open={mobileMenuOpen}
-                onClose={() => setMobileMenuOpen(false)}
+                onClose={handleMobileMenuToggle}
                 sections={sections}
                 activeSection={activeSection}
-                onChangeSection={setActiveSection}
+                onSectionChange={handleSectionChange}
                 colors={colors}
             />
         </Box>
