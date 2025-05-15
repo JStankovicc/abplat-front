@@ -17,7 +17,6 @@ import {
     ShoppingCart as OrderIcon,
     LocalShipping as SupplierIcon,
     AssignmentReturn as ReturnsIcon,
-    Assignment as AuditIcon,
     BarChart as AnalyticsIcon
 } from "@mui/icons-material";
 import MobileMenu from "../../components/inventory/MobileMenu";
@@ -28,7 +27,6 @@ import CategoriesSection from "../../components/inventory/CategoriesSection";
 import OrdersSection from "../../components/inventory/OrdersSection";
 import SuppliersSection from "../../components/inventory/SuppliersSection";
 import ReturnsSection from "../../components/inventory/ReturnsSection";
-import AuditSection from "../../components/inventory/AuditSection";
 import AnalyticsSection from "../../components/inventory/AnalyticsSection";
 
 const sections = [
@@ -38,7 +36,6 @@ const sections = [
     { id: "orders", label: "Porudžbine", icon: <OrderIcon />, component: <OrdersSection /> },
     { id: "suppliers", label: "Dobavljači", icon: <SupplierIcon />, component: <SuppliersSection /> },
     { id: "returns", label: "Povrati", icon: <ReturnsIcon />, component: <ReturnsSection /> },
-    { id: "audit", label: "Revizije", icon: <AuditIcon />, component: <AuditSection /> },
     { id: "analytics", label: "Analitika", icon: <AnalyticsIcon />, component: <AnalyticsSection /> },
 ];
 
