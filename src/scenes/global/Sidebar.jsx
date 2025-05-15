@@ -259,7 +259,7 @@ const Sidebar = () => {
                             </Typography>
                             <Item
                                 title="Inventar"
-                                to="/inventar"
+                                to="/inventory"
                                 icon={<StorefrontOutlinedIcon />}
                                 selected={selected}
                                 setSelected={setSelected}
