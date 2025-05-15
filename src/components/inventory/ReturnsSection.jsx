@@ -18,7 +18,11 @@ import {
     Card,
     CardContent,
     Chip,
-    useTheme
+    useTheme,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    MenuItem
 } from "@mui/material";
 import { tokens } from "../../theme";
 import {
@@ -39,34 +43,44 @@ const ReturnsSection = () => {
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedReturn, setSelectedReturn] = useState(null);
-
-    // Primer podataka
-    const returns = [
+    const [returns, setReturns] = useState([
         {
-            id: "RET-001",
-            date: "2024-03-15",
-            customer: "Kompanija A",
-            orderId: "ORD-001",
-            reason: "Oštećen proizvod",
+            id: 1,
+            orderNumber: "ORD-2024-001",
+            customer: "Petar Petrović",
+            date: "2024-02-15",
+            reason: "Neispravan proizvod",
             status: "Na čekanju",
             items: [
-                { name: "Laptop Dell XPS 13", quantity: 1, price: "€1,234.56" }
+                {
+                    id: 1,
+                    name: "Laptop Dell XPS 13",
+                    quantity: 1,
+                    price: "€1,234.56"
+                }
             ],
-            total: "€1,234.56"
+            totalAmount: "€1,234.56",
+            notes: "Kupac prijavljuje da laptop ne pali"
         },
         {
-            id: "RET-002",
-            date: "2024-03-14",
-            customer: "Kompanija B",
-            orderId: "ORD-002",
+            id: 2,
+            orderNumber: "ORD-2024-002",
+            customer: "Ana Anić",
+            date: "2024-02-14",
             reason: "Pogrešan proizvod",
-            status: "Odobren",
+            status: "Odobreno",
             items: [
-                { name: "iPhone 14 Pro", quantity: 2, price: "€999.99" }
+                {
+                    id: 2,
+                    name: "Monitor Dell 27\"",
+                    quantity: 1,
+                    price: "€299.99"
+                }
             ],
-            total: "€1,999.98"
+            totalAmount: "€299.99",
+            notes: "Kupac je dobio pogrešan model monitora"
         }
-    ];
+    ]);
 
     const handleChangePage = (event, newPage) => {
         setPage(newPage);
@@ -79,28 +93,47 @@ const ReturnsSection = () => {
 
     const getStatusColor = (status) => {
         switch (status) {
-            case "Odobren":
-                return colors.greenAccent[500];
             case "Na čekanju":
-                return colors.blueAccent[500];
-            case "Odbijen":
+                return colors.orangeAccent[500];
+            case "Odobreno":
+                return colors.greenAccent[500];
+            case "Odbijeno":
                 return colors.redAccent[500];
+            case "Završeno":
+                return colors.primary[400];
             default:
-                return colors.grey[500];
+                return colors.grey[100];
         }
     };
 
     const getStatusIcon = (status) => {
         switch (status) {
-            case "Odobren":
+            case "Approved":
                 return <ApprovedIcon />;
-            case "Na čekanju":
+            case "Pending":
                 return <PendingIcon />;
-            case "Odbijen":
+            case "Rejected":
                 return <RejectedIcon />;
             default:
                 return null;
         }
+    };
+
+    const [newReturn, setNewReturn] = useState({
+        orderNumber: "",
+        customer: "",
+        date: "",
+        reason: "",
+        status: "Na čekanju",
+        totalAmount: "",
+        notes: ""
+    });
+
+    const handleNewReturnChange = (field) => (event) => {
+        setNewReturn({
+            ...newReturn,
+            [field]: event.target.value
+        });
     };
 
     return (
@@ -170,7 +203,7 @@ const ReturnsSection = () => {
                                             <TableCell>{returnItem.id}</TableCell>
                                             <TableCell>{returnItem.date}</TableCell>
                                             <TableCell>{returnItem.customer}</TableCell>
-                                            <TableCell>{returnItem.orderId}</TableCell>
+                                            <TableCell>{returnItem.orderNumber}</TableCell>
                                             <TableCell>{returnItem.reason}</TableCell>
                                             <TableCell>
                                                 <Chip
@@ -182,7 +215,7 @@ const ReturnsSection = () => {
                                                     }}
                                                 />
                                             </TableCell>
-                                            <TableCell align="right">{returnItem.total}</TableCell>
+                                            <TableCell align="right">{returnItem.totalAmount}</TableCell>
                                             <TableCell align="right">
                                                 <IconButton size="small">
                                                     <ReturnIcon />
@@ -226,7 +259,7 @@ const ReturnsSection = () => {
                                         Kupac: {selectedReturn.customer}
                                     </Typography>
                                     <Typography variant="body2" sx={{ mb: 1 }}>
-                                        Broj porudžbine: {selectedReturn.orderId}
+                                        Broj porudžbine: {selectedReturn.orderNumber}
                                     </Typography>
                                     <Typography variant="body2" sx={{ mb: 1 }}>
                                         Razlog: {selectedReturn.reason}
@@ -247,7 +280,7 @@ const ReturnsSection = () => {
                                         </Box>
                                     ))}
                                     <Typography variant="subtitle2" sx={{ mt: 1 }}>
-                                        Ukupno: {selectedReturn.total}
+                                        Ukupno: {selectedReturn.totalAmount}
                                     </Typography>
                                 </Box>
                                 <Box sx={{ display: "flex", gap: 1 }}>
@@ -273,6 +306,148 @@ const ReturnsSection = () => {
                     </Grid>
                 )}
             </Grid>
+
+            <Dialog open={Boolean(selectedReturn)} onClose={() => setSelectedReturn(null)}>
+                <DialogTitle>Detalji povrata</DialogTitle>
+                <DialogContent>
+                    <Grid container spacing={2} sx={{ mt: 1 }}>
+                        <Grid item xs={12} sm={6}>
+                            <TextField
+                                fullWidth
+                                label="Broj porudžbine"
+                                value={selectedReturn?.orderNumber}
+                                InputLabelProps={{ shrink: true }}
+                            />
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                            <TextField
+                                fullWidth
+                                label="Kupac"
+                                value={selectedReturn?.customer}
+                            />
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                            <TextField
+                                fullWidth
+                                label="Datum"
+                                type="date"
+                                value={selectedReturn?.date}
+                                InputLabelProps={{ shrink: true }}
+                            />
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                            <TextField
+                                fullWidth
+                                label="Razlog"
+                                value={selectedReturn?.reason}
+                            />
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                            <TextField
+                                fullWidth
+                                label="Status"
+                                select
+                                value={selectedReturn?.status}
+                            >
+                                <MenuItem value="Na čekanju">Na čekanju</MenuItem>
+                                <MenuItem value="Odobreno">Odobreno</MenuItem>
+                                <MenuItem value="Odbijeno">Odbijeno</MenuItem>
+                                <MenuItem value="Završeno">Završeno</MenuItem>
+                            </TextField>
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                            <TextField
+                                fullWidth
+                                label="Ukupno"
+                                value={selectedReturn?.totalAmount}
+                            />
+                        </Grid>
+                        <Grid item xs={12}>
+                            <TextField
+                                fullWidth
+                                multiline
+                                rows={4}
+                                label="Napomene"
+                                value={selectedReturn?.notes}
+                            />
+                        </Grid>
+                    </Grid>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={Boolean(newReturn)} onClose={() => setNewReturn(null)}>
+                <DialogTitle>Novi povrat</DialogTitle>
+                <DialogContent>
+                    <Grid container spacing={2} sx={{ mt: 1 }}>
+                        <Grid item xs={12} sm={6}>
+                            <TextField
+                                fullWidth
+                                label="Broj porudžbine"
+                                value={newReturn.orderNumber}
+                                onChange={handleNewReturnChange("orderNumber")}
+                            />
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                            <TextField
+                                fullWidth
+                                label="Kupac"
+                                value={newReturn.customer}
+                                onChange={handleNewReturnChange("customer")}
+                            />
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                            <TextField
+                                fullWidth
+                                label="Datum"
+                                type="date"
+                                value={newReturn.date}
+                                onChange={handleNewReturnChange("date")}
+                                InputLabelProps={{ shrink: true }}
+                            />
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                            <TextField
+                                fullWidth
+                                label="Razlog"
+                                value={newReturn.reason}
+                                onChange={handleNewReturnChange("reason")}
+                            />
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                            <TextField
+                                fullWidth
+                                label="Status"
+                                select
+                                value={newReturn.status}
+                                onChange={handleNewReturnChange("status")}
+                            >
+                                <MenuItem value="Na čekanju">Na čekanju</MenuItem>
+                                <MenuItem value="Odobreno">Odobreno</MenuItem>
+                                <MenuItem value="Odbijeno">Odbijeno</MenuItem>
+                                <MenuItem value="Završeno">Završeno</MenuItem>
+                            </TextField>
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                            <TextField
+                                fullWidth
+                                label="Iznos"
+                                value={newReturn.totalAmount}
+                                onChange={handleNewReturnChange("totalAmount")}
+                            />
+                        </Grid>
+                        <Grid item xs={12}>
+                            <TextField
+                                fullWidth
+                                multiline
+                                rows={4}
+                                label="Napomene"
+                                value={newReturn.notes}
+                                onChange={handleNewReturnChange("notes")}
+                            />
+                        </Grid>
+                    </Grid>
+                </DialogContent>
+            </Dialog>
         </Box>
     );
 };
