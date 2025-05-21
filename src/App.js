@@ -29,6 +29,7 @@ import ProjectManagement from "./scenes/project/ProjectManagement";
 import SalesView from "./scenes/sales/SalesView";
 import SalesManagement from "./scenes/sales/SalesManagement";  
 import InventoryView from "./scenes/inventory/InventoryView";
+import AssetsView from "./scenes/assets/AssetsView";
 function App() {
     const [theme, colorMode] = useMode();
     const [token, setToken] = useState(localStorage.getItem("token"));
@@ -181,6 +182,14 @@ function App() {
                                     </PrivateRoute>
                                 }
                             />
+                            <Route
+                                path="/assets"
+                                element={
+                                    <PrivateRoute>
+                                        <AssetsView />
+                                    </PrivateRoute>
+                                }
+                            />  
                             <Route
                                 path="/user/:userId"
                                 element={

@@ -267,7 +267,7 @@ const Sidebar = () => {
                             />
                             <Item
                                 title="Imovina"
-                                to="/imovina"
+                                to="/assets"
                                 icon={<DashboardOutlinedIcon />}
                                 selected={selected}
                                 setSelected={setSelected}
