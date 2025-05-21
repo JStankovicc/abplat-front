@@ -25,19 +25,22 @@ import {
     TableRow,
     Paper,
     Chip,
-    useTheme
+    useTheme,
+    Tooltip,
+    Divider,
+    LinearProgress,
+    Alert,
+    AlertTitle,
+    Stack
 } from "@mui/material";
 import {
     Search as SearchIcon,
     Add as AddIcon,
     Edit as EditIcon,
     Delete as DeleteIcon,
-    Warning as WarningIcon,
-    CheckCircle as CheckCircleIcon,
-    Schedule as ScheduleIcon,
-    LocalPolice as PoliceIcon,
-    CarCrash as CrashIcon,
-    Speed as SpeedIcon
+    Print as PrintIcon,
+    Download as DownloadIcon,
+    Share as ShareIcon
 } from "@mui/icons-material";
 import { tokens } from "../../theme";
 
@@ -47,6 +50,9 @@ const IncidentTracking = () => {
     const [searchTerm, setSearchTerm] = useState("");
     const [openDialog, setOpenDialog] = useState(false);
     const [selectedEntry, setSelectedEntry] = useState(null);
+    const [filterType, setFilterType] = useState("all");
+    const [filterStatus, setFilterStatus] = useState("all");
+    const [sortBy, setSortBy] = useState("date");
 
     // TODO: Zameniti sa pravim podacima iz API-ja
     const incidents = [
@@ -63,23 +69,42 @@ const IncidentTracking = () => {
             cost: 850,
             insuranceClaim: "U toku",
             policeReport: "Da",
-            notes: "Zamenjen prednji branik"
+            notes: "Zamenjen prednji branik",
+            alerts: [
+                { type: "info", message: "Osiguranje u toku" }
+            ]
         },
-        // Dodati više incidenata...
+        {
+            id: 2,
+            vehicle: "Volvo FH16 (BG-789-012)",
+            date: "2024-03-20",
+            type: "violation",
+            severity: "low",
+            status: "inProgress",
+            description: "Prekoračenje brzine",
+            location: "Novi Sad, Bulevar oslobođenja 45",
+            driver: "Marko Marković",
+            cost: 150,
+            insuranceClaim: "Nije prijavljeno",
+            policeReport: "Da",
+            notes: "Kazna za prekoračenje brzine",
+            alerts: [
+                { type: "warning", message: "Na čekanju sudske odluke" }
+            ]
+        }
     ];
 
     const getStatusChip = (status) => {
         const statusConfig = {
-            reported: { color: "info", icon: <WarningIcon />, label: "Prijavljeno" },
-            inProgress: { color: "warning", icon: <ScheduleIcon />, label: "U toku" },
-            resolved: { color: "success", icon: <CheckCircleIcon />, label: "Rešeno" },
-            pending: { color: "error", icon: <WarningIcon />, label: "Na čekanju" }
+            reported: { color: "info", label: "Prijavljeno" },
+            inProgress: { color: "warning", label: "U toku" },
+            resolved: { color: "success", label: "Rešeno" },
+            pending: { color: "error", label: "Na čekanju" }
         };
 
         const config = statusConfig[status];
         return (
             <Chip
-                icon={config.icon}
                 label={config.label}
                 color={config.color}
                 size="small"
@@ -90,16 +115,15 @@ const IncidentTracking = () => {
 
     const getTypeChip = (type) => {
         const typeConfig = {
-            accident: { color: "error", icon: <CrashIcon />, label: "Nesreća" },
-            violation: { color: "warning", icon: <SpeedIcon />, label: "Prekršaj" },
-            damage: { color: "info", icon: <WarningIcon />, label: "Oštećenje" },
-            theft: { color: "error", icon: <PoliceIcon />, label: "Krađa" }
+            accident: { color: "error", label: "Nesreća" },
+            violation: { color: "warning", label: "Prekršaj" },
+            damage: { color: "info", label: "Oštećenje" },
+            theft: { color: "error", label: "Krađa" }
         };
 
         const config = typeConfig[type];
         return (
             <Chip
-                icon={config.icon}
                 label={config.label}
                 color={config.color}
                 size="small"
@@ -116,34 +140,93 @@ const IncidentTracking = () => {
     return (
         <Box>
             {/* Gornji toolbar */}
-            <Box sx={{ mb: 2, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <TextField
-                    size="small"
-                    placeholder="Pretraži incidente..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    sx={{ width: "300px" }}
-                    InputProps={{
-                        startAdornment: (
-                            <InputAdornment position="start">
-                                <SearchIcon />
-                            </InputAdornment>
-                        ),
-                    }}
-                />
-                <Button
-                    variant="contained"
-                    startIcon={<AddIcon />}
-                    onClick={() => handleAddEdit()}
-                    sx={{
-                        backgroundColor: colors.greenAccent[500],
-                        "&:hover": {
-                            backgroundColor: colors.greenAccent[600],
-                        },
-                    }}
-                >
-                    Dodaj incident
-                </Button>
+            <Box sx={{ mb: 2, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 2 }}>
+                <Box sx={{ display: "flex", gap: 2, flex: 1 }}>
+                    <TextField
+                        size="small"
+                        placeholder="Pretraži incidente..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        sx={{ width: "300px" }}
+                        InputProps={{
+                            startAdornment: (
+                                <InputAdornment position="start">
+                                    <SearchIcon />
+                                </InputAdornment>
+                            ),
+                        }}
+                    />
+                    <FormControl size="small" sx={{ minWidth: 150 }}>
+                        <InputLabel>Tip</InputLabel>
+                        <Select
+                            value={filterType}
+                            onChange={(e) => setFilterType(e.target.value)}
+                            label="Tip"
+                        >
+                            <MenuItem value="all">Svi</MenuItem>
+                            <MenuItem value="accident">Nesreće</MenuItem>
+                            <MenuItem value="violation">Prekršaji</MenuItem>
+                            <MenuItem value="damage">Oštećenja</MenuItem>
+                            <MenuItem value="theft">Krađe</MenuItem>
+                        </Select>
+                    </FormControl>
+                    <FormControl size="small" sx={{ minWidth: 150 }}>
+                        <InputLabel>Status</InputLabel>
+                        <Select
+                            value={filterStatus}
+                            onChange={(e) => setFilterStatus(e.target.value)}
+                            label="Status"
+                        >
+                            <MenuItem value="all">Svi</MenuItem>
+                            <MenuItem value="reported">Prijavljeni</MenuItem>
+                            <MenuItem value="inProgress">U toku</MenuItem>
+                            <MenuItem value="resolved">Rešeni</MenuItem>
+                            <MenuItem value="pending">Na čekanju</MenuItem>
+                        </Select>
+                    </FormControl>
+                    <FormControl size="small" sx={{ minWidth: 150 }}>
+                        <InputLabel>Sortiraj po</InputLabel>
+                        <Select
+                            value={sortBy}
+                            onChange={(e) => setSortBy(e.target.value)}
+                            label="Sortiraj po"
+                        >
+                            <MenuItem value="date">Datumu</MenuItem>
+                            <MenuItem value="cost">Troškovima</MenuItem>
+                            <MenuItem value="severity">Ozbiljnosti</MenuItem>
+                        </Select>
+                    </FormControl>
+                </Box>
+                <Box sx={{ display: "flex", gap: 1 }}>
+                    <Tooltip title="Štampaj listu">
+                        <IconButton>
+                            <PrintIcon />
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Preuzmi izveštaj">
+                        <IconButton>
+                            <DownloadIcon />
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Podeli">
+                        <IconButton>
+                            <ShareIcon />
+                        </IconButton>
+                    </Tooltip>
+                    <Button
+                        variant="contained"
+                        startIcon={<AddIcon />}
+                        onClick={() => handleAddEdit()}
+                        sx={{
+                            backgroundColor: colors.greenAccent[500],
+                            "&:hover": {
+                                backgroundColor: colors.greenAccent[600],
+                            },
+                        }}
+                    >
+                        Dodaj incident
+                    </Button>
+                </Box>
             </Box>
 
             {/* Statistika */}
@@ -151,13 +234,13 @@ const IncidentTracking = () => {
                 <Grid item xs={12} sm={6} md={3}>
                     <Card>
                         <CardContent>
-                            <Typography color="textSecondary" gutterBottom>
+                            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                                 Aktivni incidenti
                             </Typography>
                             <Typography variant="h5">
                                 3
                             </Typography>
-                            <Typography variant="body2" color="textSecondary">
+                            <Typography variant="body2" color="text.secondary">
                                 U toku
                             </Typography>
                         </CardContent>
@@ -166,13 +249,13 @@ const IncidentTracking = () => {
                 <Grid item xs={12} sm={6} md={3}>
                     <Card>
                         <CardContent>
-                            <Typography color="textSecondary" gutterBottom>
+                            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                                 Ukupni troškovi
                             </Typography>
                             <Typography variant="h5">
                                 5,500 €
                             </Typography>
-                            <Typography variant="body2" color="textSecondary">
+                            <Typography variant="body2" color="text.secondary">
                                 Ove godine
                             </Typography>
                         </CardContent>
@@ -181,13 +264,13 @@ const IncidentTracking = () => {
                 <Grid item xs={12} sm={6} md={3}>
                     <Card>
                         <CardContent>
-                            <Typography color="textSecondary" gutterBottom>
+                            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                                 Osiguranje
                             </Typography>
                             <Typography variant="h5">
                                 2,500 €
                             </Typography>
-                            <Typography variant="body2" color="textSecondary">
+                            <Typography variant="body2" color="text.secondary">
                                 Isplaćeno
                             </Typography>
                         </CardContent>
@@ -196,13 +279,13 @@ const IncidentTracking = () => {
                 <Grid item xs={12} sm={6} md={3}>
                     <Card>
                         <CardContent>
-                            <Typography color="textSecondary" gutterBottom>
+                            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                                 Prekršaji
                             </Typography>
                             <Typography variant="h5" color="warning.main">
                                 5
                             </Typography>
-                            <Typography variant="body2" color="textSecondary">
+                            <Typography variant="body2" color="text.secondary">
                                 Ove godine
                             </Typography>
                         </CardContent>
@@ -231,12 +314,43 @@ const IncidentTracking = () => {
                             <TableRow key={incident.id}>
                                 <TableCell>{new Date(incident.date).toLocaleDateString()}</TableCell>
                                 <TableCell>{incident.vehicle}</TableCell>
-                                <TableCell>{getTypeChip(incident.type)}</TableCell>
-                                <TableCell>{getStatusChip(incident.status)}</TableCell>
+                                <TableCell>
+                                    <Box>
+                                        {getTypeChip(incident.type)}
+                                        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                                            {incident.severity === "high" ? "Visoka" : 
+                                             incident.severity === "medium" ? "Srednja" : "Niska"} ozbiljnost
+                                        </Typography>
+                                    </Box>
+                                </TableCell>
+                                <TableCell>
+                                    <Box>
+                                        {getStatusChip(incident.status)}
+                                        {incident.alerts.length > 0 && (
+                                            <Alert 
+                                                severity={incident.alerts[0].type}
+                                                sx={{ py: 0.5, mt: 0.5 }}
+                                            >
+                                                <AlertTitle sx={{ fontSize: "0.75rem" }}>
+                                                    {incident.alerts[0].message}
+                                                </AlertTitle>
+                                            </Alert>
+                                        )}
+                                    </Box>
+                                </TableCell>
                                 <TableCell>{incident.description}</TableCell>
                                 <TableCell>{incident.location}</TableCell>
                                 <TableCell>{incident.driver}</TableCell>
-                                <TableCell>{incident.cost.toFixed(2)} €</TableCell>
+                                <TableCell>
+                                    <Box>
+                                        <Typography variant="body2">
+                                            {incident.cost.toFixed(2)} €
+                                        </Typography>
+                                        <Typography variant="body2" color="text.secondary">
+                                            {incident.insuranceClaim}
+                                        </Typography>
+                                    </Box>
+                                </TableCell>
                                 <TableCell>
                                     <IconButton size="small" onClick={() => handleAddEdit(incident)}>
                                         <EditIcon />
@@ -266,7 +380,7 @@ const IncidentTracking = () => {
                                     label="Vozilo"
                                 >
                                     <MenuItem value="Mercedes Actros (BG-123-456)">Mercedes Actros (BG-123-456)</MenuItem>
-                                    {/* Dodati više vozila */}
+                                    <MenuItem value="Volvo FH16 (BG-789-012)">Volvo FH16 (BG-789-012)</MenuItem>
                                 </Select>
                             </FormControl>
                         </Grid>
@@ -290,6 +404,19 @@ const IncidentTracking = () => {
                                     <MenuItem value="violation">Prekršaj</MenuItem>
                                     <MenuItem value="damage">Oštećenje</MenuItem>
                                     <MenuItem value="theft">Krađa</MenuItem>
+                                </Select>
+                            </FormControl>
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                            <FormControl fullWidth>
+                                <InputLabel>Ozbiljnost</InputLabel>
+                                <Select
+                                    defaultValue={selectedEntry?.severity || "medium"}
+                                    label="Ozbiljnost"
+                                >
+                                    <MenuItem value="high">Visoka</MenuItem>
+                                    <MenuItem value="medium">Srednja</MenuItem>
+                                    <MenuItem value="low">Niska</MenuItem>
                                 </Select>
                             </FormControl>
                         </Grid>
@@ -329,7 +456,7 @@ const IncidentTracking = () => {
                                     label="Vozač"
                                 >
                                     <MenuItem value="Petar Petrović">Petar Petrović</MenuItem>
-                                    {/* Dodati više vozača */}
+                                    <MenuItem value="Marko Marković">Marko Marković</MenuItem>
                                 </Select>
                             </FormControl>
                         </Grid>
