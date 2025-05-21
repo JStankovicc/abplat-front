@@ -275,7 +275,7 @@ const Sidebar = () => {
                             />
                             <Item
                                 title="Vozila"
-                                to="/vozila"
+                                to="/fleet"
                                 icon={<DirectionsCarIcon />}
                                 selected={selected}
                                 setSelected={setSelected}

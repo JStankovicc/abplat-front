@@ -30,6 +30,7 @@ import SalesView from "./scenes/sales/SalesView";
 import SalesManagement from "./scenes/sales/SalesManagement";  
 import InventoryView from "./scenes/inventory/InventoryView";
 import AssetsView from "./scenes/assets/AssetsView";
+import FleetView from "./scenes/fleet/FleetView";
 function App() {
     const [theme, colorMode] = useMode();
     const [token, setToken] = useState(localStorage.getItem("token"));
@@ -190,6 +191,14 @@ function App() {
                                     </PrivateRoute>
                                 }
                             />  
+                            <Route
+                                path="/fleet"
+                                element={
+                                    <PrivateRoute>
+                                        <FleetView />
+                                    </PrivateRoute>
+                                }
+                            />
                             <Route
                                 path="/user/:userId"
                                 element={
