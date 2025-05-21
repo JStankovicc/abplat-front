@@ -38,11 +38,56 @@ import {
 
 const ReturnsSection = () => {
     const theme = useTheme();
-    const colors = tokens(theme.palette.mode);
+    const mode = theme?.palette?.mode || "dark";
+    const colors = tokens(mode);
+
+    // Definišemo sve boje koje nam trebaju
+    const defaultColors = {
+        primary: {
+            400: "#141b2d",
+            500: "#1f2a40",
+            600: "#2d3a54"
+        },
+        greenAccent: {
+            500: "#4cceac"
+        },
+        redAccent: {
+            500: "#ff6b6b"
+        },
+        orangeAccent: {
+            500: "#ffa726"
+        },
+        grey: {
+            100: "#f5f5f5"
+        }
+    };
+
+    // Sigurno čitanje boja sa fallback vrednostima
+    const safeColors = {
+        primary: {
+            400: colors?.primary?.[400] || defaultColors.primary[400],
+            500: colors?.primary?.[500] || defaultColors.primary[500],
+            600: colors?.primary?.[600] || defaultColors.primary[600]
+        },
+        greenAccent: {
+            500: colors?.greenAccent?.[500] || defaultColors.greenAccent[500]
+        },
+        redAccent: {
+            500: colors?.redAccent?.[500] || defaultColors.redAccent[500]
+        },
+        orangeAccent: {
+            500: colors?.orangeAccent?.[500] || defaultColors.orangeAccent[500]
+        },
+        grey: {
+            100: colors?.grey?.[100] || defaultColors.grey[100]
+        }
+    };
+
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedReturn, setSelectedReturn] = useState(null);
+    const [isNewReturnDialogOpen, setIsNewReturnDialogOpen] = useState(false);
     const [returns, setReturns] = useState([
         {
             id: 1,
@@ -94,15 +139,15 @@ const ReturnsSection = () => {
     const getStatusColor = (status) => {
         switch (status) {
             case "Na čekanju":
-                return colors.orangeAccent[500];
+                return safeColors.orangeAccent[500];
             case "Odobreno":
-                return colors.greenAccent[500];
+                return safeColors.greenAccent[500];
             case "Odbijeno":
-                return colors.redAccent[500];
+                return safeColors.redAccent[500];
             case "Završeno":
-                return colors.primary[400];
+                return safeColors.primary[400];
             default:
-                return colors.grey[100];
+                return safeColors.grey[100];
         }
     };
 
@@ -133,6 +178,23 @@ const ReturnsSection = () => {
         setNewReturn({
             ...newReturn,
             [field]: event.target.value
+        });
+    };
+
+    const handleOpenNewReturnDialog = () => {
+        setIsNewReturnDialogOpen(true);
+    };
+
+    const handleCloseNewReturnDialog = () => {
+        setIsNewReturnDialogOpen(false);
+        setNewReturn({
+            orderNumber: "",
+            customer: "",
+            date: "",
+            reason: "",
+            status: "Na čekanju",
+            totalAmount: "",
+            notes: ""
         });
     };
 
@@ -168,6 +230,7 @@ const ReturnsSection = () => {
                     <Button
                         variant="contained"
                         startIcon={<AddIcon />}
+                        onClick={handleOpenNewReturnDialog}
                     >
                         Novi povrat
                     </Button>
@@ -177,7 +240,7 @@ const ReturnsSection = () => {
             <Grid container spacing={2}>
                 {/* Lista povrata */}
                 <Grid item xs={12} md={selectedReturn ? 8 : 12}>
-                    <TableContainer component={Paper} sx={{ backgroundColor: colors.primary[600] }}>
+                    <TableContainer component={Paper} sx={{ backgroundColor: safeColors.primary[600] }}>
                         <Table>
                             <TableHead>
                                 <TableRow>
@@ -211,7 +274,7 @@ const ReturnsSection = () => {
                                                     label={returnItem.status}
                                                     sx={{
                                                         backgroundColor: getStatusColor(returnItem.status),
-                                                        color: colors.grey[100]
+                                                        color: safeColors.grey[100]
                                                     }}
                                                 />
                                             </TableCell>
@@ -240,7 +303,7 @@ const ReturnsSection = () => {
                 {/* Detalji povrata */}
                 {selectedReturn && (
                     <Grid item xs={12} md={4}>
-                        <Card sx={{ backgroundColor: colors.primary[600] }}>
+                        <Card sx={{ backgroundColor: safeColors.primary[600] }}>
                             <CardContent>
                                 <Typography variant="h6" sx={{ mb: 2 }}>
                                     Detalji povrata
@@ -307,75 +370,8 @@ const ReturnsSection = () => {
                 )}
             </Grid>
 
-            <Dialog open={Boolean(selectedReturn)} onClose={() => setSelectedReturn(null)}>
-                <DialogTitle>Detalji povrata</DialogTitle>
-                <DialogContent>
-                    <Grid container spacing={2} sx={{ mt: 1 }}>
-                        <Grid item xs={12} sm={6}>
-                            <TextField
-                                fullWidth
-                                label="Broj porudžbine"
-                                value={selectedReturn?.orderNumber}
-                                InputLabelProps={{ shrink: true }}
-                            />
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                            <TextField
-                                fullWidth
-                                label="Kupac"
-                                value={selectedReturn?.customer}
-                            />
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                            <TextField
-                                fullWidth
-                                label="Datum"
-                                type="date"
-                                value={selectedReturn?.date}
-                                InputLabelProps={{ shrink: true }}
-                            />
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                            <TextField
-                                fullWidth
-                                label="Razlog"
-                                value={selectedReturn?.reason}
-                            />
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                            <TextField
-                                fullWidth
-                                label="Status"
-                                select
-                                value={selectedReturn?.status}
-                            >
-                                <MenuItem value="Na čekanju">Na čekanju</MenuItem>
-                                <MenuItem value="Odobreno">Odobreno</MenuItem>
-                                <MenuItem value="Odbijeno">Odbijeno</MenuItem>
-                                <MenuItem value="Završeno">Završeno</MenuItem>
-                            </TextField>
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                            <TextField
-                                fullWidth
-                                label="Ukupno"
-                                value={selectedReturn?.totalAmount}
-                            />
-                        </Grid>
-                        <Grid item xs={12}>
-                            <TextField
-                                fullWidth
-                                multiline
-                                rows={4}
-                                label="Napomene"
-                                value={selectedReturn?.notes}
-                            />
-                        </Grid>
-                    </Grid>
-                </DialogContent>
-            </Dialog>
-
-            <Dialog open={Boolean(newReturn)} onClose={() => setNewReturn(null)}>
+            {/* Dialog za novi povrat */}
+            <Dialog open={isNewReturnDialogOpen} onClose={handleCloseNewReturnDialog}>
                 <DialogTitle>Novi povrat</DialogTitle>
                 <DialogContent>
                     <Grid container spacing={2} sx={{ mt: 1 }}>
@@ -383,7 +379,7 @@ const ReturnsSection = () => {
                             <TextField
                                 fullWidth
                                 label="Broj porudžbine"
-                                value={newReturn.orderNumber}
+                                value={newReturn?.orderNumber || ""}
                                 onChange={handleNewReturnChange("orderNumber")}
                             />
                         </Grid>
@@ -391,7 +387,7 @@ const ReturnsSection = () => {
                             <TextField
                                 fullWidth
                                 label="Kupac"
-                                value={newReturn.customer}
+                                value={newReturn?.customer || ""}
                                 onChange={handleNewReturnChange("customer")}
                             />
                         </Grid>
@@ -400,7 +396,7 @@ const ReturnsSection = () => {
                                 fullWidth
                                 label="Datum"
                                 type="date"
-                                value={newReturn.date}
+                                value={newReturn?.date || ""}
                                 onChange={handleNewReturnChange("date")}
                                 InputLabelProps={{ shrink: true }}
                             />
@@ -409,7 +405,7 @@ const ReturnsSection = () => {
                             <TextField
                                 fullWidth
                                 label="Razlog"
-                                value={newReturn.reason}
+                                value={newReturn?.reason || ""}
                                 onChange={handleNewReturnChange("reason")}
                             />
                         </Grid>
@@ -418,7 +414,7 @@ const ReturnsSection = () => {
                                 fullWidth
                                 label="Status"
                                 select
-                                value={newReturn.status}
+                                value={newReturn?.status || ""}
                                 onChange={handleNewReturnChange("status")}
                             >
                                 <MenuItem value="Na čekanju">Na čekanju</MenuItem>
@@ -431,7 +427,7 @@ const ReturnsSection = () => {
                             <TextField
                                 fullWidth
                                 label="Iznos"
-                                value={newReturn.totalAmount}
+                                value={newReturn?.totalAmount || ""}
                                 onChange={handleNewReturnChange("totalAmount")}
                             />
                         </Grid>
@@ -441,7 +437,7 @@ const ReturnsSection = () => {
                                 multiline
                                 rows={4}
                                 label="Napomene"
-                                value={newReturn.notes}
+                                value={newReturn?.notes || ""}
                                 onChange={handleNewReturnChange("notes")}
                             />
                         </Grid>
