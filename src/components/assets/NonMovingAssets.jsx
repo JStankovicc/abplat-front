@@ -236,24 +236,24 @@ const NonMovingAssets = () => {
             </TableContainer>
 
             {/* Detaljan prikaz imovine */}
-            <Dialog open={detailDialog} onClose={handleDetailClose} maxWidth="md" fullWidth>
+            <Dialog open={detailDialog} onClose={handleDetailClose} maxWidth="md" fullWidth PaperProps={{ sx: { backgroundColor: colors.primary[400], color: colors.grey[100], boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)' } }}>
                 <DialogTitle>Detalji imovine: {detailAsset?.name}</DialogTitle>
                 <DialogContent>
                     <Box display="flex" gap={3} mb={2}>
-                        <QRCode value={detailAsset?.id} />
+                        <QRCode value={detailAsset?.id} sx={{ backgroundColor: colors.primary[500], color: colors.grey[100] }} />
                         <Box>
-                            <Typography variant="subtitle2">ID: {detailAsset?.id}</Typography>
-                            <Typography variant="subtitle2">Tip: {detailAsset?.type}</Typography>
-                            <Typography variant="subtitle2">Kategorija: {detailAsset?.category}</Typography>
-                            <Typography variant="subtitle2">Adresa: {detailAsset?.address}</Typography>
-                            <Typography variant="subtitle2">Površina: {detailAsset?.area}</Typography>
-                            <Typography variant="subtitle2">Vlasnik: {detailAsset?.owner}</Typography>
-                            <Typography variant="subtitle2">Status: <Chip label={detailAsset?.status} color={statusColors[detailAsset?.status] || "default"} size="small" /></Typography>
-                            <Typography variant="subtitle2">Vrednost: €{detailAsset?.value}</Typography>
-                            <Typography variant="subtitle2">Amortizacija: €{detailAsset?.depreciation}</Typography>
-                            <Typography variant="subtitle2">Datum nabavke: {detailAsset?.purchaseDate}</Typography>
-                            <Typography variant="subtitle2">Poslednja inspekcija: {detailAsset?.lastInspection}</Typography>
-                            <Typography variant="subtitle2">Osiguranje do: {detailAsset?.insurance}</Typography>
+                            <Typography variant="subtitle2" color={colors.grey[100]}>ID: {detailAsset?.id}</Typography>
+                            <Typography variant="subtitle2" color={colors.grey[100]}>Tip: {detailAsset?.type}</Typography>
+                            <Typography variant="subtitle2" color={colors.grey[100]}>Kategorija: {detailAsset?.category}</Typography>
+                            <Typography variant="subtitle2" color={colors.grey[100]}>Adresa: {detailAsset?.address}</Typography>
+                            <Typography variant="subtitle2" color={colors.grey[100]}>Površina: {detailAsset?.area}</Typography>
+                            <Typography variant="subtitle2" color={colors.grey[100]}>Vlasnik: {detailAsset?.owner}</Typography>
+                            <Typography variant="subtitle2" color={colors.grey[100]}>Status: <Chip label={detailAsset?.status} color={statusColors[detailAsset?.status] || "default"} size="small" /></Typography>
+                            <Typography variant="subtitle2" color={colors.grey[100]}>Vrednost: €{detailAsset?.value}</Typography>
+                            <Typography variant="subtitle2" color={colors.grey[100]}>Amortizacija: €{detailAsset?.depreciation}</Typography>
+                            <Typography variant="subtitle2" color={colors.grey[100]}>Datum nabavke: {detailAsset?.purchaseDate}</Typography>
+                            <Typography variant="subtitle2" color={colors.grey[100]}>Poslednja inspekcija: {detailAsset?.lastInspection}</Typography>
+                            <Typography variant="subtitle2" color={colors.grey[100]}>Osiguranje do: {detailAsset?.insurance}</Typography>
                         </Box>
                     </Box>
                     <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2 }}>
@@ -264,8 +264,8 @@ const NonMovingAssets = () => {
                     </Tabs>
                     {tab === 0 && (
                         <Box>
-                            <Typography variant="subtitle1" mb={1}>Kretanje imovine:</Typography>
-                            <Table size="small">
+                            <Typography variant="subtitle1" mb={1} color={colors.grey[100]}>Kretanje imovine:</Typography>
+                            <Table size="small" sx={{ backgroundColor: colors.primary[300] }}>
                                 <TableHead>
                                     <TableRow>
                                         <TableCell>Datum</TableCell>
@@ -287,8 +287,8 @@ const NonMovingAssets = () => {
                     )}
                     {tab === 1 && (
                         <Box>
-                            <Typography variant="subtitle1" mb={1}>Istorija održavanja:</Typography>
-                            <Table size="small">
+                            <Typography variant="subtitle1" mb={1} color={colors.grey[100]}>Istorija održavanja:</Typography>
+                            <Table size="small" sx={{ backgroundColor: colors.primary[300] }}>
                                 <TableHead>
                                     <TableRow>
                                         <TableCell>Datum</TableCell>
@@ -312,7 +312,7 @@ const NonMovingAssets = () => {
                     )}
                     {tab === 2 && (
                         <Box>
-                            <Typography variant="subtitle1" mb={1}>Dokumenti:</Typography>
+                            <Typography variant="subtitle1" mb={1} color={colors.grey[100]}>Dokumenti:</Typography>
                             <ul>
                                 {detailAsset?.documents?.map((doc, i) => (
                                     <li key={i}><a href="#" style={{ color: colors.greenAccent[500] }}>{doc}</a></li>
@@ -322,8 +322,8 @@ const NonMovingAssets = () => {
                     )}
                     {tab === 3 && (
                         <Box>
-                            <Typography variant="subtitle1" mb={1}>Napomene:</Typography>
-                            <Typography variant="body2">{detailAsset?.notes}</Typography>
+                            <Typography variant="subtitle1" mb={1} color={colors.grey[100]}>Napomene:</Typography>
+                            <Typography variant="body2" color={colors.grey[100]}>{detailAsset?.notes}</Typography>
                         </Box>
                     )}
                 </DialogContent>
@@ -333,7 +333,7 @@ const NonMovingAssets = () => {
             </Dialog>
 
             {/* Dialog za dodavanje/izmenu (osnovni podaci, može se proširiti po potrebi) */}
-            <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
+            <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth PaperProps={{ sx: { backgroundColor: colors.primary[400], color: colors.grey[100], boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)' } }}>
                 <DialogTitle>
                     {editMode ? "Izmeni imovinu" : "Dodaj novu imovinu"}
                 </DialogTitle>
