@@ -25,17 +25,22 @@ import {
     TableRow,
     Paper,
     Chip,
-    useTheme
+    useTheme,
+    Tooltip,
+    Divider,
+    LinearProgress,
+    Alert,
+    AlertTitle,
+    Stack
 } from "@mui/material";
 import {
     Search as SearchIcon,
     Add as AddIcon,
     Edit as EditIcon,
     Delete as DeleteIcon,
-    Build as BuildIcon,
-    Warning as WarningIcon,
-    CheckCircle as CheckCircleIcon,
-    Schedule as ScheduleIcon
+    Print as PrintIcon,
+    Download as DownloadIcon,
+    Share as ShareIcon
 } from "@mui/icons-material";
 import { tokens } from "../../theme";
 
@@ -45,6 +50,8 @@ const MaintenanceTracking = () => {
     const [searchTerm, setSearchTerm] = useState("");
     const [openDialog, setOpenDialog] = useState(false);
     const [selectedEntry, setSelectedEntry] = useState(null);
+    const [filterStatus, setFilterStatus] = useState("all");
+    const [sortBy, setSortBy] = useState("date");
 
     // TODO: Zameniti sa pravim podacima iz API-ja
     const maintenanceEntries = [
@@ -59,23 +66,40 @@ const MaintenanceTracking = () => {
             cost: 850,
             nextService: "2024-09-15",
             serviceProvider: "Auto Servis Beograd",
-            notes: "Zamenjeni filteri i ulje"
+            notes: "Zamenjeni filteri i ulje",
+            alerts: [
+                { type: "info", message: "Sledeći servis za 180 dana" }
+            ]
         },
-        // Dodati više unosa...
+        {
+            id: 2,
+            vehicle: "Volvo FH16 (BG-789-012)",
+            date: "2024-03-20",
+            type: "emergency",
+            status: "inProgress",
+            description: "Zamena kočnica",
+            mileage: 15000,
+            cost: 1200,
+            nextService: "2024-09-20",
+            serviceProvider: "Auto Servis Novi Sad",
+            notes: "Hitna intervencija",
+            alerts: [
+                { type: "warning", message: "Servis u toku" }
+            ]
+        }
     ];
 
     const getStatusChip = (status) => {
         const statusConfig = {
-            scheduled: { color: "info", icon: <ScheduleIcon />, label: "Zakazano" },
-            inProgress: { color: "warning", icon: <BuildIcon />, label: "U toku" },
-            completed: { color: "success", icon: <CheckCircleIcon />, label: "Završeno" },
-            overdue: { color: "error", icon: <WarningIcon />, label: "Prekoračeno" }
+            scheduled: { color: "info", label: "Zakazano" },
+            inProgress: { color: "warning", label: "U toku" },
+            completed: { color: "success", label: "Završeno" },
+            overdue: { color: "error", label: "Prekoračeno" }
         };
 
         const config = statusConfig[status];
         return (
             <Chip
-                icon={config.icon}
                 label={config.label}
                 color={config.color}
                 size="small"
@@ -89,37 +113,89 @@ const MaintenanceTracking = () => {
         setOpenDialog(true);
     };
 
+    const getDaysUntilService = (date) => {
+        const serviceDate = new Date(date);
+        const today = new Date();
+        const diffTime = serviceDate - today;
+        return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    };
+
     return (
         <Box>
             {/* Gornji toolbar */}
-            <Box sx={{ mb: 2, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <TextField
-                    size="small"
-                    placeholder="Pretraži servise..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    sx={{ width: "300px" }}
-                    InputProps={{
-                        startAdornment: (
-                            <InputAdornment position="start">
-                                <SearchIcon />
-                            </InputAdornment>
-                        ),
-                    }}
-                />
-                <Button
-                    variant="contained"
-                    startIcon={<AddIcon />}
-                    onClick={() => handleAddEdit()}
-                    sx={{
-                        backgroundColor: colors.greenAccent[500],
-                        "&:hover": {
-                            backgroundColor: colors.greenAccent[600],
-                        },
-                    }}
-                >
-                    Dodaj servis
-                </Button>
+            <Box sx={{ mb: 2, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 2 }}>
+                <Box sx={{ display: "flex", gap: 2, flex: 1 }}>
+                    <TextField
+                        size="small"
+                        placeholder="Pretraži servise..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        sx={{ width: "300px" }}
+                        InputProps={{
+                            startAdornment: (
+                                <InputAdornment position="start">
+                                    <SearchIcon />
+                                </InputAdornment>
+                            ),
+                        }}
+                    />
+                    <FormControl size="small" sx={{ minWidth: 150 }}>
+                        <InputLabel>Status</InputLabel>
+                        <Select
+                            value={filterStatus}
+                            onChange={(e) => setFilterStatus(e.target.value)}
+                            label="Status"
+                        >
+                            <MenuItem value="all">Svi</MenuItem>
+                            <MenuItem value="scheduled">Zakazani</MenuItem>
+                            <MenuItem value="inProgress">U toku</MenuItem>
+                            <MenuItem value="completed">Završeni</MenuItem>
+                            <MenuItem value="overdue">Prekoračeni</MenuItem>
+                        </Select>
+                    </FormControl>
+                    <FormControl size="small" sx={{ minWidth: 150 }}>
+                        <InputLabel>Sortiraj po</InputLabel>
+                        <Select
+                            value={sortBy}
+                            onChange={(e) => setSortBy(e.target.value)}
+                            label="Sortiraj po"
+                        >
+                            <MenuItem value="date">Datumu</MenuItem>
+                            <MenuItem value="cost">Troškovima</MenuItem>
+                            <MenuItem value="nextService">Sledećem servisu</MenuItem>
+                        </Select>
+                    </FormControl>
+                </Box>
+                <Box sx={{ display: "flex", gap: 1 }}>
+                    <Tooltip title="Štampaj listu">
+                        <IconButton>
+                            <PrintIcon />
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Preuzmi izveštaj">
+                        <IconButton>
+                            <DownloadIcon />
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Podeli">
+                        <IconButton>
+                            <ShareIcon />
+                        </IconButton>
+                    </Tooltip>
+                    <Button
+                        variant="contained"
+                        startIcon={<AddIcon />}
+                        onClick={() => handleAddEdit()}
+                        sx={{
+                            backgroundColor: colors.greenAccent[500],
+                            "&:hover": {
+                                backgroundColor: colors.greenAccent[600],
+                            },
+                        }}
+                    >
+                        Dodaj servis
+                    </Button>
+                </Box>
             </Box>
 
             {/* Statistika */}
@@ -127,13 +203,13 @@ const MaintenanceTracking = () => {
                 <Grid item xs={12} sm={6} md={3}>
                     <Card>
                         <CardContent>
-                            <Typography color="textSecondary" gutterBottom>
+                            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                                 Zakazani servisi
                             </Typography>
                             <Typography variant="h5">
                                 5
                             </Typography>
-                            <Typography variant="body2" color="textSecondary">
+                            <Typography variant="body2" color="text.secondary">
                                 Narednih 30 dana
                             </Typography>
                         </CardContent>
@@ -142,13 +218,13 @@ const MaintenanceTracking = () => {
                 <Grid item xs={12} sm={6} md={3}>
                     <Card>
                         <CardContent>
-                            <Typography color="textSecondary" gutterBottom>
+                            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                                 U toku
                             </Typography>
                             <Typography variant="h5">
                                 2
                             </Typography>
-                            <Typography variant="body2" color="textSecondary">
+                            <Typography variant="body2" color="text.secondary">
                                 Trenutno u servisu
                             </Typography>
                         </CardContent>
@@ -157,13 +233,13 @@ const MaintenanceTracking = () => {
                 <Grid item xs={12} sm={6} md={3}>
                     <Card>
                         <CardContent>
-                            <Typography color="textSecondary" gutterBottom>
+                            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                                 Ukupni troškovi
                             </Typography>
                             <Typography variant="h5">
                                 12,500 €
                             </Typography>
-                            <Typography variant="body2" color="textSecondary">
+                            <Typography variant="body2" color="text.secondary">
                                 Ove godine
                             </Typography>
                         </CardContent>
@@ -172,13 +248,13 @@ const MaintenanceTracking = () => {
                 <Grid item xs={12} sm={6} md={3}>
                     <Card>
                         <CardContent>
-                            <Typography color="textSecondary" gutterBottom>
+                            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                                 Prekoračeni servisi
                             </Typography>
                             <Typography variant="h5" color="error">
                                 1
                             </Typography>
-                            <Typography variant="body2" color="textSecondary">
+                            <Typography variant="body2" color="text.secondary">
                                 Zahteva hitnu pažnju
                             </Typography>
                         </CardContent>
@@ -214,11 +290,34 @@ const MaintenanceTracking = () => {
                                         size="small"
                                     />
                                 </TableCell>
-                                <TableCell>{getStatusChip(entry.status)}</TableCell>
+                                <TableCell>
+                                    <Box>
+                                        {getStatusChip(entry.status)}
+                                        {entry.alerts.length > 0 && (
+                                            <Alert 
+                                                severity={entry.alerts[0].type}
+                                                sx={{ py: 0.5, mt: 0.5 }}
+                                            >
+                                                <AlertTitle sx={{ fontSize: "0.75rem" }}>
+                                                    {entry.alerts[0].message}
+                                                </AlertTitle>
+                                            </Alert>
+                                        )}
+                                    </Box>
+                                </TableCell>
                                 <TableCell>{entry.description}</TableCell>
                                 <TableCell>{entry.mileage.toLocaleString()} km</TableCell>
                                 <TableCell>{entry.cost.toFixed(2)} €</TableCell>
-                                <TableCell>{new Date(entry.nextService).toLocaleDateString()}</TableCell>
+                                <TableCell>
+                                    <Box>
+                                        <Typography variant="body2">
+                                            {new Date(entry.nextService).toLocaleDateString()}
+                                        </Typography>
+                                        <Typography variant="body2" color="text.secondary">
+                                            Za {getDaysUntilService(entry.nextService)} dana
+                                        </Typography>
+                                    </Box>
+                                </TableCell>
                                 <TableCell>
                                     <IconButton size="small" onClick={() => handleAddEdit(entry)}>
                                         <EditIcon />
@@ -248,7 +347,7 @@ const MaintenanceTracking = () => {
                                     label="Vozilo"
                                 >
                                     <MenuItem value="Mercedes Actros (BG-123-456)">Mercedes Actros (BG-123-456)</MenuItem>
-                                    {/* Dodati više vozila */}
+                                    <MenuItem value="Volvo FH16 (BG-789-012)">Volvo FH16 (BG-789-012)</MenuItem>
                                 </Select>
                             </FormControl>
                         </Grid>
