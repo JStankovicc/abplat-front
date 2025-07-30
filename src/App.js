@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
+import axios from "axios";
 import HomePage from "./scenes/public/homepage";
 import PublicNavbar from "./scenes/global/PublicNavbar";
 import Sidebar from "./scenes/global/Sidebar";
@@ -34,11 +35,48 @@ import FleetView from "./scenes/fleet/FleetView";
 function App() {
     const [theme, colorMode] = useMode();
     const [token, setToken] = useState(localStorage.getItem("token"));
+    const [userProfile, setUserProfile] = useState(null);
+    const [companyInfo, setCompanyInfo] = useState(null);
 
-    const handleLogin = (jwt) => {
+    // API pozivi za korisničke podatke
+    const fetchUserProfile = async (token) => {
+        try {
+            const response = await axios.get("http://192.168.1.30:8080/api/v1/userProfile/getUserProfile", {
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                }
+            });
+            console.log('User profile response:', response.data);
+            setUserProfile(response.data);
+        } catch (error) {
+            console.error("Failed to fetch user profile:", error);
+        }
+    };
+
+    const fetchCompanyInfo = async (token) => {
+        try {
+            const response = await axios.get("http://192.168.1.30:8080/api/v1/company/getCompanyInfo", {
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                }
+            });
+            console.log('Company info response:', response.data);
+            setCompanyInfo(response.data);
+        } catch (error) {
+            console.error("Failed to fetch company info:", error);
+        }
+    };
+
+    const handleLogin = async (jwt) => {
         try {
             setToken(jwt);
             localStorage.setItem("token", jwt);
+            
+            // Pozovi API-je za korisničke podatke i company podatke
+            await Promise.all([
+                fetchUserProfile(jwt),
+                fetchCompanyInfo(jwt)
+            ]);
         } catch (error) {
             console.error("Invalid token:", error);
         }
@@ -46,6 +84,8 @@ function App() {
 
     const handleLogout = () => {
         setToken(null);
+        setUserProfile(null);
+        setCompanyInfo(null);
         localStorage.removeItem("token");
     };
 
@@ -55,6 +95,10 @@ function App() {
                 const decoded = jwtDecode(token);
                 if (decoded.exp * 1000 < Date.now()) {
                     handleLogout();
+                } else {
+                    // Ako token postoji i valjan je, učitaj podatke
+                    fetchUserProfile(token);
+                    fetchCompanyInfo(token);
                 }
             } catch (error) {
                 console.error("Error decoding token:", error);
@@ -79,10 +123,10 @@ function App() {
                     {/* Public Navbar for unauthenticated users */}
                     {!token && <PublicNavbar />}
                     {/* Sidebar for authenticated users */}
-                    {token && <Sidebar />}
+                    {token && <Sidebar userProfile={userProfile} companyInfo={companyInfo} />}
                     <main className="content" style={{ paddingTop: token ? '0' : '64px' }}>
                         {/* Topbar for authenticated users */}
-                        {token && <Topbar />}
+                        {token && <Topbar companyInfo={companyInfo} />}
                         <Routes>
                             {/* Public Routes */}
                             <Route

@@ -37,7 +37,7 @@ const Item = ({ title, to, icon, selected, setSelected, onClick }) => {
     );
 };
 
-const Sidebar = () => {
+const Sidebar = ({ userProfile, companyInfo }) => {
     const theme = useTheme();
     const colors = tokens(theme.palette.mode);
     const [isCollapsed, setIsCollapsed] = useState(false);
@@ -48,6 +48,51 @@ const Sidebar = () => {
     const handleLogout = () => {
         localStorage.removeItem("token");
         window.location.href = "/login";
+    };
+
+    // Funkcija za konverziju byte array u base64 string
+    const byteArrayToBase64 = (byteArray) => {
+        if (!byteArray) return null;
+        
+        try {
+            // Ako je već string, vrati ga direktno
+            if (typeof byteArray === 'string') {
+                return byteArray;
+            }
+            
+            // Ako je array brojeva
+            if (Array.isArray(byteArray)) {
+                const binary = String.fromCharCode.apply(null, byteArray);
+                return btoa(binary);
+            }
+            
+            // Ako je Uint8Array ili slična struktura
+            if (byteArray.constructor === Uint8Array || byteArray.buffer) {
+                const binary = String.fromCharCode.apply(null, new Uint8Array(byteArray));
+                return btoa(binary);
+            }
+            
+            return null;
+        } catch (error) {
+            console.error('Error converting byte array to base64:', error, byteArray);
+            return null;
+        }
+    };
+
+    // Kreiranje URL-a za slike
+    const getProfileImageUrl = () => {
+        if (userProfile?.profilePic) {
+            const base64String = byteArrayToBase64(userProfile.profilePic);
+            return `data:image/jpeg;base64,${base64String}`;
+        }
+        return "../../assets/testSpiderman.png"; // fallback
+    };
+
+    // ABPlat logo uvek u sidebar-u
+    const getABPlatLogoUrl = () => {
+        return theme.palette.mode === "dark"
+            ? "../../assets/ABPlatLogoInline.png"
+            : "../../assets/ABPlatLogoInlineDark.png";
     };
 
     useEffect(() => {
@@ -106,10 +151,8 @@ const Sidebar = () => {
                                 {!isCollapsed && (
                                     <Box display="flex" justifyContent="space-between" alignItems="center" ml="15px">
                                         <img
-                                            src={theme.palette.mode === "dark"
-                                                ? "../../assets/ABPlatLogoInline.png"
-                                                : "../../assets/ABPlatLogoInlineDark.png"}
-                                            alt="ABPlat"
+                                            src={getABPlatLogoUrl()}
+                                            alt="ABPlat Logo"
                                             style={{ height: "25px", cursor: "pointer" }}
                                         />
                                         <IconButton onClick={() => setIsCollapsed(!isCollapsed)}>
@@ -128,7 +171,7 @@ const Sidebar = () => {
                                         alt="profile-user"
                                         width="100px"
                                         height="100px"
-                                        src="../../assets/testSpiderman.png"
+                                        src={getProfileImageUrl()}
                                         style={{
                                             cursor: "pointer",
                                             borderRadius: "50%",
@@ -143,14 +186,14 @@ const Sidebar = () => {
                                         fontWeight="bold"
                                         sx={{ m: "10px 0 0 0", fontSize: isMobile ? "1.5rem" : "1.75rem" }}
                                     >
-                                        Jovan Stanković
+                                        {userProfile?.displayName || "Loading..."}
                                     </Typography>
                                     <Typography
                                         variant="h5"
                                         color={colors.greenAccent[500]}
                                         sx={{ fontSize: isMobile ? "0.9rem" : "1.1rem" }}
                                     >
-                                        ABPlat Developer
+                                        {companyInfo?.companyName || "Loading..."}
                                     </Typography>
                                 </Box>
                             </Box>

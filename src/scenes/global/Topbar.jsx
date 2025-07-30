@@ -7,10 +7,48 @@ import NotificationsOutlinedIcon from "@mui/icons-material/NotificationsOutlined
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
 
-const Topbar = () => {
+const Topbar = ({ companyInfo }) => {
   const theme = useTheme();
   const colorMode = useContext(ColorModeContext);
   const isMobile = useMediaQuery("(max-width:600px)");
+
+  // Funkcija za konverziju byte array u base64 string
+  const byteArrayToBase64 = (byteArray) => {
+    if (!byteArray) return null;
+    
+    try {
+      // Ako je već string, vrati ga direktno
+      if (typeof byteArray === 'string') {
+        return byteArray;
+      }
+      
+      // Ako je array brojeva
+      if (Array.isArray(byteArray)) {
+        const binary = String.fromCharCode.apply(null, byteArray);
+        return btoa(binary);
+      }
+      
+      // Ako je Uint8Array ili slična struktura
+      if (byteArray.constructor === Uint8Array || byteArray.buffer) {
+        const binary = String.fromCharCode.apply(null, new Uint8Array(byteArray));
+        return btoa(binary);
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Error converting byte array to base64:', error, byteArray);
+      return null;
+    }
+  };
+
+  // Kreiranje URL-a za company logo
+  const getCompanyLogoUrl = () => {
+    if (companyInfo?.logoPic) {
+      const base64String = byteArrayToBase64(companyInfo.logoPic);
+      return `data:image/jpeg;base64,${base64String}`;
+    }
+    return "/assets/logoipsum-378.svg"; // fallback
+  };
 
   if (isMobile) return null;
 
@@ -19,8 +57,8 @@ const Topbar = () => {
         {/* Logo Section */}
         <Box display="flex" alignItems="center">
           <img
-              src="/assets/logoipsum-378.svg"
-              alt="Logo"
+              src={getCompanyLogoUrl()}
+              alt="Company Logo"
               style={{ height: "40px", marginRight: "10px" }}
           />
         </Box>
