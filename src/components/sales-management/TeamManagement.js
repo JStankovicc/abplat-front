@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
     Box,
     Paper,
@@ -23,8 +23,12 @@ import {
     InputLabel,
     Chip,
     useTheme,
-    useMediaQuery
+    useMediaQuery,
+    CircularProgress,
+    Alert,
+    Avatar
 } from "@mui/material";
+import axios from "axios";
 import { tokens } from "../../theme";
 import { 
     Add as AddIcon, 
@@ -35,93 +39,23 @@ import {
     Share as ShareIcon
 } from "@mui/icons-material";
 
-// Mock podaci za liste klijenata
-const mockClientLists = [
-    {
-        id: 1,
-        name: "Glavni klijenti",
-        description: "Lista najvažnijih klijenata",
-        type: "contacts",
-        count: 25
-    },
-    {
-        id: 2,
-        name: "Potencijalni klijenti",
-        description: "Lista potencijalnih klijenata",
-        type: "leads",
-        count: 50
-    },
-    {
-        id: 3,
-        name: "Regionalni klijenti",
-        description: "Klijenti iz regiona",
-        type: "contacts",
-        count: 15
-    },
-    {
-        id: 4,
-        name: "Novi potencijalni klijenti",
-        description: "Lista novih potencijalnih klijenata",
-        type: "leads",
-        count: 30
-    }
-];
+// API konstante
+const API_BASE_URL = "http://192.168.1.30:8080/api/v1/team";
 
-// Mock podaci za timove
-const mockTeamsData = [
-    {
-        id: 1,
-        name: "Tim A",
-        description: "Glavni prodajni tim",
-        members: [
-            {
-                id: 1,
-                name: "Marko Petrović",
-                role: "Menadžer prodaje",
-                email: "marko.petrovic@abplat.com",
-                phone: "+381 64 123 4567",
-                status: "Aktivan"
-            },
-            {
-                id: 2,
-                name: "Ana Jovanović",
-                role: "Prodajni predstavnik",
-                email: "ana.jovanovic@abplat.com",
-                phone: "+381 64 234 5678",
-                status: "Aktivan"
-            }
-        ],
-        sharedLists: [1, 2] // ID-jevi lista koje su deljene sa timom
-    },
-    {
-        id: 2,
-        name: "Tim B",
-        description: "Regionalni tim",
-        members: [
-            {
-                id: 3,
-                name: "Stefan Nikolić",
-                role: "Prodajni predstavnik",
-                email: "stefan.nikolic@abplat.com",
-                phone: "+381 64 345 6789",
-                status: "Aktivan"
-            }
-        ],
-        sharedLists: [3] // ID-jevi lista koje su deljene sa timom
-    }
-];
-
-const mockContactsData = [
-    { id: 1, name: "Marko Nikolić", company: "IT Solutions", type: "Klijent" },
-    { id: 2, name: "Jovana Stanković", company: "Tech Innovations", type: "Partner" },
-    { id: 3, name: "Stefan Petrović", company: "Digital Systems", type: "Klijent" }
-];
+// Helper funkcija za auth headers
+const getAuthHeaders = () => {
+    const token = localStorage.getItem('token');
+    return {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json"
+    };
+};
 
 const TeamManagement = () => {
     const theme = useTheme();
     const colors = tokens(theme.palette.mode);
     const isMobile = useMediaQuery("(max-width:768px)");
-    const [teamsData, setTeamsData] = useState(mockTeamsData);
+    const [teamsData, setTeamsData] = useState([]);
     const [openTeamDialog, setOpenTeamDialog] = useState(false);
     const [openMemberDialog, setOpenMemberDialog] = useState(false);
     const [openShareDialog, setOpenShareDialog] = useState(false);
@@ -141,6 +75,57 @@ const TeamManagement = () => {
     const [shareFormData, setShareFormData] = useState([]);
     const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
     const [teamToDelete, setTeamToDelete] = useState(null);
+    
+    // Loading i error states
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+
+    // API funkcije
+    const fetchTeams = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            
+            const response = await axios.get(`${API_BASE_URL}/getAllSalesTeams`, {
+                headers: getAuthHeaders()
+            });
+
+            console.log('Teams response:', response.data);
+            
+            // Transformišemo response u format koji komponenta očekuje
+            const transformedTeams = response.data.map((team, index) => ({
+                id: index + 1,
+                name: team.name,
+                description: team.description,
+                department: team.department,
+                members: team.users.map((user, userIndex) => ({
+                    id: userIndex + 1,
+                    name: user.displayName || user.name,
+                    displayName: user.displayName,
+                    profilePic: user.profilePic,
+                    role: "Član tima", // Default uloga jer nije u response-u
+                    email: "", // Nema u response-u
+                    phone: "", // Nema u response-u
+                    status: "Aktivan" // Default status
+                })),
+                sharedLists: [] // Dodajemo prazan niz za kompatibilnost
+            }));
+            
+            setTeamsData(transformedTeams);
+            
+        } catch (error) {
+            console.error('Failed to fetch teams:', error);
+            setError('Greška pri učitavanju timova');
+            setTeamsData([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // useEffect za inicijalno učitavanje
+    useEffect(() => {
+        fetchTeams();
+    }, []);
 
     const handleOpenTeamDialog = (team = null) => {
         if (team) {
@@ -297,24 +282,55 @@ const TeamManagement = () => {
 
     return (
         <Box>
+            {/* Error Alert */}
+            {error && (
+                <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+                    {error}
+                </Alert>
+            )}
+            
             <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
                 <Typography variant="h5" color={colors.grey[100]}>
                     Upravljanje timovima
                 </Typography>
-                <Button
-                    variant="contained"
-                    startIcon={<AddIcon />}
-                    onClick={() => handleOpenTeamDialog()}
-                    sx={{
-                        backgroundColor: colors.greenAccent[500],
-                        "&:hover": {
-                            backgroundColor: colors.greenAccent[600]
-                        }
-                    }}
-                >
-                    Dodaj tim
-                </Button>
+                <Box sx={{ display: "flex", gap: 1 }}>
+                    <Button
+                        variant="outlined"
+                        onClick={() => fetchTeams()}
+                        disabled={loading}
+                        sx={{
+                            borderColor: colors.greenAccent[500],
+                            color: colors.greenAccent[500],
+                            "&:hover": {
+                                borderColor: colors.greenAccent[600],
+                                backgroundColor: colors.greenAccent[500] + '20'
+                            }
+                        }}
+                    >
+                        {loading ? <CircularProgress size={20} /> : "Osveži"}
+                    </Button>
+                    <Button
+                        variant="contained"
+                        startIcon={<AddIcon />}
+                        onClick={() => handleOpenTeamDialog()}
+                        sx={{
+                            backgroundColor: colors.greenAccent[500],
+                            "&:hover": {
+                                backgroundColor: colors.greenAccent[600]
+                            }
+                        }}
+                    >
+                        Dodaj tim
+                    </Button>
+                </Box>
             </Box>
+
+            {/* Loading indicator */}
+            {loading && (
+                <Box display="flex" justifyContent="center" my={4}>
+                    <CircularProgress />
+                </Box>
+            )}
 
             <Grid container spacing={2}>
                 {teamsData.map((team) => (
@@ -332,6 +348,11 @@ const TeamManagement = () => {
                                     <Typography variant="body2" color={colors.grey[300]}>
                                         {team.description}
                                     </Typography>
+                                    {team.department && (
+                                        <Typography variant="body2" color={colors.grey[400]} sx={{ mt: 0.5 }}>
+                                            Departman: {team.department}
+                                        </Typography>
+                                    )}
                                 </Box>
                                 <Box>
                                     <IconButton
@@ -348,13 +369,7 @@ const TeamManagement = () => {
                                     >
                                         <DeleteIcon />
                                     </IconButton>
-                                    <IconButton
-                                        size="small"
-                                        onClick={() => handleOpenShareDialog(team)}
-                                        sx={{ color: colors.grey[100] }}
-                                    >
-                                        <ShareIcon />
-                                    </IconButton>
+
                                 </Box>
                             </Box>
 
@@ -366,9 +381,9 @@ const TeamManagement = () => {
                                     <Table size="small">
                                         <TableHead>
                                             <TableRow>
+                                                <TableCell sx={{ color: colors.grey[100] }}>Profil</TableCell>
                                                 <TableCell sx={{ color: colors.grey[100] }}>Ime</TableCell>
                                                 <TableCell sx={{ color: colors.grey[100] }}>Uloga</TableCell>
-                                                <TableCell sx={{ color: colors.grey[100] }}>Email</TableCell>
                                                 <TableCell sx={{ color: colors.grey[100] }}>Status</TableCell>
                                                 <TableCell sx={{ color: colors.grey[100] }}>Akcije</TableCell>
                                             </TableRow>
@@ -376,9 +391,20 @@ const TeamManagement = () => {
                                         <TableBody>
                                             {team.members.map((member) => (
                                                 <TableRow key={member.id}>
+                                                    <TableCell>
+                                                        <Avatar
+                                                            src={member.profilePic ? `data:image/jpeg;base64,${member.profilePic}` : undefined}
+                                                            sx={{
+                                                                width: 32,
+                                                                height: 32,
+                                                                bgcolor: colors.blueAccent[500]
+                                                            }}
+                                                        >
+                                                            {!member.profilePic && member.name ? member.name.split(' ').map(n => n[0]).join('') : '?'}
+                                                        </Avatar>
+                                                    </TableCell>
                                                     <TableCell sx={{ color: colors.grey[100] }}>{member.name}</TableCell>
                                                     <TableCell sx={{ color: colors.grey[100] }}>{member.role}</TableCell>
-                                                    <TableCell sx={{ color: colors.grey[100] }}>{member.email}</TableCell>
                                                     <TableCell sx={{ color: colors.grey[100] }}>
                                                         <Chip
                                                             label={member.status}
@@ -421,45 +447,7 @@ const TeamManagement = () => {
                                 </Button>
                             </Box>
 
-                            <Box>
-                                <Typography variant="subtitle1" sx={{ mb: 1 }}>
-                                    Deljene liste
-                                </Typography>
-                                <Grid container spacing={1}>
-                                    {mockClientLists
-                                        .filter(list => team.sharedLists.includes(list.id))
-                                        .map(list => (
-                                            <Grid item xs={12} md={6} key={list.id}>
-                                                <Box sx={{ 
-                                                    display: 'flex', 
-                                                    alignItems: 'center',
-                                                    backgroundColor: colors.primary[500],
-                                                    p: 1,
-                                                    borderRadius: 1
-                                                }}>
-                                                    <Box sx={{ flex: 1 }}>
-                                                        <Typography variant="body2" color={colors.grey[100]}>
-                                                            {list.name}
-                                                        </Typography>
-                                                        <Typography variant="body2" color={colors.grey[300]}>
-                                                            {list.count} klijenata
-                                                        </Typography>
-                                                    </Box>
-                                                    <Chip
-                                                        label={list.type === 'leads' ? 'Potencijalni klijenti' : 'Kontakti'}
-                                                        size="small"
-                                                        sx={{
-                                                            backgroundColor: list.type === 'leads' 
-                                                                ? colors.blueAccent[500] 
-                                                                : colors.greenAccent[500],
-                                                            color: colors.grey[100]
-                                                        }}
-                                                    />
-                                                </Box>
-                                            </Grid>
-                                        ))}
-                                </Grid>
-                            </Box>
+
                         </Paper>
                     </Grid>
                 ))}
@@ -551,66 +539,7 @@ const TeamManagement = () => {
                 </DialogActions>
             </Dialog>
 
-            {/* Dialog za deljenje resursa */}
-            <Dialog open={openShareDialog} onClose={handleCloseShareDialog}>
-                <DialogTitle>Deljenje lista klijenata</DialogTitle>
-                <DialogContent>
-                    <Box sx={{ pt: 2 }}>
-                        <Typography variant="subtitle1" sx={{ mb: 2 }}>
-                            Izaberite liste koje želite da podelite sa timom:
-                        </Typography>
-                        <Grid container spacing={2}>
-                            {mockClientLists.map((list) => (
-                                <Grid item xs={12} key={list.id}>
-                                    <Paper
-                                        sx={{
-                                            p: 2,
-                                            backgroundColor: colors.primary[500],
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'space-between'
-                                        }}
-                                    >
-                                        <Box>
-                                            <Typography variant="body1" color={colors.grey[100]}>
-                                                {list.name}
-                                            </Typography>
-                                            <Typography variant="body2" color={colors.grey[300]}>
-                                                {list.description}
-                                            </Typography>
-                                            <Typography variant="body2" color={colors.grey[300]}>
-                                                Broj klijenata: {list.count}
-                                            </Typography>
-                                        </Box>
-                                        <Button
-                                            variant={shareFormData.includes(list.id) ? "contained" : "outlined"}
-                                            onClick={() => handleToggleList(list.id)}
-                                            sx={{
-                                                backgroundColor: shareFormData.includes(list.id) 
-                                                    ? colors.greenAccent[500] 
-                                                    : 'transparent',
-                                                '&:hover': {
-                                                    backgroundColor: shareFormData.includes(list.id) 
-                                                        ? colors.greenAccent[600] 
-                                                        : colors.primary[600]
-                                                }
-                                            }}
-                                        >
-                                            {shareFormData.includes(list.id) ? "Deljeno" : "Podeli"}
-                                        </Button>
-                                    </Paper>
-                                </Grid>
-                            ))}
-                        </Grid>
-                    </Box>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={handleCloseShareDialog}>Otkaži</Button>
-                    <Button onClick={handleShareSubmit} variant="contained">
-                        Sačuvaj
-                    </Button>
-                </DialogActions>
-            </Dialog>
+
 
             {/* Dialog za potvrdu brisanja tima */}
             <Dialog

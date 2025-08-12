@@ -27,12 +27,12 @@ import PredictiveAnalytics from "../../components/sales-management/PredictiveAna
 import MobileMenu from "../../components/sales-management/MobileMenu";
 
 const sections = [
-    { id: 0, label: "Tim", icon: <TeamIcon />, component: <TeamManagement /> },
-    { id: 1, label: "Ciljevi", icon: <GoalIcon />, component: <GoalTracker /> },
-    { id: 2, label: "Strategija", icon: <StrategyIcon />, component: <StrategyConfig /> },
-    { id: 3, label: "Cene", icon: <PricingIcon />, component: <PricingEngine /> },
-    { id: 4, label: "Kontakti", icon: <TeamIcon />, component: <UnifiedLeadsTable /> },
-    { id: 5, label: "Analitika", icon: <AnalyticsIcon />, component: <PerformanceDashboard /> },
+    { id: 0, label: "Tim", icon: <TeamIcon />, component: <TeamManagement />, disabled: false },
+    { id: 1, label: "Ciljevi", icon: <GoalIcon />, component: <GoalTracker />, disabled: true },
+    { id: 2, label: "Strategija", icon: <StrategyIcon />, component: <StrategyConfig />, disabled: true },
+    { id: 3, label: "Cene", icon: <PricingIcon />, component: <PricingEngine />, disabled: true },
+    { id: 4, label: "Kontakti", icon: <TeamIcon />, component: <UnifiedLeadsTable />, disabled: false },
+    { id: 5, label: "Analitika", icon: <AnalyticsIcon />, component: <PerformanceDashboard />, disabled: true },
 ];
 
 const SalesManagement = () => {
@@ -43,6 +43,12 @@ const SalesManagement = () => {
     const [mobileOpen, setMobileOpen] = useState(false);
 
     const handleSectionChange = (event, newValue) => {
+        // Proveri da li je sekcija onemogućena
+        const selectedSection = sections.find(section => section.id === newValue);
+        if (selectedSection && selectedSection.disabled) {
+            return; // Ne menjaj aktivnu sekciju ako je onemogućena
+        }
+        
         setActiveSection(newValue);
         setMobileOpen(false);
     };
@@ -100,12 +106,18 @@ const SalesManagement = () => {
                                 icon={section.icon}
                                 label={section.label}
                                 iconPosition="start"
+                                disabled={section.disabled}
                                 sx={{
                                     minWidth: 100,
                                     minHeight: "25px",
-                                    color: colors.grey[100],
+                                    color: section.disabled ? colors.grey[600] : colors.grey[100],
                                     '&.Mui-selected': {
                                         color: colors.greenAccent[500],
+                                    },
+                                    '&.Mui-disabled': {
+                                        color: colors.grey[600],
+                                        opacity: 0.5,
+                                        cursor: 'not-allowed'
                                     },
                                     '& .MuiTab-iconWrapper': {
                                         mr: 1,
