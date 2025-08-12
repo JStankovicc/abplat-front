@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
     Box,
     Paper,
@@ -29,8 +29,11 @@ import {
     ListItemSecondaryAction,
     Divider,
     Chip,
-    TablePagination
+    TablePagination,
+    CircularProgress,
+    Alert
 } from "@mui/material";
+import axios from "axios";
 import { tokens } from "../../theme";
 import { 
     Add as AddIcon, 
@@ -45,277 +48,30 @@ import {
     Visibility as VisibilityIcon
 } from "@mui/icons-material";
 
-// Mock podaci za liste klijenata
-const mockClientLists = [
-    {
-        id: 1,
-        name: "Glavni klijenti",
-        description: "Lista najvažnijih klijenata",
-        type: "contacts",
-        count: 25,
-        region: "Beograd",
-        product: "ERP sistem",
-        team: "Tim A",
-        lastUpdated: "2024-03-15",
-        settings: {
-            autoAssign: true,
-            notificationEnabled: true,
-            priorityLevel: "High",
-            followUpDays: 7,
-            customFields: ["Segment", "Potencijal", "Istorija"]
-        },
-        notes: [
-            {
-                id: 1,
-                text: "Fokus na klijente iz IT sektora",
-                date: "2024-03-10",
-                author: "Marko Marković"
-            },
-            {
-                id: 2,
-                text: "Planirati sastanke za Q2",
-                date: "2024-03-12",
-                author: "Ana Jovanović"
-            }
-        ],
-        goals: {
-            monthlyTarget: 100000,
-            currentProgress: 75000,
-            conversionRate: 0.35,
-            targetClients: 50,
-            achievedClients: 25
-        },
-        metrics: {
-            averageResponseTime: "2h",
-            successRate: 0.85,
-            lastMonthGrowth: 0.15,
-            customerSatisfaction: 4.5
-        }
-    },
-    {
-        id: 2,
-        name: "Potencijalni klijenti",
-        description: "Lista potencijalnih klijenata",
-        type: "leads",
-        count: 50,
-        region: "Novi Sad",
-        product: "CRM sistem",
-        team: "Tim B",
-        lastUpdated: "2024-03-14",
-        settings: {
-            autoAssign: false,
-            notificationEnabled: true,
-            priorityLevel: "Medium",
-            followUpDays: 14,
-            customFields: ["Izvor", "Interes", "Budžet"]
-        },
-        notes: [
-            {
-                id: 1,
-                text: "Fokus na startap kompanije",
-                date: "2024-03-08",
-                author: "Petar Petrović"
-            }
-        ],
-        goals: {
-            monthlyTarget: 50000,
-            currentProgress: 30000,
-            conversionRate: 0.25,
-            targetClients: 100,
-            achievedClients: 50
-        },
-        metrics: {
-            averageResponseTime: "4h",
-            successRate: 0.65,
-            lastMonthGrowth: 0.25,
-            customerSatisfaction: 4.2
-        }
-    },
-    {
-        id: 3,
-        name: "VIP Klijenti",
-        description: "Lista VIP klijenata",
-        type: "contacts",
-        count: 15,
-        region: "Beograd",
-        product: "Enterprise Solution",
-        team: "Tim A",
-        lastUpdated: "2024-03-16",
-        settings: {
-            autoAssign: true,
-            notificationEnabled: true,
-            priorityLevel: "Critical",
-            followUpDays: 3,
-            customFields: ["VIP Level", "Dedicated Manager", "Special Requirements"]
-        },
-        notes: [
-            {
-                id: 1,
-                text: "Redovni mesečni sastanci",
-                date: "2024-03-15",
-                author: "Jovana Nikolić"
-            }
-        ],
-        goals: {
-            monthlyTarget: 200000,
-            currentProgress: 150000,
-            conversionRate: 0.45,
-            targetClients: 20,
-            achievedClients: 15
-        },
-        metrics: {
-            averageResponseTime: "1h",
-            successRate: 0.95,
-            lastMonthGrowth: 0.10,
-            customerSatisfaction: 4.8
-        }
-    }
-];
+// API konstante
+const API_BASE_URL = "http://192.168.1.30:8080/api/v1/contact";
 
-// Mock podaci za timove
+// Helper funkcija za auth headers
+const getAuthHeaders = () => {
+    const token = localStorage.getItem('token');
+    return {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json"
+    };
+};
+
+// Mock podaci za timove (zadržano za kompatibilnost)
 const mockTeams = [
     { id: 1, name: "Tim A" },
     { id: 2, name: "Tim B" },
     { id: 3, name: "Tim C" }
 ];
 
-// Mock podaci za klijente
-const mockClients = [
-    {
-        id: 1,
-        name: "Petar Petrović",
-        company: "Tech Solutions",
-        email: "petar.petrovic@techsolutions.com",
-        phone: "+381 64 123 4567",
-        list: "Glavni klijenti",
-        team: "Tim A",
-        status: "Aktivan",
-        lastContact: "2024-03-15",
-        notes: "Interesovan za ERP modul",
-        customFields: {
-            Segment: "IT",
-            Potencijal: "Visok",
-            Istorija: "2 godine"
-        }
-    },
-    {
-        id: 2,
-        name: "Ana Jovanović",
-        company: "Digital Systems",
-        email: "ana.jovanovic@digitalsystems.com",
-        phone: "+381 64 234 5678",
-        list: "Potencijalni klijenti",
-        team: "Tim B",
-        status: "Novi",
-        lastContact: "2024-03-14",
-        notes: "Novi lead iz LinkedIn-a",
-        customFields: {
-            Izvor: "LinkedIn",
-            Interes: "CRM",
-            Budžet: "50-100k"
-        }
-    },
-    {
-        id: 3,
-        name: "Marko Nikolić",
-        company: "Global Tech",
-        email: "marko.nikolic@globaltech.com",
-        phone: "+381 64 345 6789",
-        list: "VIP Klijenti",
-        team: "Tim A",
-        status: "Aktivan",
-        lastContact: "2024-03-16",
-        notes: "VIP klijent - prioritet",
-        customFields: {
-            "VIP Level": "Platinum",
-            "Dedicated Manager": "Jovana Nikolić",
-            "Special Requirements": "24/7 podrška"
-        }
-    },
-    {
-        id: 4,
-        name: "Jovana Petrović",
-        company: "Smart Solutions",
-        email: "jovana.petrovic@smartsolutions.com",
-        phone: "+381 64 456 7890",
-        list: "Glavni klijenti",
-        team: "Tim A",
-        status: "Aktivan",
-        lastContact: "2024-03-13",
-        notes: "Interesovan za custom rešenja",
-        customFields: {
-            Segment: "IT",
-            Potencijal: "Srednji",
-            Istorija: "1 godina"
-        }
-    },
-    {
-        id: 5,
-        name: "Stefan Jovanović",
-        company: "Future Tech",
-        email: "stefan.jovanovic@futuretech.com",
-        phone: "+381 64 567 8901",
-        list: "Potencijalni klijenti",
-        team: "Tim B",
-        status: "Novi",
-        lastContact: "2024-03-12",
-        notes: "Startap kompanija",
-        customFields: {
-            Izvor: "Website",
-            Interes: "ERP",
-            Budžet: "25-50k"
-        }
-    }
-];
-
-// Mock podaci za liste leadova
-const mockLeadLists = [
-    {
-        id: 1,
-        name: "Potencijalni klijenti",
-        description: "Lista potencijalnih klijenata",
-        type: "leads",
-        count: 50,
-        region: "Novi Sad",
-        product: "CRM sistem",
-        team: "Tim B",
-        lastUpdated: "2024-03-14",
-        settings: {
-            autoAssign: false,
-            notificationEnabled: true,
-            priorityLevel: "Medium",
-            followUpDays: 14,
-            customFields: ["Izvor", "Interes", "Budžet"]
-        },
-        notes: [
-            {
-                id: 1,
-                text: "Fokus na startap kompanije",
-                date: "2024-03-08",
-                author: "Petar Petrović"
-            }
-        ],
-        goals: {
-            monthlyTarget: 50000,
-            currentProgress: 30000,
-            conversionRate: 0.25,
-            targetClients: 100,
-            achievedClients: 50
-        },
-        metrics: {
-            averageResponseTime: "4h",
-            successRate: 0.65,
-            lastMonthGrowth: 0.25,
-            customerSatisfaction: 4.2
-        }
-    }
-];
-
 const UnifiedLeadsTable = () => {
     const theme = useTheme();
     const colors = tokens(theme.palette.mode);
     const isMobile = useMediaQuery("(max-width:768px)");
-    const [clientLists, setClientLists] = useState(mockClientLists);
+    const [clientLists, setClientLists] = useState([]);
     const [activeTab, setActiveTab] = useState(0);
     const [openDialog, setOpenDialog] = useState(false);
     const [openTeamDialog, setOpenTeamDialog] = useState(false);
@@ -334,9 +90,276 @@ const UnifiedLeadsTable = () => {
     const [selectedTeamDetails, setSelectedTeamDetails] = useState(null);
     const [page, setPage] = useState(0);
     const [rowsPerPage] = useState(5);
-    const [clients, setClients] = useState(mockClients);
+    const [clients, setClients] = useState([]);
     const [openListDetails, setOpenListDetails] = useState(false);
     const [selectedListDetails, setSelectedListDetails] = useState(null);
+    
+    // Loading i error states
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+
+    // API funkcije
+    const fetchContactsLists = async (status = null) => {
+        try {
+            setLoading(true);
+            setError(null);
+            
+            // Kreiramo request body prema backend specifikaciji
+            const requestData = {
+                status: status  // ContactsListStatus enum: LEAD ili CLIENT
+            };
+
+            const response = await axios.get(`${API_BASE_URL}/lists/all`, {
+                headers: getAuthHeaders(),
+                data: requestData  // GET request sa body
+            });
+
+            console.log('Contacts lists response:', response.data);
+            
+            // Transformišemo response u format koji komponenta očekuje
+            const transformedLists = response.data.map((list, index) => ({
+                id: index + 1,
+                name: list.name,
+                description: list.description,
+                type: status === "CLIENT" ? "contacts" : "leads", // Mapiramo tip na osnovu status-a
+                count: list.contacts.length,
+                region: list.region,
+                city: list.city,
+                country: list.country,
+                team: list.team,
+                lastUpdated: new Date().toISOString().split('T')[0],
+                // Dodajemo mock podatke za kompatibilnost sa postojećim UI
+        settings: {
+            autoAssign: true,
+            notificationEnabled: true,
+                    priorityLevel: "Normal",
+            followUpDays: 7,
+            customFields: ["Segment", "Potencijal", "Istorija"]
+        },
+                notes: [],
+        goals: {
+                    monthlyTarget: 50000,
+                    currentProgress: 30000,
+                    conversionRate: 0.25,
+                    targetClients: list.contacts.length * 2,
+                    achievedClients: list.contacts.length
+        },
+        metrics: {
+            averageResponseTime: "2h",
+                    successRate: 0.75,
+            lastMonthGrowth: 0.15,
+                    customerSatisfaction: 4.2
+                }
+            }));
+            
+            setClientLists(transformedLists);
+            
+            // Transformišemo kontakte
+            const allContacts = response.data.flatMap(list => 
+                list.contacts.map(contact => ({
+                    id: Math.random(),
+                    name: contact.name,
+                    company: contact.companyName,
+                    email: contact.email,
+                    phone: contact.phoneNumber,
+                    list: list.name,
+                    team: list.team,
+                    status: "Aktivan",
+                    lastContact: new Date().toISOString().split('T')[0],
+                    notes: "",
+                    customFields: {
+                        Segment: "IT",
+                        Potencijal: "Visok",
+                        Istorija: "1 godina"
+                    }
+                }))
+            );
+            
+            setClients(allContacts);
+            
+        } catch (error) {
+            console.error('Failed to fetch contacts lists:', error);
+            setError('Greška pri učitavanju listi kontakata');
+            // Postavi prazne liste u slučaju greške
+            setClientLists([]);
+            setClients([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // State za čuvanje svih podataka
+    const [allClientLists, setAllClientLists] = useState([]);
+    const [allClients, setAllClients] = useState([]);
+
+    // Funkcija za učitavanje svih tipova
+    const fetchAllContactsData = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+
+            // Dohvati token za autorizaciju
+            const token = localStorage.getItem('token');
+            
+            // Paralelno dohvatamo i CLIENT i LEAD liste sa query parametrima
+            const [clientResponse, leadResponse] = await Promise.all([
+                axios.post(`${API_BASE_URL}/lists/all?type=CLIENT`, 
+                    null,  // Nema body
+                    { 
+                        headers: {
+                            "Authorization": `Bearer ${token}`
+                        }
+                    }
+                ),
+                axios.post(`${API_BASE_URL}/lists/all?type=LEAD`, 
+                    null,  // Nema body
+                    { 
+                        headers: {
+                            "Authorization": `Bearer ${token}`
+                        }
+                    }
+                )
+            ]);
+
+            console.log('Client lists response:', clientResponse.data);
+            console.log('Lead lists response:', leadResponse.data);
+
+            // Transformišemo CLIENT liste
+            const clientLists = clientResponse.data.map((list, index) => ({
+                id: `client-${index + 1}`,
+                name: list.name,
+                description: list.description,
+                type: "contacts",
+                count: list.contacts.length,
+                region: list.region,
+                city: list.city,
+                country: list.country,
+                team: list.team,
+                lastUpdated: new Date().toISOString().split('T')[0],
+        settings: {
+                    autoAssign: true,
+            notificationEnabled: true,
+                    priorityLevel: "Normal",
+                    followUpDays: 7,
+                    customFields: ["Segment", "Potencijal", "Istorija"]
+                },
+                notes: [],
+        goals: {
+            monthlyTarget: 50000,
+            currentProgress: 30000,
+            conversionRate: 0.25,
+                    targetClients: list.contacts.length * 2,
+                    achievedClients: list.contacts.length
+        },
+        metrics: {
+                    averageResponseTime: "2h",
+                    successRate: 0.75,
+                    lastMonthGrowth: 0.15,
+            customerSatisfaction: 4.2
+        }
+            }));
+
+            // Transformišemo LEAD liste
+            const leadLists = leadResponse.data.map((list, index) => ({
+                id: `lead-${index + 1}`,
+                name: list.name,
+                description: list.description,
+                type: "leads",
+                count: list.contacts.length,
+                region: list.region,
+                city: list.city,
+                country: list.country,
+                team: list.team,
+                lastUpdated: new Date().toISOString().split('T')[0],
+        settings: {
+                    autoAssign: false,
+            notificationEnabled: true,
+                    priorityLevel: "Medium",
+                    followUpDays: 14,
+                    customFields: ["Izvor", "Interes", "Budžet"]
+                },
+                notes: [],
+        goals: {
+                    monthlyTarget: 30000,
+                    currentProgress: 20000,
+                    conversionRate: 0.20,
+                    targetClients: list.contacts.length * 3,
+                    achievedClients: list.contacts.length
+        },
+        metrics: {
+                    averageResponseTime: "4h",
+                    successRate: 0.60,
+                    lastMonthGrowth: 0.25,
+                    customerSatisfaction: 4.0
+                }
+            }));
+
+            // Kombinujemo sve liste
+            const combinedLists = [...clientLists, ...leadLists];
+            setAllClientLists(combinedLists);
+            setClientLists(combinedLists);
+
+            // Transformišemo sve kontakte
+            const clientContacts = clientResponse.data.flatMap(list => 
+                list.contacts.map(contact => ({
+                    id: `client-${Math.random()}`,
+                    name: contact.name,
+                    company: contact.companyName,
+                    email: contact.email,
+                    phone: contact.phoneNumber,
+                    list: list.name,
+                    team: list.team,
+        status: "Aktivan",
+                    lastContact: new Date().toISOString().split('T')[0],
+                    notes: "",
+        customFields: {
+            Segment: "IT",
+            Potencijal: "Visok",
+            Istorija: "1 godina"
+        }
+                }))
+            );
+
+            const leadContacts = leadResponse.data.flatMap(list => 
+                list.contacts.map(contact => ({
+                    id: `lead-${Math.random()}`,
+                    name: contact.name,
+                    company: contact.companyName,
+                    email: contact.email,
+                    phone: contact.phoneNumber,
+                    list: list.name,
+                    team: list.team,
+        status: "Novi",
+                    lastContact: new Date().toISOString().split('T')[0],
+                    notes: "",
+        customFields: {
+            Izvor: "Website",
+                        Interes: "CRM",
+            Budžet: "25-50k"
+        }
+                }))
+            );
+
+            const allContacts = [...clientContacts, ...leadContacts];
+            setAllClients(allContacts);
+            setClients(allContacts);
+
+        } catch (error) {
+            console.error('Failed to fetch contacts data:', error);
+            setError('Greška pri učitavanju podataka o kontaktima');
+            setAllClientLists([]);
+            setClientLists([]);
+            setAllClients([]);
+            setClients([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // useEffect za inicijalno učitavanje
+    useEffect(() => {
+        fetchAllContactsData();
+    }, []);
 
     const handleTabChange = (event, newValue) => {
         setActiveTab(newValue);
@@ -455,10 +478,33 @@ const UnifiedLeadsTable = () => {
 
     return (
         <Box>
+            {/* Error Alert */}
+            {error && (
+                <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+                    {error}
+                </Alert>
+            )}
+            
             <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
                 <Typography variant="h5" color={colors.grey[100]}>
                     Upravljanje listama klijenata
                 </Typography>
+                <Box sx={{ display: "flex", gap: 1 }}>
+                    <Button
+                        variant="outlined"
+                        onClick={() => fetchAllContactsData()}
+                        disabled={loading}
+                        sx={{
+                            borderColor: colors.greenAccent[500],
+                            color: colors.greenAccent[500],
+                            "&:hover": {
+                                borderColor: colors.greenAccent[600],
+                                backgroundColor: colors.greenAccent[500] + '20'
+                            }
+                        }}
+                    >
+                        {loading ? <CircularProgress size={20} /> : "Osveži"}
+                    </Button>
                 <Button
                     variant="contained"
                     startIcon={<AddIcon />}
@@ -472,7 +518,15 @@ const UnifiedLeadsTable = () => {
                 >
                     Nova lista
                 </Button>
+                </Box>
             </Box>
+
+            {/* Loading indicator */}
+            {loading && (
+                <Box display="flex" justifyContent="center" my={4}>
+                    <CircularProgress />
+                </Box>
+            )}
 
             <Tabs
                 value={activeTab}
@@ -518,7 +572,7 @@ const UnifiedLeadsTable = () => {
 
             {activeTab === 0 ? (
                 <Grid container spacing={2}>
-                    {clientLists.map((list) => (
+                    {clientLists.filter(list => list.type === "contacts").map((list) => (
                         <Grid item xs={12} key={list.id}>
                             <Paper
                                 sx={{
@@ -553,12 +607,17 @@ const UnifiedLeadsTable = () => {
                                 <Grid container spacing={2}>
                                     <Grid item xs={12} md={3}>
                                         <Typography variant="body2" color={colors.grey[300]}>
+                                            Zemlja: {list.country}
+                                        </Typography>
+                                    </Grid>
+                                    <Grid item xs={12} md={3}>
+                                        <Typography variant="body2" color={colors.grey[300]}>
                                             Region: {list.region}
                                         </Typography>
                                     </Grid>
                                     <Grid item xs={12} md={3}>
                                         <Typography variant="body2" color={colors.grey[300]}>
-                                            Proizvod: {list.product}
+                                            Grad: {list.city}
                                         </Typography>
                                     </Grid>
                                     <Grid item xs={12} md={3}>
@@ -576,7 +635,7 @@ const UnifiedLeadsTable = () => {
                                             Tim: {list.team}
                                         </Typography>
                                     </Grid>
-                                    <Grid item xs={12} md={3}>
+                                    <Grid item xs={12} md={12}>
                                         <Typography variant="body2" color={colors.grey[300]}>
                                             Broj klijenata: {list.count}
                                         </Typography>
@@ -673,7 +732,7 @@ const UnifiedLeadsTable = () => {
                 </Grid>
             ) : activeTab === 1 ? (
                 <Grid container spacing={2}>
-                    {mockLeadLists.map((list) => (
+                    {clientLists.filter(list => list.type === "leads").map((list) => (
                         <Grid item xs={12} key={list.id}>
                             <Paper
                                 sx={{
@@ -708,12 +767,17 @@ const UnifiedLeadsTable = () => {
                                 <Grid container spacing={2}>
                                     <Grid item xs={12} md={3}>
                                         <Typography variant="body2" color={colors.grey[300]}>
+                                            Zemlja: {list.country}
+                                        </Typography>
+                                    </Grid>
+                                    <Grid item xs={12} md={3}>
+                                        <Typography variant="body2" color={colors.grey[300]}>
                                             Region: {list.region}
                                         </Typography>
                                     </Grid>
                                     <Grid item xs={12} md={3}>
                                         <Typography variant="body2" color={colors.grey[300]}>
-                                            Proizvod: {list.product}
+                                            Grad: {list.city}
                                         </Typography>
                                     </Grid>
                                     <Grid item xs={12} md={3}>
@@ -731,7 +795,7 @@ const UnifiedLeadsTable = () => {
                                             Tim: {list.team}
                                         </Typography>
                                     </Grid>
-                                    <Grid item xs={12} md={3}>
+                                    <Grid item xs={12} md={12}>
                                         <Typography variant="body2" color={colors.grey[300]}>
                                             Broj leadova: {list.count}
                                         </Typography>
@@ -747,9 +811,7 @@ const UnifiedLeadsTable = () => {
                                                     <TableCell sx={{ color: colors.grey[100] }}>Kompanija</TableCell>
                                                     <TableCell sx={{ color: colors.grey[100] }}>Email</TableCell>
                                                     <TableCell sx={{ color: colors.grey[100] }}>Telefon</TableCell>
-                                                    <TableCell sx={{ color: colors.grey[100] }}>Izvor</TableCell>
-                                                    <TableCell sx={{ color: colors.grey[100] }}>Interes</TableCell>
-                                                    <TableCell sx={{ color: colors.grey[100] }}>Budžet</TableCell>
+                                                                                                                <TableCell sx={{ color: colors.grey[100] }}>Status</TableCell>
                                                     <TableCell sx={{ color: colors.grey[100] }}>Akcije</TableCell>
                                                 </TableRow>
                                             </TableHead>
@@ -765,30 +827,12 @@ const UnifiedLeadsTable = () => {
                                                             <TableCell sx={{ color: colors.grey[100] }}>{client.phone}</TableCell>
                                                             <TableCell sx={{ color: colors.grey[100] }}>
                                                                 <Chip
-                                                                    label={client.customFields.Izvor}
+                                                                    label={client.status}
                                                                     size="small"
                                                                     sx={{
-                                                                        backgroundColor: colors.blueAccent[500],
-                                                                        color: colors.grey[100]
-                                                                    }}
-                                                                />
-                                                            </TableCell>
-                                                            <TableCell sx={{ color: colors.grey[100] }}>
-                                                                <Chip
-                                                                    label={client.customFields.Interes}
-                                                                    size="small"
-                                                                    sx={{
-                                                                        backgroundColor: colors.greenAccent[500],
-                                                                        color: colors.grey[100]
-                                                                    }}
-                                                                />
-                                                            </TableCell>
-                                                            <TableCell sx={{ color: colors.grey[100] }}>
-                                                                <Chip
-                                                                    label={client.customFields.Budžet}
-                                                                    size="small"
-                                                                    sx={{
-                                                                        backgroundColor: colors.redAccent[500],
+                                                                        backgroundColor: client.status === "Aktivan" 
+                                                                            ? colors.greenAccent[500] 
+                                                                            : colors.blueAccent[500],
                                                                         color: colors.grey[100]
                                                                     }}
                                                                 />

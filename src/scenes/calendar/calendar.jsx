@@ -99,12 +99,7 @@ const Calendar = () => {
       setLoading(true);
       setError(null);
       
-      const calendarViewRequest = {
-        startDate: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString(),
-        endDate: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString(),
-        includeGroupTypes: ['ENTIRE_COMPANY', 'TEAM', 'DEPARTMENT', 'SALES_TEAM', 'MANAGEMENT'],
-        onlyMyEvents: false
-      };
+      const calendarViewRequest = {};
 
       const response = await axios.post(`${API_BASE_URL}/events/my`, calendarViewRequest, {
         headers: getAuthHeaders()
