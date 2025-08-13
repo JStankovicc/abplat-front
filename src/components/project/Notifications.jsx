@@ -2,11 +2,7 @@ import { Card, CardContent, Typography, List, ListItem, ListItemText, Badge } fr
 import { Notifications as NotificationsIcon } from "@mui/icons-material";
 
 const Notifications = () => {
-    const notifications = [
-        'Novi komentar na zadatku #123',
-        'Sastanak u 14:00 sa klijentom',
-        'Ažurirana dokumentacija za API'
-    ];
+    const notifications = []; // Ispraznjeno
 
     return (
         <Card sx={{ height: '100%' }}>
@@ -18,11 +14,21 @@ const Notifications = () => {
                     Obaveštenja
                 </Typography>
                 <List dense>
-                    {notifications.map((text, index) => (
-                        <ListItem key={index} sx={{ py: 1 }}>
-                            <ListItemText primary={text} />
+                    {notifications.length === 0 ? (
+                        <ListItem sx={{ py: 1 }}>
+                            <ListItemText 
+                                primary="Nema obaveštenja"
+                                secondary="Trenutno nemate nova obaveštenja"
+                                sx={{ textAlign: 'center', color: 'text.secondary' }}
+                            />
                         </ListItem>
-                    ))}
+                    ) : (
+                        notifications.map((text, index) => (
+                            <ListItem key={index} sx={{ py: 1 }}>
+                                <ListItemText primary={text} />
+                            </ListItem>
+                        ))
+                    )}
                 </List>
             </CardContent>
         </Card>

@@ -109,7 +109,6 @@ const PipelineBoard = () => {
                         company: contact.companyName || 'N/A',
                         email: contact.email,
                         phone: contact.phoneNumber || 'N/A',
-                        value: `${Math.floor(Math.random() * 200000 + 50000).toLocaleString()} RSD`, // Random vrednost
                         assigned: "Trenutni korisnik", // Placeholder
                         status: contactEnumStatus // Čuvamo originalnu enum vrednost
                     });
@@ -123,7 +122,6 @@ const PipelineBoard = () => {
                             company: contact.companyName || 'N/A',
                             email: contact.email,
                             phone: contact.phoneNumber || 'N/A',
-                            value: `${Math.floor(Math.random() * 200000 + 50000).toLocaleString()} RSD`,
                             assigned: "Trenutni korisnik",
                             status: 'NEW'
                         });
@@ -305,12 +303,7 @@ const PipelineBoard = () => {
                                                     >
                                                         {item.company}
                                                     </Typography>
-                                                    <Typography
-                                                        variant="body2"
-                                                        sx={{ color: colors.greenAccent[500], mb: 1 }}
-                                                    >
-                                                        {item.value}
-                                                    </Typography>
+
                                                     <Typography
                                                         variant="body2"
                                                         sx={{ color: colors.grey[400], fontSize: '0.75rem' }}

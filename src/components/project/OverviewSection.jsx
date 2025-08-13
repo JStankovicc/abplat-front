@@ -5,7 +5,7 @@ import ProjectTimeline from "./ProjectTimeline";
 import Notes from "./Notes";
 import Notifications from "./Notifications";
 
-const OverviewSection = () => {
+const OverviewSection = ({ noteValue, onNoteChange, noteLoading }) => {
     return (
         <Grid container spacing={3}>
             <Grid item xs={12} md={6}>
@@ -15,7 +15,11 @@ const OverviewSection = () => {
                 <ProjectTimeline />
             </Grid>
             <Grid item xs={12} md={6}>
-                <Notes />
+                <Notes 
+                    note={noteValue}
+                    onNoteChange={onNoteChange}
+                    loading={noteLoading}
+                />
             </Grid>
             <Grid item xs={12} md={6}>
                 <Notifications />

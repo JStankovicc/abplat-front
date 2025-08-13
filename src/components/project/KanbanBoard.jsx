@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
-import { Box, TextField, IconButton, useTheme, Typography, Button, Dialog, DialogTitle, DialogContent, DialogActions, Grid, Divider, Avatar, Checkbox, FormControlLabel, List, ListItem, ListItemText, ListItemIcon, ListItemSecondaryAction, Paper, Chip } from '@mui/material';
+import { Box, TextField, IconButton, useTheme, Typography, Button, Dialog, DialogTitle, DialogContent, DialogActions, Grid, Divider, Avatar, Checkbox, FormControlLabel, List, ListItem, ListItemText, ListItemIcon, ListItemSecondaryAction, Paper, Chip, CircularProgress, Alert } from '@mui/material';
+import axios from 'axios';
 import { tokens } from '../../theme';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -12,86 +13,17 @@ import BlockIcon from '@mui/icons-material/Block';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import PendingIcon from '@mui/icons-material/Pending';
 
-const initialColumns = [
-    { 
-        id: 'todo', 
-        title: 'To Do', 
-        tasks: [
-            { 
-                id: 'task-1', 
-                content: 'Test task 1',
-                description: 'Detaljan opis taska 1',
-                assignedUsers: [1, 2],
-                dueDate: '2024-03-20',
-                priority: 'high',
-                status: 'active',
-                files: [
-                    { id: 1, name: 'dokument.pdf', size: '2.5MB', type: 'pdf' },
-                    { id: 2, name: 'slika.jpg', size: '1.2MB', type: 'image' }
-                ],
-                notes: [
-                    { id: 1, content: 'Prva napomena', createdAt: '2024-03-19T10:00:00', createdBy: 1 },
-                    { id: 2, content: 'Druga napomena', createdAt: '2024-03-19T11:00:00', createdBy: 2 }
-                ]
-            },
-            { 
-                id: 'task-2', 
-                content: 'Test task 2',
-                description: 'Detaljan opis taska 2',
-                assignedUsers: [3],
-                dueDate: '2024-03-21',
-                priority: 'medium',
-                status: 'blocked',
-                files: [],
-                notes: []
-            }
-        ] 
-    },
-    { 
-        id: 'inProgress', 
-        title: 'In Progress', 
-        tasks: [
-            { 
-                id: 'task-3', 
-                content: 'Test task 3',
-                description: 'Detaljan opis taska 3',
-                assignedUsers: [1, 4],
-                dueDate: '2024-03-22',
-                priority: 'low'
-            },
-            { 
-                id: 'task-4', 
-                content: 'Test task 4',
-                description: 'Detaljan opis taska 4',
-                assignedUsers: [2],
-                dueDate: '2024-03-23',
-                priority: 'high'
-            }
-        ] 
-    },
-    { 
-        id: 'done', 
-        title: 'Done', 
-        tasks: [
-            { 
-                id: 'task-5', 
-                content: 'Test task 5',
-                description: 'Detaljan opis taska 5',
-                assignedUsers: [3, 4],
-                dueDate: '2024-03-24',
-                priority: 'medium'
-            },
-            { 
-                id: 'task-6', 
-                content: 'Test task 6',
-                description: 'Detaljan opis taska 6',
-                assignedUsers: [1],
-                dueDate: '2024-03-25',
-                priority: 'low'
-            }
-        ] 
-    },
-];
+// API konstante
+const API_BASE_URL = "http://192.168.1.30:8080/api/v1/project";
+
+// Helper funkcija za auth headers
+const getAuthHeaders = () => {
+    const token = localStorage.getItem('token');
+    return {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json"
+    };
+};
 
 const mockUsers = [
     { id: 1, firstName: "Marko", lastName: "Marković", color: "#ff5722" },
@@ -103,7 +35,9 @@ const mockUsers = [
 const KanbanBoard = () => {
     const theme = useTheme();
     const colors = tokens(theme.palette.mode);
-    const [columns, setColumns] = useState(initialColumns);
+    const [columns, setColumns] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
     const [newTaskInputs, setNewTaskInputs] = useState({});
     const [editingTask, setEditingTask] = useState(null);
     const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -123,28 +57,156 @@ const KanbanBoard = () => {
     const [userSearchQuery, setUserSearchQuery] = useState('');
     const [editingColumnTitle, setEditingColumnTitle] = useState(null);
 
-    const onDragEnd = (result) => {
-        const { source, destination } = result;
+    // API funkcije
+    const updateProjectTask = async (task, newStatus) => {
+        try {
+            const taskToUpdate = {
+                id: task.originalTask.id,
+                name: task.originalTask.name,
+                description: task.originalTask.description,
+                projectId: task.originalTask.project?.id,
+                dateDue: task.originalTask.dateDue,
+                priority: task.originalTask.priority,
+                status: newStatus,
+                userId: task.originalTask.user?.id
+            };
 
-        // Ako nema odredišta ili je isti kao izvor, ne radimo ništa
-        if (!destination || 
-            (source.droppableId === destination.droppableId && 
-             source.index === destination.index)) {
-            return;
+            await axios.put(`${API_BASE_URL}/tasks/update`, taskToUpdate, {
+                headers: getAuthHeaders()
+            });
+            
+            return taskToUpdate;
+        } catch (error) {
+            console.error('Failed to update project task:', error);
+            throw error;
         }
+    };
 
-        const newColumns = [...columns];
-        const sourceCol = newColumns.find(col => col.id === source.droppableId);
-        const destCol = newColumns.find(col => col.id === destination.droppableId);
-        const task = sourceCol.tasks[source.index];
+    const fetchKanbanData = async () => {
+        try {
+            setLoading(true);
+            setError(null);
 
-        // Uklanjamo task iz izvorne kolone
-        sourceCol.tasks.splice(source.index, 1);
+            // Paralelno dohvatamo task statuse i taskove
+            const [statusResponse, tasksResponse] = await Promise.all([
+                axios.get(`${API_BASE_URL}/taskStatus/getAll`, {
+                    headers: getAuthHeaders()
+                }),
+                axios.get(`${API_BASE_URL}/tasks/my`, {
+                    headers: getAuthHeaders()
+                })
+            ]);
+
+
+
+            // Kreiramo kolone na osnovu task statusa
+            const kanbanColumns = statusResponse.data.map(status => ({
+                id: status.name.toLowerCase().replace(/\s+/g, '_'),
+                title: status.name,
+                tasks: []
+            }));
+
+            // Distribuiramo taskove po kolonama na osnovu njihovog statusa
+            tasksResponse.data.forEach((task, index) => {
+                const taskStatus = task.status || (kanbanColumns.length > 0 ? kanbanColumns[0].title : 'To Do');
+                
+                // Pronađemo odgovarajuću kolonu po nazivu statusa
+                const targetColumn = kanbanColumns.find(col => 
+                    col.title.toLowerCase() === taskStatus.toLowerCase() ||
+                    col.id === taskStatus.toLowerCase().replace(/\s+/g, '_')
+                );
+                
+                const taskItem = {
+                    id: `task-${task.id}`,
+                    content: task.name,
+                    description: task.description || '',
+                    assignedUsers: task.users ? task.users.map(u => u.id) : [],
+                    dueDate: task.dateDue ? new Date(task.dateDue).toISOString().split('T')[0] : '',
+                    priority: task.priority ? task.priority.toLowerCase() : 'medium',
+                    status: 'active',
+                    files: [],
+                    notes: task.notes || [],
+                    originalTask: task // Čuvamo originalnu referencu
+                };
+                
+                if (targetColumn) {
+                    targetColumn.tasks.push(taskItem);
+                } else {
+                    // Ako nema odgovarajuće kolone, dodaj u prvu dostupnu
+                    if (kanbanColumns.length > 0) {
+
+                        kanbanColumns[0].tasks.push(taskItem);
+                    }
+                }
+            });
+
+            setColumns(kanbanColumns);
+
+        } catch (error) {
+            console.error('Failed to fetch kanban data:', error);
+            setError('Greška pri učitavanju kanban podataka');
+            setColumns([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // useEffect za inicijalno učitavanje
+    useEffect(() => {
+        fetchKanbanData();
+    }, []);
+
+    const onDragEnd = async (result) => {
+        if (!result.destination) return;
+
+        const { source, destination } = result;
         
-        // Dodajemo task u odredišnu kolonu
-        destCol.tasks.splice(destination.index, 0, task);
+        if (source.droppableId === destination.droppableId) {
+            // Samo promena pozicije u istoj koloni
+            const newColumns = [...columns];
+            const sourceCol = newColumns.find(col => col.id === source.droppableId);
+            const copiedTasks = [...sourceCol.tasks];
+            const [removed] = copiedTasks.splice(source.index, 1);
+            copiedTasks.splice(destination.index, 0, removed);
+            
+            sourceCol.tasks = copiedTasks;
+            setColumns(newColumns);
+        } else {
+            // Premestanje između različitih kolona - treba da ažuriramo status
+            const newColumns = [...columns];
+            const sourceCol = newColumns.find(col => col.id === source.droppableId);
+            const destCol = newColumns.find(col => col.id === destination.droppableId);
+            const task = sourceCol.tasks[source.index];
 
-        setColumns(newColumns);
+            // Uklanjamo task iz izvorne kolone
+            sourceCol.tasks.splice(source.index, 1);
+            
+            // Dodajemo task u odredišnu kolonu
+            destCol.tasks.splice(destination.index, 0, task);
+
+            // Ažuriraj UI odmah
+            setColumns(newColumns);
+
+            // Pošalji API poziv za ažuriranje statusa
+            try {
+                const newStatus = destCol.title; // Koristimo naziv kolone kao status
+                await updateProjectTask(task, newStatus);
+                console.log(`Task ${task.content} premešten u ${newStatus}`);
+            } catch (error) {
+                console.error('Greška pri ažuriranju task statusa:', error);
+                setError('Greška pri ažuriranju task statusa');
+                
+                // Vrati na prethodnu poziciju ako je API poziv neuspešan
+                const rollbackColumns = [...columns];
+                const rollbackSourceCol = rollbackColumns.find(col => col.id === source.droppableId);
+                const rollbackDestCol = rollbackColumns.find(col => col.id === destination.droppableId);
+                
+                rollbackDestCol.tasks.splice(destination.index, 1);
+                rollbackSourceCol.tasks.splice(source.index, 0, task);
+                
+                setColumns(rollbackColumns);
+            }
+        }
     };
 
     const addTask = (columnId) => {
@@ -328,7 +390,29 @@ const KanbanBoard = () => {
 
     return (
         <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+            {/* Error Alert */}
+            {error && (
+                <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+                    {error}
+                </Alert>
+            )}
+
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Button
+                    variant="outlined"
+                    onClick={() => fetchKanbanData()}
+                    disabled={loading}
+                    sx={{
+                        borderColor: colors.greenAccent[500],
+                        color: colors.greenAccent[500],
+                        "&:hover": {
+                            borderColor: colors.greenAccent[600],
+                            backgroundColor: colors.greenAccent[500] + '20'
+                        }
+                    }}
+                >
+                    {loading ? <CircularProgress size={20} /> : "Osveži"}
+                </Button>
                 <Button
                     variant="contained"
                     startIcon={<AddIcon />}
@@ -343,6 +427,13 @@ const KanbanBoard = () => {
                     Dodaj kolonu
                 </Button>
             </Box>
+
+            {/* Loading indicator */}
+            {loading && (
+                <Box display="flex" justifyContent="center" my={4}>
+                    <CircularProgress />
+                </Box>
+            )}
 
             <DragDropContext onDragEnd={onDragEnd}>
                 <Box 
