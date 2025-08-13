@@ -58,18 +58,20 @@ const KanbanBoard = () => {
     const [editingColumnTitle, setEditingColumnTitle] = useState(null);
 
     // API funkcije
-    const updateProjectTask = async (task, newStatus) => {
+    const updateProjectTask = async (task, newStatus, taskDetails = null) => {
         try {
             const taskToUpdate = {
                 id: task.originalTask.id,
-                name: task.originalTask.name,
-                description: task.originalTask.description,
-                projectId: task.originalTask.project?.id,
-                dateDue: task.originalTask.dateDue,
-                priority: task.originalTask.priority,
+                name: taskDetails ? taskDetails.content : task.originalTask.name,
+                description: taskDetails ? taskDetails.description : task.originalTask.description,
+                projectId: task.originalTask.projectId || 1, // Default to project 1 if not available
+                dateDue: taskDetails ? (taskDetails.dueDate ? new Date(taskDetails.dueDate).toISOString() : null) : task.originalTask.dateDue,
+                priority: taskDetails ? taskDetails.priority.toUpperCase() : (task.originalTask.priority || 'MEDIUM'),
                 status: newStatus,
                 userId: task.originalTask.user?.id
             };
+
+            console.log('Sending task update:', taskToUpdate);
 
             await axios.put(`${API_BASE_URL}/tasks/update`, taskToUpdate, {
                 headers: getAuthHeaders()
@@ -259,31 +261,44 @@ const KanbanBoard = () => {
         setEditDialogOpen(true);
     };
 
-    const handleSaveEdit = () => {
+    const handleSaveEdit = async () => {
         if (!taskDetails.content.trim()) return;
 
-        setColumns(columns.map(col => ({
-            ...col,
-            tasks: col.tasks.map(task =>
-                task.id === editingTask.id
-                    ? { ...task, ...taskDetails }
-                    : task
-            )
-        })));
+        try {
+            // Prvo ažuriraj UI
+            setColumns(columns.map(col => ({
+                ...col,
+                tasks: col.tasks.map(task =>
+                    task.id === editingTask.id
+                        ? { ...task, ...taskDetails }
+                        : task
+                )
+            })));
 
-        setEditDialogOpen(false);
-        setEditingTask(null);
-        setTaskDetails({
-            content: '',
-            description: '',
-            assignedUsers: [],
-            dueDate: '',
-            priority: 'medium',
-            status: 'active',
-            waitingFor: null,
-            files: [],
-            notes: []
-        });
+            // Pošalji API poziv za ažuriranje - proslijedi i taskDetails
+            await updateProjectTask(editingTask, taskDetails.status, taskDetails);
+            console.log('Task uspešno ažuriran:', taskDetails.content);
+
+            setEditDialogOpen(false);
+            setEditingTask(null);
+            setTaskDetails({
+                content: '',
+                description: '',
+                assignedUsers: [],
+                dueDate: '',
+                priority: 'medium',
+                status: 'active',
+                waitingFor: null,
+                files: [],
+                notes: []
+            });
+        } catch (error) {
+            console.error('Greška pri ažuriranju taska:', error);
+            setError('Greška pri ažuriranju taska');
+            
+            // Vrati na prethodno stanje ako API poziv ne uspe
+            fetchKanbanData(); // Reload data from server
+        }
     };
 
     const handleUserSelect = (userId) => {
