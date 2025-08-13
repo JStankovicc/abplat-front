@@ -18,21 +18,26 @@ import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined';
 import TrendingUpOutlinedIcon from '@mui/icons-material/TrendingUpOutlined';
 import DirectionsCarIcon from '@mui/icons-material/DirectionsCar';
 
-const Item = ({ title, to, icon, selected, setSelected, onClick }) => {
+const Item = ({ title, to, icon, selected, setSelected, onClick, disabled = false }) => {
     const theme = useTheme();
     const colors = tokens(theme.palette.mode);
     return (
         <MenuItem
             active={selected === title}
-            style={{ color: colors.grey[100] }}
+            style={{ 
+                color: disabled ? colors.grey[500] : colors.grey[100],
+                opacity: disabled ? 0.6 : 1,
+                cursor: disabled ? 'not-allowed' : 'pointer'
+            }}
             onClick={() => {
+                if (disabled) return;
                 setSelected(title);
                 if (onClick) onClick();
             }}
             icon={icon}
         >
             <Typography>{title}</Typography>
-            {to && <Link to={to} />}
+            {to && !disabled && <Link to={to} />}
         </MenuItem>
     );
 };
@@ -237,6 +242,7 @@ const Sidebar = ({ userProfile, companyInfo }) => {
                                 selected={selected}
                                 setSelected={setSelected}
                                 onClick={() => isMobile && setIsMobileSidebarOpen(false)}
+                                disabled={true}
                             />
                             <Item
                                 title="Podesavanja kompanije"
@@ -245,6 +251,7 @@ const Sidebar = ({ userProfile, companyInfo }) => {
                                 selected={selected}
                                 setSelected={setSelected}
                                 onClick={() => isMobile && setIsMobileSidebarOpen(false)}
+                                disabled={true}
                             />
                             <Item
                                 title="Pregled kompanije"
@@ -253,6 +260,7 @@ const Sidebar = ({ userProfile, companyInfo }) => {
                                 selected={selected}
                                 setSelected={setSelected}
                                 onClick={() => isMobile && setIsMobileSidebarOpen(false)}
+                                disabled={true}
                             />
 
                             <Typography variant="h6" color={colors.grey[300]} sx={{ m: "15px 0 5px 20px" }}>
@@ -286,6 +294,7 @@ const Sidebar = ({ userProfile, companyInfo }) => {
                                 selected={selected}
                                 setSelected={setSelected}
                                 onClick={() => isMobile && setIsMobileSidebarOpen(false)}
+                                disabled={true}
                             />
                             <Item
                                 title="Projekat X"
@@ -307,6 +316,7 @@ const Sidebar = ({ userProfile, companyInfo }) => {
                                 selected={selected}
                                 setSelected={setSelected}
                                 onClick={() => isMobile && setIsMobileSidebarOpen(false)}
+                                disabled={true}
                             />
                             <Item
                                 title="Imovina"
@@ -315,6 +325,7 @@ const Sidebar = ({ userProfile, companyInfo }) => {
                                 selected={selected}
                                 setSelected={setSelected}
                                 onClick={() => isMobile && setIsMobileSidebarOpen(false)}
+                                disabled={true}
                             />
                             <Item
                                 title="Vozila"
@@ -323,6 +334,7 @@ const Sidebar = ({ userProfile, companyInfo }) => {
                                 selected={selected}
                                 setSelected={setSelected}
                                 onClick={() => isMobile && setIsMobileSidebarOpen(false)}
+                                disabled={true}
                             />
 
                             {isMobile && (
