@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
     Box,
     Button,
@@ -12,27 +12,78 @@ import {
     TableSortLabel,
     TextField,
     useTheme,
-    useMediaQuery
+    useMediaQuery,
+    CircularProgress,
+    Alert,
+    Chip
 } from "@mui/material";
+import axios from "axios";
 import { tokens } from "../../theme";
 import AddLeadModal from "./modals/AddLeadModal";
 
-// Mock podaci
-const mockContacts = [
-    { id: 1, ime: "Marko Marković", email: "marko@example.com", status: "Aktivan" },
-    { id: 2, ime: "Ana Anić", email: "ana@example.com", status: "Neaktivan" },
-    { id: 3, ime: "Petar Petrović", email: "petar@example.com", status: "Aktivan" },
-];
+// API konstante
+const API_BASE_URL = "http://192.168.1.30:8080/api/v1/contact";
+
+// Helper funkcija za auth headers
+const getAuthHeaders = () => {
+    const token = localStorage.getItem('token');
+    return {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json"
+    };
+};
 
 const ContactTable = () => {
     const theme = useTheme();
     const colors = tokens(theme.palette.mode);
     const isMobile = useMediaQuery("(max-width:768px)");
-    const [contacts, setContacts] = useState(mockContacts);
-    const [orderBy, setOrderBy] = useState("ime");
+    const [contacts, setContacts] = useState([]);
+    const [orderBy, setOrderBy] = useState("name");
     const [order, setOrder] = useState("asc");
     const [searchTerm, setSearchTerm] = useState("");
     const [isModalOpen, setIsModalOpen] = useState(false);
+    
+    // Loading i error states
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+
+    // API funkcije
+    const fetchContacts = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            
+            const response = await axios.get(`${API_BASE_URL}/user/sales/all`, {
+                headers: getAuthHeaders()
+            });
+
+            console.log('Contacts response:', response.data);
+            
+            // Transformišemo response u format koji komponenta očekuje
+            const transformedContacts = response.data.map((contact, index) => ({
+                id: index + 1,
+                name: contact.name,
+                companyName: contact.companyName,
+                phoneNumber: contact.phoneNumber,
+                email: contact.email,
+                status: "Aktivan" // Default status jer nije u response-u
+            }));
+            
+            setContacts(transformedContacts);
+            
+        } catch (error) {
+            console.error('Failed to fetch contacts:', error);
+            setError('Greška pri učitavanju kontakata');
+            setContacts([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // useEffect za inicijalno učitavanje
+    useEffect(() => {
+        fetchContacts();
+    }, []);
 
     const handleSort = (property) => {
         const isAsc = orderBy === property && order === "asc";
@@ -42,8 +93,9 @@ const ContactTable = () => {
 
     const filteredContacts = contacts
         .filter((contact) =>
-            contact.ime.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            contact.email.toLowerCase().includes(searchTerm.toLowerCase())
+            contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            contact.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (contact.companyName && contact.companyName.toLowerCase().includes(searchTerm.toLowerCase()))
         )
         .sort((a, b) => {
             if (order === "asc") {
@@ -54,6 +106,13 @@ const ContactTable = () => {
 
     return (
         <Box>
+            {/* Error Alert */}
+            {error && (
+                <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+                    {error}
+                </Alert>
+            )}
+            
             <Box
                 sx={{
                     display: "flex",
@@ -77,19 +136,43 @@ const ContactTable = () => {
                         }
                     }}
                 />
-                <Button
-                    variant="contained"
-                    onClick={() => setIsModalOpen(true)}
-                    sx={{
-                        backgroundColor: colors.greenAccent[500],
-                        "&:hover": {
-                            backgroundColor: colors.greenAccent[600]
-                        }
-                    }}
-                >
-                    Dodaj kontakt
-                </Button>
+                <Box sx={{ display: "flex", gap: 1 }}>
+                    <Button
+                        variant="outlined"
+                        onClick={() => fetchContacts()}
+                        disabled={loading}
+                        sx={{
+                            borderColor: colors.greenAccent[500],
+                            color: colors.greenAccent[500],
+                            "&:hover": {
+                                borderColor: colors.greenAccent[600],
+                                backgroundColor: colors.greenAccent[500] + '20'
+                            }
+                        }}
+                    >
+                        {loading ? <CircularProgress size={20} /> : "Osveži"}
+                    </Button>
+                    <Button
+                        variant="contained"
+                        onClick={() => setIsModalOpen(true)}
+                        sx={{
+                            backgroundColor: colors.greenAccent[500],
+                            "&:hover": {
+                                backgroundColor: colors.greenAccent[600]
+                            }
+                        }}
+                    >
+                        Dodaj kontakt
+                    </Button>
+                </Box>
             </Box>
+
+            {/* Loading indicator */}
+            {loading && (
+                <Box display="flex" justifyContent="center" my={4}>
+                    <CircularProgress />
+                </Box>
+            )}
 
             <TableContainer component={Paper}>
                 <Table>
@@ -97,11 +180,20 @@ const ContactTable = () => {
                         <TableRow>
                             <TableCell>
                                 <TableSortLabel
-                                    active={orderBy === "ime"}
-                                    direction={orderBy === "ime" ? order : "asc"}
-                                    onClick={() => handleSort("ime")}
+                                    active={orderBy === "name"}
+                                    direction={orderBy === "name" ? order : "asc"}
+                                    onClick={() => handleSort("name")}
                                 >
                                     Ime
+                                </TableSortLabel>
+                            </TableCell>
+                            <TableCell>
+                                <TableSortLabel
+                                    active={orderBy === "companyName"}
+                                    direction={orderBy === "companyName" ? order : "asc"}
+                                    onClick={() => handleSort("companyName")}
+                                >
+                                    Kompanija
                                 </TableSortLabel>
                             </TableCell>
                             <TableCell>
@@ -111,6 +203,15 @@ const ContactTable = () => {
                                     onClick={() => handleSort("email")}
                                 >
                                     Email
+                                </TableSortLabel>
+                            </TableCell>
+                            <TableCell>
+                                <TableSortLabel
+                                    active={orderBy === "phoneNumber"}
+                                    direction={orderBy === "phoneNumber" ? order : "asc"}
+                                    onClick={() => handleSort("phoneNumber")}
+                                >
+                                    Telefon
                                 </TableSortLabel>
                             </TableCell>
                             <TableCell>
@@ -128,9 +229,22 @@ const ContactTable = () => {
                     <TableBody>
                         {filteredContacts.map((contact) => (
                             <TableRow key={contact.id}>
-                                <TableCell>{contact.ime}</TableCell>
+                                <TableCell>{contact.name}</TableCell>
+                                <TableCell>{contact.companyName || '-'}</TableCell>
                                 <TableCell>{contact.email}</TableCell>
-                                <TableCell>{contact.status}</TableCell>
+                                <TableCell>{contact.phoneNumber || '-'}</TableCell>
+                                <TableCell>
+                                    <Chip
+                                        label={contact.status}
+                                        size="small"
+                                        sx={{
+                                            backgroundColor: contact.status === "Aktivan" 
+                                                ? colors.greenAccent[500] 
+                                                : colors.redAccent[500],
+                                            color: colors.grey[100]
+                                        }}
+                                    />
+                                </TableCell>
                                 <TableCell>
                                     <Button
                                         size="small"
@@ -154,7 +268,9 @@ const ContactTable = () => {
                 open={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 onAdd={(newContact) => {
-                    setContacts([...contacts, { ...newContact, id: contacts.length + 1 }]);
+                    // TODO: Implementirati API poziv za kreiranje novog kontakta
+                    // Za sada samo osveži listu sa servera
+                    fetchContacts();
                     setIsModalOpen(false);
                 }}
             />

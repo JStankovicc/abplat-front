@@ -23,10 +23,10 @@ import SalesAnalytics from "../../components/sales/SalesAnalytics";
 import MobileMenu from "../../components/sales/MobileMenu";
 
 const sections = [
-    { id: 0, label: "Kontakti", icon: <ContactsIcon />, component: <ContactTable /> },
-    { id: 1, label: "Pipeline", icon: <PipelineIcon />, component: <PipelineBoard /> },
-    { id: 2, label: "Kalendar", icon: <CalendarIcon />, component: <SalesCalendar /> },
-    { id: 3, label: "Analitika", icon: <AnalyticsIcon />, component: <SalesAnalytics /> },
+    { id: 0, label: "Kontakti", icon: <ContactsIcon />, component: <ContactTable />, disabled: false },
+    { id: 1, label: "Pipeline", icon: <PipelineIcon />, component: <PipelineBoard />, disabled: false },
+    { id: 2, label: "Kalendar", icon: <CalendarIcon />, component: <SalesCalendar />, disabled: true },
+    { id: 3, label: "Analitika", icon: <AnalyticsIcon />, component: <SalesAnalytics />, disabled: true },
 ];
 
 const SalesView = () => {
@@ -37,6 +37,10 @@ const SalesView = () => {
     const [mobileOpen, setMobileOpen] = useState(false);
 
     const handleSectionChange = (event, newValue) => {
+        const selectedSection = sections.find(section => section.id === newValue);
+        if (selectedSection && selectedSection.disabled) {
+            return; // Sprečava prebacivanje na onemogućenu sekciju
+        }
         setActiveSection(newValue);
         setMobileOpen(false);
     };
@@ -94,12 +98,19 @@ const SalesView = () => {
                                 icon={section.icon}
                                 label={section.label}
                                 iconPosition="start"
+                                disabled={section.disabled}
                                 sx={{
                                     minWidth: 100,
                                     minHeight: "25px",
-                                    color: colors.grey[100],
+                                    color: section.disabled ? colors.grey[500] : colors.grey[100],
+                                    opacity: section.disabled ? 0.6 : 1,
+                                    cursor: section.disabled ? 'not-allowed' : 'pointer',
                                     '&.Mui-selected': {
                                         color: colors.greenAccent[500],
+                                    },
+                                    '&.Mui-disabled': {
+                                        color: colors.grey[500],
+                                        opacity: 0.6
                                     },
                                     '& .MuiTab-iconWrapper': {
                                         mr: 1,
@@ -126,7 +137,13 @@ const SalesView = () => {
                 onClose={() => setMobileOpen(false)}
                 sections={sections}
                 activeSection={activeSection}
-                onChangeSection={(sectionId) => setActiveSection(sectionId)}
+                onChangeSection={(sectionId) => {
+                    const selectedSection = sections.find(section => section.id === sectionId);
+                    if (selectedSection && selectedSection.disabled) {
+                        return; // Sprečava prebacivanje na onemogućenu sekciju u mobilnom meniju
+                    }
+                    setActiveSection(sectionId);
+                }}
                 colors={colors}
             />
 
