@@ -1,13 +1,16 @@
 // API konfiguracija za različita okruženja
 const API_CONFIG = {
   development: {
-    baseURL: "http://192.168.1.30:8080/api/v1"
+    baseURL: "http://localhost:8080/api/v1",
+    wsURL: "http://localhost:8080/ws-chat"
   },
   docker: {
-    baseURL: "/api/v1"  // Koristimo relativni URL jer nginx proxy-uje
+    baseURL: "/api/v1",  // Koristimo relativni URL jer nginx proxy-uje
+    wsURL: "/ws-chat"
   },
   production: {
-    baseURL: "/api/v1"  // Koristimo relativni URL za production
+    baseURL: "/api/v1",  // Koristimo relativni URL za production
+    wsURL: "/ws-chat"
   }
 };
 
@@ -17,8 +20,8 @@ const getEnvironment = () => {
   if (window.location.port === '' || window.location.port === '80') {
     return 'production';
   }
-  // Ako je localhost:3000, verovatno je development
-  if (window.location.hostname === 'localhost' && window.location.port === '3000') {
+  // Ako je localhost:5000, verovatno je development
+  if (window.location.hostname === 'localhost' && window.location.port === '5000') {
     return 'development';
   }
   return 'docker';
@@ -26,5 +29,6 @@ const getEnvironment = () => {
 
 const environment = getEnvironment();
 export const API_BASE_URL = API_CONFIG[environment].baseURL;
+export const WS_BASE_URL = API_CONFIG[environment].wsURL;
 
 export default API_CONFIG;

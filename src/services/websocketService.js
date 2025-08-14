@@ -1,5 +1,6 @@
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
+import { WS_BASE_URL } from '../config/apiConfig';
 
 class WebSocketService {
     constructor() {
@@ -20,13 +21,8 @@ class WebSocketService {
         }
 
         if (this.disabled) {
-            return Promise.reject(new Error('WebSocket je onemogućen zbog CORS problema'));
-        }
-
-        if (this.failedAttempts >= this.maxFailedAttempts) {
-            this.disabled = true;
-            console.warn('WebSocket onemogućen nakon', this.maxFailedAttempts, 'neuspešnih pokušaja');
-            return Promise.reject(new Error('WebSocket je onemogućen zbog previše neuspešnih pokušaja'));
+            console.warn('WebSocket je onemogućen, pokušavam ponovo...');
+            this.disabled = false; // Reset disabled status
         }
 
         if (!userId) {
@@ -41,8 +37,22 @@ class WebSocketService {
         }
 
         return new Promise((resolve, reject) => {
+            // Pokušaj prvo čisti WebSocket, pa onda SockJS fallback
+            const wsUrl = WS_BASE_URL.replace('/ws-chat', '/ws-chat');
+            
             this.client = new Client({
-                webSocketFactory: () => new SockJS('http://192.168.1.30:8080/ws-chat'),
+                webSocketFactory: () => {
+                    // Pokušaj čisti WebSocket
+                    try {
+                        return new WebSocket(wsUrl.replace('http://', 'ws://'));
+                    } catch (error) {
+                        console.warn('WebSocket failed, falling back to SockJS:', error);
+                        // Fallback na SockJS
+                        return new SockJS(WS_BASE_URL.replace('/ws-chat', '/ws-chat-sockjs'), null, {
+                            transports: ['websocket', 'xhr-streaming', 'xhr-polling']
+                        });
+                    }
+                },
                 connectHeaders: {
                     'Authorization': `Bearer ${token}`,
                     'user-id': userId.toString()
@@ -56,20 +66,25 @@ class WebSocketService {
                     }
                 },
                 onConnect: (frame) => {
-                    console.log('WebSocket povezan:', frame);
+                    console.log('✅ WebSocket uspešno povezan:', frame);
                     this.isConnected = true;
                     this.failedAttempts = 0; // Reset failed attempts na uspešnu konekciju
+                    this.disabled = false; // Reset disabled status
                     
-                    // Pretplati se na personalne poruke
+                    // Pretplati se na personalne poruke (tvoj sistem)
+                    console.log('🔔 Subscribing to /user/queue/messages');
                     this.client.subscribe('/user/queue/messages', (message) => {
+                        console.log('📨 Received message:', message.body);
                         const messageData = JSON.parse(message.body);
                         this.notifyMessageHandlers(messageData);
                     });
 
-                    // Pretplati se na ACK poruke
+                    // Pretplati se na ACK poruke (tvoj sistem)
+                    console.log('🔔 Subscribing to /user/queue/ack');
                     this.client.subscribe('/user/queue/ack', (message) => {
                         const ackData = JSON.parse(message.body);
-                        console.log('Poruka potvrđena:', ackData);
+                        console.log('✅ Message ACK received:', ackData);
+                        // Možeš dodati handler za ACK poruke
                     });
 
                     this.notifyConnectionHandlers(true);
@@ -155,20 +170,63 @@ class WebSocketService {
 
     sendMessage(conversationId, content) {
         if (!this.isConnected || !this.client) {
+            console.error('❌ WebSocket nije povezan');
             throw new Error('WebSocket nije povezan');
         }
 
-        const messagePayload = {
-            conversationId: conversationId,
-            content: content
-        };
+        console.log('📤 Sending message via WebSocket:', {
+            conversationId,
+            content,
+            userId: this.currentUserId
+        });
 
+        // Šalje preko tvog WebSocket endpointa
         this.client.publish({
             destination: '/app/chat.send',
-            body: JSON.stringify(messagePayload),
+            body: JSON.stringify({
+                conversationId: conversationId,
+                content: content
+            }),
             headers: {
                 'user-id': this.currentUserId?.toString() || ''
             }
+        });
+    }
+
+    subscribeToThread(threadId) {
+        if (!this.isConnected || !this.client) {
+            throw new Error('WebSocket nije povezan');
+        }
+
+        console.log(`🔔 Subscribing to conversation topic: /topic/conversation/${threadId}`);
+        
+        // Pretplati se na poruke za specifičnu konverzaciju
+        this.client.subscribe(`/topic/conversation/${threadId}`, (message) => {
+            console.log(`📨 Received message for conversation ${threadId}:`, message.body);
+            const messageData = JSON.parse(message.body);
+            this.notifyMessageHandlers(messageData);
+        });
+
+        // Pretplati se na typing indikatore za thread
+        this.client.subscribe(`/topic/thread/${threadId}/typing`, (message) => {
+            const typingData = JSON.parse(message.body);
+            console.log('Typing indicator:', typingData);
+            // Možeš dodati handler za typing indikatore
+        });
+    }
+
+    sendTypingIndicator(threadId, isTyping = true) {
+        if (!this.isConnected || !this.client) {
+            return;
+        }
+
+        this.client.publish({
+            destination: '/app/chat.typing',
+            body: JSON.stringify({
+                type: isTyping ? 'TYPING' : 'STOP_TYPING',
+                sender: this.currentUserId?.toString() || '',
+                threadId: threadId
+            })
         });
     }
 
