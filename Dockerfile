@@ -1,63 +1,36 @@
-# Multi-stage build za React aplikaciju
+# Multi-stage build
 FROM node:18-alpine AS build
 
-# Instaliraj potrebne pakete za build
-RUN apk add --no-cache git
-
-# Postavi radni direktorij
 WORKDIR /app
 
-# Kopiraj package files
+# Copy package files
 COPY package*.json ./
 
-# Instaliraj dependencies
-RUN npm ci --only=production --silent
+# Install dependencies
+RUN npm ci --only=production
 
-# Kopiraj source code
+# Copy source code
 COPY . .
 
-# Kreiraj production build
+# Build the React app
 RUN npm run build
 
-# Production stage sa Nginx
+# Production stage with Nginx
 FROM nginx:alpine
 
-# Instaliraj potrebne pakete
-RUN apk add --no-cache tzdata curl
+# Install curl for health check
+RUN apk add --no-cache curl
 
-# Setuj timezone na Belgrade
-ENV TZ=Europe/Belgrade
+# Copy custom nginx config
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Ukloni default nginx konfiguraciju
-RUN rm /etc/nginx/conf.d/default.conf
-
-# Kopiraj custom nginx konfiguraciju
-COPY nginx.conf /etc/nginx/conf.d/
-
-# Kopiraj build fajlove iz build stage
+# Copy built React app
 COPY --from=build /app/build /usr/share/nginx/html
-
-# Kreiraj korisnika za nginx (security best practice)
-RUN addgroup -g 1001 -S nginx-app && \
-    adduser -S nginx-app -u 1001 -G nginx-app
-
-# Promeni vlasništvo fajlova
-RUN chown -R nginx-app:nginx-app /usr/share/nginx/html && \
-    chown -R nginx-app:nginx-app /var/cache/nginx && \
-    chown -R nginx-app:nginx-app /var/log/nginx && \
-    chown -R nginx-app:nginx-app /etc/nginx/conf.d && \
-    touch /var/run/nginx.pid && \
-    chown -R nginx-app:nginx-app /var/run/nginx.pid
-
-# Prebaci na nginx-app korisnika
-USER nginx-app
-
-# Expose port 80
-EXPOSE 80
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-    CMD curl -f http://localhost:80 || exit 1
+  CMD curl -f http://localhost/ || exit 1
 
-# Pokreni nginx
+EXPOSE 80
+
 CMD ["nginx", "-g", "daemon off;"]

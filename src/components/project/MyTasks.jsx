@@ -3,10 +3,9 @@ import { Card, CardContent, Typography, List, ListItem, ListItemText, Chip, Circ
 import { Task as TaskIcon } from "@mui/icons-material";
 import axios from "axios";
 import { tokens } from "../../theme";
-import { API_BASE_URL } from "../../config/apiConfig";
 
 // API konstante
-const PROJECT_API_URL = `${API_BASE_URL.baseURL}/project`;
+const API_BASE_URL = "http://192.168.1.30:8080/api/v1/project";
 
 // Helper funkcija za auth headers
 const getAuthHeaders = () => {
@@ -28,7 +27,7 @@ const MyTasks = () => {
             setLoading(true);
             setError(null);
             
-            const response = await axios.get(`${PROJECT_API_URL}/tasks/my`, {
+            const response = await axios.get(`${API_BASE_URL}/tasks/my`, {
                 headers: getAuthHeaders()
             });
             

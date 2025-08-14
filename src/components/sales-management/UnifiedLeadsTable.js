@@ -35,7 +35,6 @@ import {
 } from "@mui/material";
 import axios from "axios";
 import { tokens } from "../../theme";
-import { API_BASE_URL } from "../../config/apiConfig";
 import { 
     Add as AddIcon, 
     Edit as EditIcon, 
@@ -50,7 +49,7 @@ import {
 } from "@mui/icons-material";
 
 // API konstante
-const CONTACT_API_URL = `${API_BASE_URL.baseURL}/contact`;
+const API_BASE_URL = "http://192.168.1.30:8080/api/v1/contact";
 
 // Helper funkcija za auth headers
 const getAuthHeaders = () => {

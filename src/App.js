@@ -32,8 +32,6 @@ import SalesManagement from "./scenes/sales/SalesManagement";
 import InventoryView from "./scenes/inventory/InventoryView";
 import AssetsView from "./scenes/assets/AssetsView";
 import FleetView from "./scenes/fleet/FleetView";
-import { API_BASE_URL } from "./config/apiConfig";
-
 function App() {
     const [theme, colorMode] = useMode();
     const [token, setToken] = useState(localStorage.getItem("token"));
@@ -43,7 +41,7 @@ function App() {
     // API pozivi za korisničke podatke
     const fetchUserProfile = async (token) => {
         try {
-            const response = await axios.get(`${API_BASE_URL.baseURL}/userProfile/getUserProfile`, {
+            const response = await axios.get("http://192.168.1.30:8080/api/v1/userProfile/getUserProfile", {
                 headers: {
                     "Authorization": `Bearer ${token}`
                 }
@@ -57,7 +55,7 @@ function App() {
 
     const fetchCompanyInfo = async (token) => {
         try {
-            const response = await axios.get(`${API_BASE_URL.baseURL}/company/getCompanyInfo`, {
+            const response = await axios.get("http://192.168.1.30:8080/api/v1/company/getCompanyInfo", {
                 headers: {
                     "Authorization": `Bearer ${token}`
                 }

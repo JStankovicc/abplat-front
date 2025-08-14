@@ -16,12 +16,12 @@ const API_CONFIG = {
 
 // Detektujemo okruženje
 const getEnvironment = () => {
-  // Ako je aplikacija pokrenuta kroz nginx (Docker), koristimo relativne URL-ove
+  // Ako je aplikacija pokrenuta kroz nginx (Docker ili production), koristimo relativne URL-ove
   if (window.location.port === '' || window.location.port === '80') {
-    return 'production';
+    return 'docker';
   }
-  // Ako je localhost:5000, verovatno je development
-  if (window.location.hostname === 'localhost' && window.location.port === '5000') {
+  // Ako je localhost:5000 ili 3000, verovatno je development
+  if (window.location.hostname === 'localhost' && (window.location.port === '5000' || window.location.port === '3000')) {
     return 'development';
   }
   return 'docker';
