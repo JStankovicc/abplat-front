@@ -1,22 +1,23 @@
-# Multi-stage build - koristimo node sa npm
+# Alternativni Dockerfile koji koristi yarn
 FROM node:18 AS build
 
 WORKDIR /app
 
-# Proveri da li npm postoji, ako ne instaliraj ga
-RUN which npm || (curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && apt-get install -y nodejs npm)
+# Install yarn globalno
+RUN npm install -g yarn
 
-# Copy package.json i package-lock.json
+# Copy package files
 COPY package*.json ./
+COPY yarn.lock* ./
 
-# Install dependencies sa --force da preskoči konflikte
-RUN npm install --force
+# Install dependencies sa yarn
+RUN yarn install --frozen-lockfile || yarn install
 
 # Copy source kod
 COPY . .
 
 # Build React aplikaciju
-RUN npm run build
+RUN yarn build
 
 # Production stage sa nginx
 FROM nginx:alpine
