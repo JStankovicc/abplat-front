@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
     Box,
     CssBaseline,
@@ -18,9 +18,6 @@ import {
     DialogTitle,
     DialogContent,
     InputAdornment,
-    CircularProgress,
-    Alert,
-    Snackbar,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import AttachFileIcon from "@mui/icons-material/AttachFile";
@@ -29,329 +26,131 @@ import AddIcon from "@mui/icons-material/Add";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import AutoAwesomeOutlinedIcon from "@mui/icons-material/AutoAwesomeOutlined";
 import { tokens } from "../../theme";
-import chatService from "../../services/chatService";
-import websocketService from "../../services/websocketService";
-import { 
-    getCurrentUser, 
-    formatConversationSummary, 
-    formatMessage, 
-    formatContact, 
-    sortConversationsByLastMessage,
-    formatTime 
-} from "../../utils/chatUtils";
 
+
+const initialChats = [
+    {
+        id: 1,
+        name: "Ana Marković",
+        avatar: "https://via.placeholder.com/40",
+        messages: [
+            {
+                text: "Kad će biti spremni ti dokumenti?",
+                sender: "sent",
+                senderAvatar: "https://via.placeholder.com/40",
+                timestamp: new Date("2024-02-05T19:35:28")
+            },
+            {
+                text: "Do kraja nedelje najkasnije",
+                sender: "received",
+                senderAvatar: "https://via.placeholder.com/40",
+                timestamp: new Date("2024-02-05T19:36:11")
+            }
+        ],
+        newMessages: true,
+    },
+    {
+        id: 2,
+        name: "Marko Petrović",
+        avatar: "https://via.placeholder.com/40",
+        messages: [
+            {
+                text: "Jesi li proverio finansijski izveštaj?",
+                sender: "sent",
+                senderAvatar: "https://via.placeholder.com/40",
+                timestamp: new Date("2024-02-05T18:47:03")
+            }
+        ],
+        newMessages: false,
+    },
+    {
+        id: 3,
+        name: "Jovana Ilić",
+        avatar: "https://via.placeholder.com/40",
+        messages: [],
+        newMessages: false,
+    }
+];
+
+const contacts = [
+    { id: 1, name: "Ana Marković", avatar: "https://via.placeholder.com/40" },
+    { id: 2, name: "Marko Petrović", avatar: "https://via.placeholder.com/40" },
+    { id: 3, name: "Jovana Ilić", avatar: "https://via.placeholder.com/40" },
+    { id: 4, name: "Nikola Stojanović", avatar: "https://via.placeholder.com/40" },
+    { id: 5, name: "Milica Đorđević", avatar: "https://via.placeholder.com/40" },
+    { id: 6, name: "Stefan Popović", avatar: "https://via.placeholder.com/40" },
+    { id: 7, name: "Kristina Nikolić", avatar: "https://via.placeholder.com/40" },
+    { id: 8, name: "Luka Pavlović", avatar: "https://via.placeholder.com/40" },
+    { id: 9, name: "Maja Todorović", avatar: "https://via.placeholder.com/40" },
+    { id: 10, name: "Ivan Milošević", avatar: "https://via.placeholder.com/40" },
+];
 
 const ChatInterface = () => {
-    // State
-    const [conversations, setConversations] = useState([]);
-    const [contacts, setContacts] = useState([]);
-    const [selectedConversationId, setSelectedConversationId] = useState(null);
-    const [messages, setMessages] = useState({});
+    const [chats, setChats] = useState(initialChats);
+    const [selectedChatId, setSelectedChatId] = useState(null);
     const [message, setMessage] = useState("");
     const [isNewChatDialogOpen, setIsNewChatDialogOpen] = useState(false);
     const [searchContactTerm, setSearchContactTerm] = useState("");
     const [searchChatTerm, setSearchChatTerm] = useState("");
-    const [loading, setLoading] = useState(true);
-    const [sendingMessage, setSendingMessage] = useState(false);
-    const [error, setError] = useState("");
-    const [wsConnected, setWsConnected] = useState(false);
-    const [currentUser, setCurrentUser] = useState(null);
-    const [messagesLoading, setMessagesLoading] = useState({});
-    const [loadingMoreMessages, setLoadingMoreMessages] = useState({});
-    const [hasMoreMessages, setHasMoreMessages] = useState({});
-    const [messagesPage, setMessagesPage] = useState({});
-    
     const theme = useTheme();
     const colors = tokens(theme.palette.mode);
     const messagesEndRef = useRef(null);
     const isSmallScreen = useMediaQuery(theme.breakpoints.down("md"));
-    
-    const selectedConversation = conversations.find(conv => conv.id === selectedConversationId);
-    const selectedMessages = useMemo(() => messages[selectedConversationId] || [], [messages, selectedConversationId]);
 
-    // WebSocket message handler
-    const handleWebSocketMessage = useCallback((messageResponse) => {
-        const formattedMessage = formatMessage(messageResponse, currentUser?.id);
-        const conversationId = messageResponse.conversationId;
-        
-        setMessages(prev => ({
-            ...prev,
-            [conversationId]: [...(prev[conversationId] || []), formattedMessage]
-        }));
-        
-        // Update conversation last message
-        setConversations(prev => prev.map(conv => 
-            conv.id === conversationId 
-                ? { 
-                    ...conv, 
-                    lastMessagePreview: messageResponse.content,
-                    lastMessageAt: new Date(messageResponse.createdAt),
-                    newMessages: conv.id !== selectedConversationId
-                }
-                : conv
-        ));
-    }, [currentUser?.id, selectedConversationId]);
+    const selectedChat = chats.find(chat => chat.id === selectedChatId);
 
-    // Inicijalno učitavanje podataka
     useEffect(() => {
-        const initializeChat = async () => {
-            try {
-                setLoading(true);
-                const user = getCurrentUser();
-                if (!user || !user.id) {
-                    setError("Nema validnog korisnika ili korisnik nema ID");
-                    console.error('getCurrentUser vratila:', user);
-                    return;
-                }
-                setCurrentUser(user);
-
-                // Učitaj kontakte i konverzacije paralelno
-                const [contactsResponse, conversationsResponse] = await Promise.all([
-                    chatService.getAllContacts(),
-                    chatService.getInbox()
-                ]);
-
-                const formattedContacts = (contactsResponse || []).map(formatContact);
-                setContacts(formattedContacts);
-                
-                if (formattedContacts.length === 0) {
-                    console.warn('Nema dostupnih kontakata - možda je potrebno da se backend popravi');
-                }
-
-                console.log('Raw konverzacije response:', conversationsResponse);
-                
-                const formattedConversations = (conversationsResponse || []).map(conv => 
-                    formatConversationSummary(conv, contactsResponse || [], user.id)
-                );
-                console.log('Formatirane konverzacije:', formattedConversations);
-                
-                const sortedConversations = sortConversationsByLastMessage(formattedConversations);
-                console.log('Sortirane konverzacije:', sortedConversations);
-                
-                setConversations(sortedConversations);
-
-                // Odaberi poslednju konverzaciju
-                if (sortedConversations.length > 0) {
-                    setSelectedConversationId(sortedConversations[0].id);
-                    console.log('Odabrana konverzacija:', sortedConversations[0].id);
-                } else {
-                    console.warn('Nema konverzacija za prikaz');
-                }
-
-                // Konektuj WebSocket
-                try {
-                    await websocketService.connect(user.id);
-                    websocketService.addMessageHandler(handleWebSocketMessage);
-                    websocketService.addConnectionHandler(setWsConnected);
-                } catch (wsError) {
-                    console.error('WebSocket konekcija neuspešna:', wsError);
-                    setWsConnected(false);
-                    // Nastavi bez WebSocket-a - aplikacija može raditi sa REST API
-                    console.info('Chat radi u REST-only modu - poruke se šalju preko HTTP');
-                    
-                    // Prikaži poruku korisniku o WebSocket problemu
-                    if (wsError.message.includes('CORS') || wsError.message.includes('onemogućen')) {
-                        setError("WebSocket nije dostupan zbog CORS problema. Chat radi preko HTTP-a.");
-                    }
-                }
-                
-            } catch (error) {
-                console.error('Greška pri inicijalizaciji chat-a:', error);
-                setError("Greška pri učitavanju chat-a");
-        } finally {
-                setLoading(false);
-            }
-        };
-
-        initializeChat();
-
-        // Cleanup
-        return () => {
-            websocketService.removeMessageHandler(handleWebSocketMessage);
-            websocketService.removeConnectionHandler(setWsConnected);
-            websocketService.disconnect();
-        };
-    }, [handleWebSocketMessage]);
-
-    // Učitaj poruke kad se promeni konverzacija
-    useEffect(() => {
-        const loadMessages = async () => {
-            if (!selectedConversationId || messages[selectedConversationId]) {
-                return; // Već učitane poruke
-            }
-
-            try {
-                setMessagesLoading(prev => ({ ...prev, [selectedConversationId]: true }));
-                const messagesResponse = await chatService.getMessages(selectedConversationId, 0, 50);
-                
-                const formattedMessages = messagesResponse.content.map(msg => 
-                    formatMessage(msg, currentUser?.id)
-                ).reverse(); // Backend vraća u obrnutom redosledu
-            
-            setMessages(prev => ({
-                ...prev,
-                    [selectedConversationId]: formattedMessages
-                }));
-
-                // Set pagination info
-                setMessagesPage(prev => ({ ...prev, [selectedConversationId]: 0 }));
-                setHasMoreMessages(prev => ({ 
-                    ...prev, 
-                    [selectedConversationId]: !messagesResponse.last 
-                }));
-
-                // Označi kao pročitano
-                if (formattedMessages.length > 0) {
-                    const lastMessage = messagesResponse.content[0]; // Poslednja poruka
-                    await chatService.markAsRead(selectedConversationId, lastMessage.id);
-                    
-                    // Update unread count
-                setConversations(prev => prev.map(conv => 
-                        conv.id === selectedConversationId 
-                            ? { ...conv, newMessages: false, unreadCount: 0 }
-                        : conv
-                ));
-            }
-                
-            } catch (error) {
-                console.error('Greška pri učitavanju poruka:', error);
-        } finally {
-                setMessagesLoading(prev => ({ ...prev, [selectedConversationId]: false }));
-            }
-        };
-
-        loadMessages();
-    }, [selectedConversationId, currentUser?.id, messages]);
-
-    // Funkcija za učitavanje starijih poruka
-    const loadMoreMessages = async () => {
-        if (!selectedConversationId || loadingMoreMessages[selectedConversationId] || !hasMoreMessages[selectedConversationId]) {
-            return;
+        // Select last chat
+        if (chats.length > 0) {
+            const mostRecentChat = chats.reduce((prev, current) => {
+                const prevLastMessage = prev.messages[prev.messages.length - 1]?.timestamp || 0;
+                const currentLastMessage = current.messages[current.messages.length - 1]?.timestamp || 0;
+                return prevLastMessage > currentLastMessage ? prev : current;
+            });
+            setSelectedChatId(mostRecentChat.id);
         }
+    }, []);
 
-        try {
-            setLoadingMoreMessages(prev => ({ ...prev, [selectedConversationId]: true }));
-            const currentPage = messagesPage[selectedConversationId] || 0;
-            const nextPage = currentPage + 1;
-            
-            const messagesResponse = await chatService.getMessages(selectedConversationId, nextPage, 50);
-            
-            const formattedMessages = messagesResponse.content.map(msg => 
-                formatMessage(msg, currentUser?.id)
-            ).reverse();
-            
-            // Dodaj starije poruke na početak
-        setMessages(prev => ({
-            ...prev,
-                [selectedConversationId]: [...formattedMessages, ...(prev[selectedConversationId] || [])]
-            }));
-
-            setMessagesPage(prev => ({ ...prev, [selectedConversationId]: nextPage }));
-            setHasMoreMessages(prev => ({ 
-                ...prev, 
-                [selectedConversationId]: !messagesResponse.last 
-            }));
-            
-        } catch (error) {
-            console.error('Greška pri učitavanju starijih poruka:', error);
-        } finally {
-            setLoadingMoreMessages(prev => ({ ...prev, [selectedConversationId]: false }));
-        }
-    };
-
-    // Scroll do kraja kad se dodaju nove poruke
     useEffect(() => {
         if (messagesEndRef.current) {
             messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
         }
-    }, [selectedMessages]);
+    }, [selectedChat?.messages]);
 
-    const handleSendMessage = async () => {
-        if (!message.trim() || !selectedConversationId || sendingMessage) {
-            return;
-        }
-
-        const messageToSend = message;
-        
-        try {
-            setSendingMessage(true);
-            
-            // Optimistic update - dodaj poruku odmah u UI
-            const optimisticMessage = {
-                id: `temp-${Date.now()}`,
-                text: messageToSend,
+    const handleSendMessage = () => {
+        if (message.trim() && selectedChatId) {
+            const newMessage = {
+                text: message,
                 sender: "sent",
-                senderId: currentUser?.id,
                 senderAvatar: "https://via.placeholder.com/40",
                 timestamp: new Date()
             };
-            
-            setMessages(prev => ({
-                ...prev,
-                [selectedConversationId]: [...(prev[selectedConversationId] || []), optimisticMessage]
-            }));
-            
-            setMessage("");
-            
-            // Pošalji preko WebSocket-a
-            if (wsConnected) {
-                websocketService.sendMessage(selectedConversationId, messageToSend);
-            } else {
-                // Fallback na REST API
-                await chatService.sendMessage(selectedConversationId, messageToSend);
-            }
-            
-        } catch (error) {
-            console.error('Greška pri slanju poruke:', error);
-            setError("Greška pri slanju poruke");
-            // Ukloni optimistic update u slučaju greške
-            setMessages(prev => ({
-                ...prev,
-                [selectedConversationId]: (prev[selectedConversationId] || []).filter(msg => 
-                    !msg.id.toString().startsWith('temp-')
+
+            setChats(prevChats =>
+                prevChats.map(chat =>
+                    chat.id === selectedChatId
+                        ? { ...chat, messages: [...chat.messages, newMessage] }
+                        : chat
                 )
-            }));
-            setMessage(messageToSend); // Vrati poruku u input
-        } finally {
-            setSendingMessage(false);
+            );
+            setMessage("");
         }
     };
 
-    const handleContactSelect = async (contact) => {
-        try {
-            setIsNewChatDialogOpen(false);
+    const handleContactSelect = (contact) => {
+        setIsNewChatDialogOpen(false);
 
-            // Proveravamo da li već postoji konverzacija sa ovim kontaktom
-            const existingConversation = conversations.find(conv => 
-                !conv.group && conv.participantIds?.includes(contact.id)
-            );
-
-            if (existingConversation) {
-                setSelectedConversationId(existingConversation.id);
-            } else {
-                // Kreiraj novu direktnu konverzaciju
-                const conversationId = await chatService.createOrGetDirectConversation(contact.id);
-                
-                // Dodaj novu konverzaciju u listu
-                const newConversation = {
-                    id: conversationId,
-                    name: contact.name,
-                    avatar: contact.avatar,
-                    messages: [],
-                    newMessages: false,
-                    unreadCount: 0,
-                    lastMessagePreview: "",
-                    lastMessageAt: null,
-                    group: false,
-                    participantIds: [currentUser?.id, contact.id]
-                };
-                
-                setConversations(prev => [newConversation, ...prev]);
-                setSelectedConversationId(conversationId);
-            }
-        } catch (error) {
-            console.error('Greška pri kreiranju konverzacije:', error);
-            setError("Greška pri kreiranju konverzacije");
+        const existingChat = chats.find(chat => chat.id === contact.id);
+        if (existingChat) {
+            setSelectedChatId(existingChat.id);
+        } else {
+            const newChat = {
+                ...contact,
+                messages: [],
+                newMessages: false,
+            };
+            setChats(prev => [...prev, newChat]);
+            setSelectedChatId(newChat.id);
         }
     };
 
@@ -360,79 +159,21 @@ const ChatInterface = () => {
         setMessage(formalizedMessage);
     };
 
-    const handleKeyPress = (event) => {
-        if (event.key === 'Enter' && !event.shiftKey) {
-            event.preventDefault();
-            handleSendMessage();
-        }
+    const formatTime = (date) => {
+        return date?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) || '';
     };
 
     const filteredContacts = contacts.filter(contact =>
-        contact && contact.name && 
-        contact.name.toLowerCase().includes(searchContactTerm.toLowerCase()) &&
-        contact.id !== currentUser?.id // Ne prikazuj sebe u kontaktima
+        contact.name.toLowerCase().includes(searchContactTerm.toLowerCase())
     );
 
-    const filteredConversations = conversations.filter(conv =>
-        conv && conv.name && 
-        conv.name.toLowerCase().includes(searchChatTerm.toLowerCase())
+    const filteredChats = chats.filter(chat =>
+        chat.name.toLowerCase().includes(searchChatTerm.toLowerCase())
     );
-
-    // Loading state
-    if (loading) {
-        return (
-            <Box sx={{ 
-                height: "calc(100vh - 72px)", 
-                display: "flex", 
-                alignItems: "center", 
-                justifyContent: "center" 
-            }}>
-                <CircularProgress />
-            </Box>
-        );
-    }
 
     return (
         <Box sx={{ height: "calc(100vh - 72px)", display: "flex" }}>
             <CssBaseline />
-            
-            {/* Error Snackbar */}
-            <Snackbar
-                open={!!error} 
-                autoHideDuration={error.includes('WebSocket') ? null : 6000} 
-                onClose={() => setError("")}
-                anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-            >
-                <Alert 
-                    onClose={() => setError("")} 
-                    severity={error.includes('WebSocket') ? "warning" : "error"}
-                    action={error.includes('WebSocket') ? (
-                        <Button 
-                            color="inherit" 
-                            size="small" 
-                            onClick={() => {
-                                websocketService.reset();
-                                setError("");
-                                // Pokušaj ponovo da se konektuješ
-                                if (currentUser?.id) {
-                                    websocketService.connect(currentUser.id)
-                                        .then(() => {
-                                            websocketService.addMessageHandler(handleWebSocketMessage);
-                                            websocketService.addConnectionHandler(setWsConnected);
-                                        })
-                                        .catch(() => {
-                                            // Ignorišemo grešku - već smo prikazali poruku
-                                        });
-                                }
-                            }}
-                        >
-                            Pokušaj ponovo
-                        </Button>
-                    ) : null}
-                >
-                    {error}
-                </Alert>
-            </Snackbar>
 
             {/* New Chat Dialog */}
             <Dialog
@@ -466,35 +207,24 @@ const ChatInterface = () => {
                         }}
                     />
                     <List sx={{ maxHeight: '60vh', overflow: 'auto' }}>
-                        {filteredContacts.length === 0 ? (
-                            <ListItem>
+                        {filteredContacts.map((contact) => (
+                            <ListItem
+                                button
+                                key={contact.id}
+                                onClick={() => handleContactSelect(contact)}
+                                sx={{
+                                    '&:hover': {
+                                        bgcolor: colors.primary[600]
+                                    }
+                                }}
+                            >
+                                <Avatar src={contact.avatar} sx={{ mr: 2 }} />
                                 <ListItemText
-                                    primary="Nema dostupnih kontakata"
-                                    secondary="Backend greška - kontaktirajte administratora"
+                                    primary={contact.name}
                                     primaryTypographyProps={{ color: 'white' }}
-                                    secondaryTypographyProps={{ color: colors.grey[400] }}
                                 />
                             </ListItem>
-                        ) : (
-                            filteredContacts.map((contact) => (
-                                <ListItem
-                                    button
-                                    key={contact.id}
-                                    onClick={() => handleContactSelect(contact)}
-                                    sx={{
-                                        '&:hover': {
-                                            bgcolor: colors.primary[600]
-                                        }
-                                    }}
-                                >
-                                    <Avatar src={contact.avatar} sx={{ mr: 2 }} />
-                                    <ListItemText
-                                        primary={contact.name}
-                                        primaryTypographyProps={{ color: 'white' }}
-                                    />
-                                </ListItem>
-                            ))
-                        )}
+                        ))}
                     </List>
                 </DialogContent>
             </Dialog>
@@ -508,7 +238,7 @@ const ChatInterface = () => {
                             width: "100%",
                             height: "100vh",
                             position: "absolute",
-                            left: selectedConversationId ? "-100%" : "0",
+                            left: selectedChatId ? "-100%" : "0",
                             transition: "left 0.3s ease",
                             bgcolor: theme.palette.mode === "dark" ? colors.primary[700] : "#f4f4f7",
                             p: 2,
@@ -545,50 +275,51 @@ const ChatInterface = () => {
                             />
                         </Box>
                         <List>
-                            {filteredConversations.map((conv) => {
-                                    return (
-                                    <React.Fragment key={conv.id}>
-                                            <ListItem
-                                                button
-                                            onClick={() => setSelectedConversationId(conv.id)}
-                                                sx={{
-                                                bgcolor: selectedConversationId === conv.id ? colors.primary[600] : "transparent",
-                                                    borderRadius: "8px",
-                                                    mb: 1
-                                                }}
-                                            >
-                                            <Avatar src={conv.avatar} sx={{ mr: 2 }} />
-                                                <ListItemText
-                                                primary={conv.name}
-                                                    secondary={
-                                                        <Box display="flex" justifyContent="space-between" alignItems="center">
-                                                            <Typography
-                                                                variant="body2"
-                                                                noWrap
-                                                                sx={{
-                                                                    color: theme.palette.mode === 'dark' ? colors.grey[300] : colors.grey[700],
-                                                                    maxWidth: '70%'
-                                                                }}
-                                                            >
-                                                            {conv.lastMessagePreview || "Nema poruka"}
-                                                            </Typography>
-                                                            <Typography
-                                                                variant="caption"
-                                                                sx={{
-                                                                    color: theme.palette.mode === 'dark' ? colors.grey[500] : colors.grey[600],
-                                                                    fontSize: '0.7rem'
-                                                                }}
-                                                            >
-                                                            {formatTime(conv.lastMessageAt)}
-                                                            </Typography>
-                                                        </Box>
-                                                    }
-                                                />
-                                            {conv.newMessages && <Badge color="error" variant="dot" />}
-                                            </ListItem>
-                                            <Divider />
-                                        </React.Fragment>
-                                    );
+                            {filteredChats.map((chat) => {
+                                const lastMessage = chat.messages[chat.messages.length - 1];
+                                return (
+                                    <React.Fragment key={chat.id}>
+                                        <ListItem
+                                            button
+                                            onClick={() => setSelectedChatId(chat.id)}
+                                            sx={{
+                                                bgcolor: selectedChatId === chat.id ? colors.primary[600] : "transparent",
+                                                borderRadius: "8px",
+                                                mb: 1
+                                            }}
+                                        >
+                                            <Avatar src={chat.avatar} sx={{ mr: 2 }} />
+                                            <ListItemText
+                                                primary={chat.name}
+                                                secondary={
+                                                    <Box display="flex" justifyContent="space-between" alignItems="center">
+                                                        <Typography
+                                                            variant="body2"
+                                                            noWrap
+                                                            sx={{
+                                                                color: theme.palette.mode === 'dark' ? colors.grey[300] : colors.grey[700],
+                                                                maxWidth: '70%'
+                                                            }}
+                                                        >
+                                                            {lastMessage?.text || "Nema poruka"}
+                                                        </Typography>
+                                                        <Typography
+                                                            variant="caption"
+                                                            sx={{
+                                                                color: theme.palette.mode === 'dark' ? colors.grey[500] : colors.grey[600],
+                                                                fontSize: '0.7rem'
+                                                            }}
+                                                        >
+                                                            {formatTime(lastMessage?.timestamp)}
+                                                        </Typography>
+                                                    </Box>
+                                                }
+                                            />
+                                            {chat.newMessages && <Badge color="error" variant="dot" />}
+                                        </ListItem>
+                                        <Divider />
+                                    </React.Fragment>
+                                );
                             })}
                         </List>
                     </Box>
@@ -599,7 +330,7 @@ const ChatInterface = () => {
                             width: "100%",
                             height: "100vh",
                             position: "absolute",
-                            left: selectedConversationId ? "0" : "100%",
+                            left: selectedChatId ? "0" : "100%",
                             transition: "left 0.3s ease",
                             bgcolor: theme.palette.mode === "dark" ? colors.primary[800] : "#fff",
                             p: 2,
@@ -608,19 +339,14 @@ const ChatInterface = () => {
                             zIndex: 2
                         }}
                     >
-                        {selectedConversation && (
+                        {selectedChat && (
                             <>
                                 <Box display="flex" alignItems="center" mb={2} paddingTop="50px">
-                                    <IconButton onClick={() => setSelectedConversationId(null)} sx={{ mr: 1 }}>
+                                    <IconButton onClick={() => setSelectedChatId(null)} sx={{ mr: 1 }}>
                                         <ArrowBackIcon />
                                     </IconButton>
-                                    <Avatar src={selectedConversation.avatar} sx={{ mr: 2 }} />
-                                    <Typography variant="h6">{selectedConversation.name}</Typography>
-                                    {!wsConnected && (
-                                        <Typography variant="caption" color="error" sx={{ ml: 2 }}>
-                                            Offline
-                                    </Typography>
-                                    )}
+                                    <Avatar src={selectedChat.avatar} sx={{ mr: 2 }} />
+                                    <Typography variant="h6">{selectedChat.name}</Typography>
                                 </Box>
 
                                 <Box
@@ -633,70 +359,45 @@ const ChatInterface = () => {
                                         mb: 2
                                     }}
                                 >
-                                    {hasMoreMessages[selectedConversationId] && (
-                                                <Box display="flex" justifyContent="center" mb={2}>
-                                                    <Button 
-                                                variant="outlined"
-                                                        size="small"
-                                                onClick={loadMoreMessages}
-                                                disabled={loadingMoreMessages[selectedConversationId]}
-                                                sx={{ 
-                                                    borderRadius: '16px',
-                                                    textTransform: 'none'
-                                                }}
-                                            >
-                                                {loadingMoreMessages[selectedConversationId] ? (
-                                                    <CircularProgress size={16} />
-                                                ) : (
-                                                    'Učitaj starije poruke'
-                                                )}
-                                                    </Button>
-                                                </Box>
-                                            )}
-                                    {messagesLoading[selectedConversationId] && (
-                                        <Box display="flex" justifyContent="center" mt={2}>
-                                            <CircularProgress size={24} />
-                                        </Box>
-                                    )}
-                                    {selectedMessages.length === 0 && !messagesLoading[selectedConversationId] && (
+                                    {selectedChat.messages.length === 0 && (
                                         <Typography variant="body2" color="textSecondary" textAlign="center" mt={2}>
-                                            Počnite razgovor sa {selectedConversation.name}
+                                            Nijedna poruka još uvek...
                                         </Typography>
                                     )}
-                                    {selectedMessages.map((msg, index) => (
+                                    {selectedChat.messages.map((msg, index) => (
                                         <Box
                                             key={index}
-                                                    display="flex"
+                                            display="flex"
                                             justifyContent={msg.sender === "sent" ? "flex-end" : "flex-start"}
-                                                    mb={2}
-                                                >
-                                                    <Box sx={{ position: 'relative', maxWidth: '80%' }}>
-                                                        <Box
-                                                            sx={{
+                                            mb={2}
+                                        >
+                                            <Box sx={{ position: 'relative', maxWidth: '80%' }}>
+                                                <Box
+                                                    sx={{
                                                         bgcolor: msg.sender === "sent" ? colors.greenAccent[500] : colors.blueAccent[500],
-                                                                color: "white",
-                                                                p: 1.5,
-                                                                borderRadius: "12px",
-                                                                position: 'relative'
-                                                            }}
-                                                        >
+                                                        color: "white",
+                                                        p: 1.5,
+                                                        borderRadius: "12px",
+                                                        position: 'relative'
+                                                    }}
+                                                >
                                                     {msg.text}
-                                                            <Typography
-                                                                variant="caption"
-                                                                sx={{
-                                                                    position: 'absolute',
-                                                                    right: 8,
-                                                                    bottom: 4,
-                                                                    color: 'rgba(255,255,255,0.5)',
-                                                                    fontSize: '0.6rem',
-                                                                    lineHeight: 1
-                                                                }}
-                                                            >
+                                                    <Typography
+                                                        variant="caption"
+                                                        sx={{
+                                                            position: 'absolute',
+                                                            right: 8,
+                                                            bottom: 4,
+                                                            color: 'rgba(255,255,255,0.5)',
+                                                            fontSize: '0.6rem',
+                                                            lineHeight: 1
+                                                        }}
+                                                    >
                                                         {formatTime(msg.timestamp)}
-                                                            </Typography>
-                                                        </Box>
-                                                    </Box>
+                                                    </Typography>
                                                 </Box>
+                                            </Box>
+                                        </Box>
                                     ))}
                                     <div ref={messagesEndRef} />
                                 </Box>
@@ -709,10 +410,7 @@ const ChatInterface = () => {
                                         placeholder="Napiši poruku..."
                                         value={message}
                                         onChange={(e) => setMessage(e.target.value)}
-                                        onKeyPress={handleKeyPress}
                                         size="small"
-                                        multiline
-                                        maxRows={4}
                                     />
                                     <Button
                                         variant="outlined"
@@ -736,14 +434,13 @@ const ChatInterface = () => {
                                     <Button
                                         variant="contained"
                                         onClick={handleSendMessage}
-                                        disabled={sendingMessage || !message.trim()}
                                         sx={{
                                             bgcolor: colors.greenAccent[500],
                                             "&:hover": { bgcolor: colors.greenAccent[600] },
                                             minWidth: 'auto'
                                         }}
                                     >
-                                        {sendingMessage ? <CircularProgress size={20} color="inherit" /> : <SendIcon />}
+                                        <SendIcon />
                                     </Button>
                                 </Box>
                             </>
@@ -790,61 +487,57 @@ const ChatInterface = () => {
                             />
                         </Box>
                         <List>
-                            {filteredConversations.map((conv) => {
-                                    return (
-                                        <ListItem
-                                        key={conv.id}
-                                            button
-                                        selected={selectedConversationId === conv.id}
-                                        onClick={() => setSelectedConversationId(conv.id)}
-                                            sx={{ borderRadius: "8px", mb: 1 }}
-                                        >
-                                        <Avatar src={conv.avatar} sx={{ mr: 2 }} />
-                                            <ListItemText
-                                            primary={conv.name}
-                                                secondary={
-                                                    <Box display="flex" justifyContent="space-between" alignItems="center">
-                                                        <Typography
-                                                            variant="body2"
-                                                            noWrap
-                                                            sx={{
-                                                                color: theme.palette.mode === 'dark' ? colors.grey[300] : colors.grey[700],
-                                                                maxWidth: '60%'
-                                                            }}
-                                                        >
-                                                        {conv.lastMessagePreview || "Nema poruka"}
-                                                        </Typography>
-                                                        <Typography
-                                                            variant="caption"
-                                                            sx={{
-                                                                color: theme.palette.mode === 'dark' ? colors.grey[500] : colors.grey[600],
-                                                                fontSize: '0.7rem'
-                                                            }}
-                                                        >
-                                                        {formatTime(conv.lastMessageAt)}
-                                                        </Typography>
-                                                    </Box>
-                                                }
-                                            />
-                                        {conv.newMessages && <Badge color="error" variant="dot" sx={{ ml: 2 }} />}
-                                        </ListItem>
-                                    );
+                            {filteredChats.map((chat) => {
+                                const lastMessage = chat.messages[chat.messages.length - 1];
+                                return (
+                                    <ListItem
+                                        key={chat.id}
+                                        button
+                                        selected={selectedChatId === chat.id}
+                                        onClick={() => setSelectedChatId(chat.id)}
+                                        sx={{ borderRadius: "8px", mb: 1 }}
+                                    >
+                                        <Avatar src={chat.avatar} sx={{ mr: 2 }} />
+                                        <ListItemText
+                                            primary={chat.name}
+                                            secondary={
+                                                <Box display="flex" justifyContent="space-between" alignItems="center">
+                                                    <Typography
+                                                        variant="body2"
+                                                        noWrap
+                                                        sx={{
+                                                            color: theme.palette.mode === 'dark' ? colors.grey[300] : colors.grey[700],
+                                                            maxWidth: '60%'
+                                                        }}
+                                                    >
+                                                        {lastMessage?.text || "Nema poruka"}
+                                                    </Typography>
+                                                    <Typography
+                                                        variant="caption"
+                                                        sx={{
+                                                            color: theme.palette.mode === 'dark' ? colors.grey[500] : colors.grey[600],
+                                                            fontSize: '0.7rem'
+                                                        }}
+                                                    >
+                                                        {formatTime(lastMessage?.timestamp)}
+                                                    </Typography>
+                                                </Box>
+                                            }
+                                        />
+                                        {chat.newMessages && <Badge color="error" variant="dot" sx={{ ml: 2 }} />}
+                                    </ListItem>
+                                );
                             })}
                         </List>
                     </Box>
 
                     {/* Desktop Chat Window */}
                     <Box sx={{ flex: 1, display: "flex", flexDirection: "column", p: 3 }}>
-                        {selectedConversation ? (
+                        {selectedChat ? (
                             <>
                                 <Box display="flex" alignItems="center" mb={3}>
-                                    <Avatar src={selectedConversation.avatar} sx={{ width: 40, height: 40, mr: 2 }} />
-                                    <Typography variant="h5">{selectedConversation.name}</Typography>
-                                    {!wsConnected && (
-                                        <Typography variant="caption" color="error" sx={{ ml: 2 }}>
-                                            Offline - poruke se šalju preko REST API-ja
-                                    </Typography>
-                                    )}
+                                    <Avatar src={selectedChat.avatar} sx={{ width: 40, height: 40, mr: 2 }} />
+                                    <Typography variant="h5">{selectedChat.name}</Typography>
                                 </Box>
 
                                 <Box
@@ -857,70 +550,45 @@ const ChatInterface = () => {
                                         mb: 2
                                     }}
                                 >
-                                    {hasMoreMessages[selectedConversationId] && (
-                                                <Box display="flex" justifyContent="center" mb={2}>
-                                                    <Button 
-                                                variant="outlined"
-                                                        size="small"
-                                                onClick={loadMoreMessages}
-                                                disabled={loadingMoreMessages[selectedConversationId]}
-                                                sx={{ 
-                                                    borderRadius: '16px',
-                                                    textTransform: 'none'
-                                                }}
-                                            >
-                                                {loadingMoreMessages[selectedConversationId] ? (
-                                                    <CircularProgress size={16} />
-                                                ) : (
-                                                    'Učitaj starije poruke'
-                                                )}
-                                                    </Button>
-                                                </Box>
-                                            )}
-                                    {messagesLoading[selectedConversationId] && (
-                                        <Box display="flex" justifyContent="center" mt={2}>
-                                            <CircularProgress size={24} />
-                                        </Box>
-                                    )}
-                                    {selectedMessages.length === 0 && !messagesLoading[selectedConversationId] && (
+                                    {selectedChat.messages.length === 0 && (
                                         <Typography variant="body2" color="textSecondary" textAlign="center" mt={2}>
-                                            Počnite razgovor sa {selectedConversation.name}
+                                            Počnite razgovor sa {selectedChat.name}
                                         </Typography>
                                     )}
-                                    {selectedMessages.map((msg, index) => (
+                                    {selectedChat.messages.map((msg, index) => (
                                         <Box
                                             key={index}
-                                                    display="flex"
+                                            display="flex"
                                             justifyContent={msg.sender === "sent" ? "flex-end" : "flex-start"}
-                                                    mb={2}
-                                                >
-                                                    <Box sx={{ position: 'relative', maxWidth: '60%' }}>
-                                                        <Box
-                                                            sx={{
+                                            mb={2}
+                                        >
+                                            <Box sx={{ position: 'relative', maxWidth: '60%' }}>
+                                                <Box
+                                                    sx={{
                                                         bgcolor: msg.sender === "sent" ? colors.greenAccent[500] : colors.blueAccent[500],
-                                                                color: "white",
-                                                                p: 2,
-                                                                borderRadius: "12px",
-                                                                position: 'relative'
-                                                            }}
-                                                        >
+                                                        color: "white",
+                                                        p: 2,
+                                                        borderRadius: "12px",
+                                                        position: 'relative'
+                                                    }}
+                                                >
                                                     {msg.text}
-                                                            <Typography
-                                                                variant="caption"
-                                                                sx={{
-                                                                    position: 'absolute',
-                                                                    right: 8,
-                                                                    bottom: 4,
-                                                                    color: 'rgba(255,255,255,0.5)',
-                                                                    fontSize: '0.7rem',
-                                                                    lineHeight: 1
-                                                                }}
-                                                            >
+                                                    <Typography
+                                                        variant="caption"
+                                                        sx={{
+                                                            position: 'absolute',
+                                                            right: 8,
+                                                            bottom: 4,
+                                                            color: 'rgba(255,255,255,0.5)',
+                                                            fontSize: '0.7rem',
+                                                            lineHeight: 1
+                                                        }}
+                                                    >
                                                         {formatTime(msg.timestamp)}
-                                                            </Typography>
-                                                        </Box>
-                                                    </Box>
+                                                    </Typography>
                                                 </Box>
+                                            </Box>
+                                        </Box>
                                     ))}
                                     <div ref={messagesEndRef} />
                                 </Box>
@@ -935,10 +603,7 @@ const ChatInterface = () => {
                                         placeholder="Napiši poruku..."
                                         value={message}
                                         onChange={(e) => setMessage(e.target.value)}
-                                        onKeyPress={handleKeyPress}
                                         size="medium"
-                                        multiline
-                                        maxRows={4}
                                     />
                                     <Button
                                         variant="outlined"
@@ -962,7 +627,6 @@ const ChatInterface = () => {
                                         variant="contained"
                                         size="large"
                                         onClick={handleSendMessage}
-                                        disabled={sendingMessage || !message.trim()}
                                         sx={{
                                             bgcolor: colors.greenAccent[500],
                                             "&:hover": { bgcolor: colors.greenAccent[600] },
@@ -970,27 +634,15 @@ const ChatInterface = () => {
                                             py: 1.5
                                         }}
                                     >
-                                        {sendingMessage ? (
-                                            <CircularProgress size={20} color="inherit" />
-                                        ) : (
-                                            <>
-                                                <SendIcon sx={{ mr: 1 }} /> Pošalji
-                                            </>
-                                        )}
+                                        <SendIcon sx={{ mr: 1 }} /> Pošalji
                                     </Button>
                                 </Box>
                             </>
                         ) : (
-                            <Box sx={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 2 }}>
+                            <Box sx={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
                                 <Typography variant="h6" color="textSecondary">
-                                    {conversations.length === 0 ? "Nema dostupnih konverzacija" : "Odaberite prepisku za dopisivanje"}
+                                    Odaberite prepisku za dopisivanje
                                 </Typography>
-                                {conversations.length === 0 && (
-                                    <Typography variant="body2" color="textSecondary" textAlign="center">
-                                        Možda postoji problem sa backend servisom.<br/>
-                                        Kontaktirajte administratora za pomoć.
-                                    </Typography>
-                                )}
                             </Box>
                         )}
                     </Box>
