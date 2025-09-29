@@ -22,7 +22,7 @@ import { tokens } from "../../theme";
 import AddLeadModal from "./modals/AddLeadModal";
 
 // API konstante
-const API_BASE_URL = "http://192.168.1.30:8080/api/v1/contact";
+const API_BASE_URL = "http://localhost:8080/api/v1/contact";
 
 // Helper funkcija za auth headers
 const getAuthHeaders = () => {

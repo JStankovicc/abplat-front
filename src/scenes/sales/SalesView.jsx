@@ -25,8 +25,8 @@ import MobileMenu from "../../components/sales/MobileMenu";
 const sections = [
     { id: 0, label: "Kontakti", icon: <ContactsIcon />, component: <ContactTable />, disabled: false },
     { id: 1, label: "Pipeline", icon: <PipelineIcon />, component: <PipelineBoard />, disabled: false },
-    { id: 2, label: "Kalendar", icon: <CalendarIcon />, component: <SalesCalendar />, disabled: true },
-    { id: 3, label: "Analitika", icon: <AnalyticsIcon />, component: <SalesAnalytics />, disabled: true },
+    { id: 2, label: "Kalendar", icon: <CalendarIcon />, component: <SalesCalendar />, disabled: false },
+    { id: 3, label: "Analitika", icon: <AnalyticsIcon />, component: <SalesAnalytics />, disabled: false },
 ];
 
 const SalesView = () => {

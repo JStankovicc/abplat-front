@@ -4,6 +4,10 @@ const API_CONFIG = {
     baseURL: "http://localhost:8080/api/v1",
     wsURL: "http://localhost:8080/ws-chat"
   },
+  serveo: {
+    baseURL: "http://localhost:8080/api/v1",
+    wsURL: "http://localhost:8080/ws-chat"
+  },
   docker: {
     baseURL: "/api/v1",  // Koristimo relativni URL jer nginx proxy-uje
     wsURL: "/ws-chat"
@@ -16,15 +20,8 @@ const API_CONFIG = {
 
 // Detektujemo okruženje
 const getEnvironment = () => {
-  // Ako je aplikacija pokrenuta kroz nginx (Docker ili production), koristimo relativne URL-ove
-  if (window.location.port === '' || window.location.port === '80') {
-    return 'docker';
-  }
-  // Ako je localhost:5000 ili 3000, verovatno je development
-  if (window.location.hostname === 'localhost' && (window.location.port === '5000' || window.location.port === '3000')) {
-    return 'development';
-  }
-  return 'docker';
+  // PRIVREMENO: Za testiranje uvek koristi serveo backend
+  return 'serveo';
 };
 
 const environment = getEnvironment();

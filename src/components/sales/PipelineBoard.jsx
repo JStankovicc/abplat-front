@@ -13,8 +13,8 @@ import { tokens } from "../../theme";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 
 // API konstante
-const API_BASE_URL_CONTACTS = "http://192.168.1.30:8080/api/v1/contact";
-const API_BASE_URL_STATUS = "http://192.168.1.30:8080/api/v1/contactStatus";
+const API_BASE_URL_CONTACTS = "http://localhost:8080/api/v1/contact";
+const API_BASE_URL_STATUS = "http://localhost:8080/api/v1/contactStatus";
 
 // Helper funkcija za auth headers
 const getAuthHeaders = () => {

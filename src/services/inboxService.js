@@ -216,3 +216,4 @@ class InboxService {
 }
 
 export default new InboxService();
+
