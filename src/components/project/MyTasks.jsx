@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, Typography, List, ListItem, ListItemText, Chip, CircularProgress, Alert, Button, Box } from "@mui/material";
 import { Task as TaskIcon } from "@mui/icons-material";
 import axios from "axios";
+import { useParams } from "react-router-dom";
 import { tokens } from "../../theme";
 
 // API konstante
@@ -20,6 +21,7 @@ const MyTasks = () => {
     const [tasks, setTasks] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const { projectId } = useParams();
 
     // API funkcije
     const fetchMyTasks = async () => {
@@ -27,22 +29,29 @@ const MyTasks = () => {
             setLoading(true);
             setError(null);
             
+            if (!projectId) {
+                console.error('Nema projectId u URL-u');
+                setError('Nema ID projekta');
+                return;
+            }
+            
             const response = await axios.get(`${API_BASE_URL}/tasks/my`, {
-                headers: getAuthHeaders()
+                headers: getAuthHeaders(),
+                params: {
+                    projectId: projectId
+                }
             });
             
-            // Transformišemo ProjectTask objekte u format koji komponenta očekuje
-            const transformedTasks = response.data.map((task) => ({
+            // Mapiranje ProjectTask objekata u jednostavan format
+            const mappedTasks = response.data.map((task) => ({
                 id: task.id,
-                title: task.name,
+                name: task.name,
                 description: task.description,
-                status: task.status,
-                priority: task.priority ? task.priority.toLowerCase() : 'medium',
-                dateDue: task.dateDue,
-                user: task.user
+                statusId: task.statusId,
+                dateDue: task.dateDue
             }));
             
-            setTasks(transformedTasks);
+            setTasks(mappedTasks);
             
         } catch (error) {
             console.error('Failed to fetch my tasks:', error);
@@ -56,29 +65,34 @@ const MyTasks = () => {
     // useEffect za inicijalno učitavanje
     useEffect(() => {
         fetchMyTasks();
-    }, []);
+    }, [projectId]);
 
-    const getStatusColor = (status) => {
-        // Mapiranje različitih statusa na boje
-        const statusLower = status?.toLowerCase() || '';
-        if (statusLower.includes('u toku') || statusLower.includes('progress') || statusLower.includes('doing')) {
-            return 'primary';
+    const getStatusColor = (statusId) => {
+        // Mapiranje statusId na boje (pretpostavljamo da su statusId brojevi)
+        // Možda će trebati da se prilagodi na osnovu stvarnih statusId vrednosti sa backend-a
+        switch(statusId) {
+            case 1: // To Do / Čekanje
+                return 'warning';
+            case 2: // In Progress / U toku
+                return 'primary';
+            case 3: // Done / Završeno
+                return 'success';
+            default:
+                return 'secondary';
         }
-        if (statusLower.includes('završeno') || statusLower.includes('completed') || statusLower.includes('done')) {
-            return 'success';
-        }
-        if (statusLower.includes('čekanje') || statusLower.includes('waiting') || statusLower.includes('todo')) {
-            return 'warning';
-        }
-        return 'secondary';
     };
 
-    const getPriorityColor = (priority) => {
-        switch (priority?.toLowerCase()) {
-            case 'high': return 'error';
-            case 'medium': return 'warning';
-            case 'low': return 'info';
-            default: return 'default';
+    const getStatusName = (statusId) => {
+        // Mapiranje statusId na čitljiv naziv
+        switch(statusId) {
+            case 1:
+                return 'Čekanje';
+            case 2:
+                return 'U toku';
+            case 3:
+                return 'Završeno';
+            default:
+                return 'Nepoznat';
         }
     };
 
@@ -113,27 +127,40 @@ const MyTasks = () => {
                     </div>
                 )}
 
-                <List dense>
+                <List 
+                    dense
+                    sx={{
+                        maxHeight: tasks.length > 2 ? '200px' : 'none',
+                        overflowY: tasks.length > 2 ? 'auto' : 'visible',
+                        '&::-webkit-scrollbar': {
+                            width: '6px',
+                        },
+                        '&::-webkit-scrollbar-track': {
+                            backgroundColor: 'rgba(0,0,0,0.1)',
+                            borderRadius: '3px',
+                        },
+                        '&::-webkit-scrollbar-thumb': {
+                            backgroundColor: 'rgba(0,0,0,0.3)',
+                            borderRadius: '3px',
+                            '&:hover': {
+                                backgroundColor: 'rgba(0,0,0,0.5)',
+                            },
+                        },
+                    }}
+                >
                     {tasks.map(task => (
                         <ListItem key={task.id} sx={{ py: 1, px: 0, flexDirection: 'column', alignItems: 'flex-start' }}>
                             <ListItemText
-                                primary={task.title}
+                                primary={task.name}
+                                secondary={task.description}
                                 sx={{ width: '100%' }}
                             />
                             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: '4px', mt: 1 }}>
                                 <Chip
-                                    label={task.status}
+                                    label={getStatusName(task.statusId)}
                                     size="small"
-                                    color={getStatusColor(task.status)}
+                                    color={getStatusColor(task.statusId)}
                                 />
-                                {task.priority && (
-                                    <Chip
-                                        label={task.priority}
-                                        size="small"
-                                        color={getPriorityColor(task.priority)}
-                                        variant="outlined"
-                                    />
-                                )}
                                 {task.dateDue && (
                                     <Chip
                                         label={new Date(task.dateDue).toLocaleDateString('sr-RS')}

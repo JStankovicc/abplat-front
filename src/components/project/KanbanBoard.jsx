@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import { Box, TextField, IconButton, useTheme, Typography, Button, Dialog, DialogTitle, DialogContent, DialogActions, Grid, Divider, Avatar, Checkbox, FormControlLabel, List, ListItem, ListItemText, ListItemIcon, ListItemSecondaryAction, Paper, Chip, CircularProgress, Alert } from '@mui/material';
 import axios from 'axios';
+import { useParams } from 'react-router-dom';
 import { tokens } from '../../theme';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -35,6 +36,7 @@ const mockUsers = [
 const KanbanBoard = () => {
     const theme = useTheme();
     const colors = tokens(theme.palette.mode);
+    const { projectId } = useParams();
     const [columns, setColumns] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -47,7 +49,7 @@ const KanbanBoard = () => {
         assignedUsers: [],
         dueDate: '',
         priority: 'medium',
-        status: 'active',
+        statusId: 1, // Početni statusId (pretpostavljamo da je 1 = To Do)
         waitingFor: null,
         files: [],
         notes: []
@@ -58,16 +60,16 @@ const KanbanBoard = () => {
     const [editingColumnTitle, setEditingColumnTitle] = useState(null);
 
     // API funkcije
-    const updateProjectTask = async (task, newStatus, taskDetails = null) => {
+    const updateProjectTask = async (task, newStatusId, taskDetails = null) => {
         try {
             const taskToUpdate = {
                 id: task.originalTask.id,
                 name: taskDetails ? taskDetails.content : task.originalTask.name,
                 description: taskDetails ? taskDetails.description : task.originalTask.description,
-                projectId: task.originalTask.projectId || 1, // Default to project 1 if not available
+                projectId: projectId || task.originalTask.projectId || 1,
                 dateDue: taskDetails ? (taskDetails.dueDate ? new Date(taskDetails.dueDate).toISOString() : null) : task.originalTask.dateDue,
                 priority: taskDetails ? taskDetails.priority.toUpperCase() : (task.originalTask.priority || 'MEDIUM'),
-                status: newStatus,
+                statusId: newStatusId, // Koristimo statusId umesto status
                 userId: task.originalTask.user?.id
             };
 
@@ -89,13 +91,25 @@ const KanbanBoard = () => {
             setLoading(true);
             setError(null);
 
+            if (!projectId) {
+                console.error('Nema projectId u URL-u');
+                setError('Nema ID projekta');
+                return;
+            }
+
             // Paralelno dohvatamo task statuse i taskove
             const [statusResponse, tasksResponse] = await Promise.all([
                 axios.get(`${API_BASE_URL}/taskStatus/getAll`, {
-                    headers: getAuthHeaders()
+                    headers: getAuthHeaders(),
+                    params: {
+                        projectId: projectId
+                    }
                 }),
                 axios.get(`${API_BASE_URL}/tasks/my`, {
-                    headers: getAuthHeaders()
+                    headers: getAuthHeaders(),
+                    params: {
+                        projectId: projectId
+                    }
                 })
             ]);
 
@@ -105,17 +119,15 @@ const KanbanBoard = () => {
             const kanbanColumns = statusResponse.data.map(status => ({
                 id: status.name.toLowerCase().replace(/\s+/g, '_'),
                 title: status.name,
+                statusId: status.id, // Dodajemo statusId za mapiranje
                 tasks: []
             }));
 
-            // Distribuiramo taskove po kolonama na osnovu njihovog statusa
+            // Distribuiramo taskove po kolonama na osnovu njihovog statusId
             tasksResponse.data.forEach((task, index) => {
-                const taskStatus = task.status || (kanbanColumns.length > 0 ? kanbanColumns[0].title : 'To Do');
-                
-                // Pronađemo odgovarajuću kolonu po nazivu statusa
+                // Pronađemo odgovarajuću kolonu po statusId
                 const targetColumn = kanbanColumns.find(col => 
-                    col.title.toLowerCase() === taskStatus.toLowerCase() ||
-                    col.id === taskStatus.toLowerCase().replace(/\s+/g, '_')
+                    col.statusId === task.statusId
                 );
                 
                 const taskItem = {
@@ -125,7 +137,7 @@ const KanbanBoard = () => {
                     assignedUsers: task.users ? task.users.map(u => u.id) : [],
                     dueDate: task.dateDue ? new Date(task.dateDue).toISOString().split('T')[0] : '',
                     priority: task.priority ? task.priority.toLowerCase() : 'medium',
-                    status: 'active',
+                    statusId: task.statusId,
                     files: [],
                     notes: task.notes || [],
                     originalTask: task // Čuvamo originalnu referencu
@@ -133,13 +145,8 @@ const KanbanBoard = () => {
                 
                 if (targetColumn) {
                     targetColumn.tasks.push(taskItem);
-                } else {
-                    // Ako nema odgovarajuće kolone, dodaj u prvu dostupnu
-                    if (kanbanColumns.length > 0) {
-
-                        kanbanColumns[0].tasks.push(taskItem);
-                    }
                 }
+                // Uklonili smo fallback - taskovi se dodaju samo u odgovarajuće kolone
             });
 
             setColumns(kanbanColumns);
@@ -156,7 +163,7 @@ const KanbanBoard = () => {
     // useEffect za inicijalno učitavanje
     useEffect(() => {
         fetchKanbanData();
-    }, []);
+    }, [projectId]);
 
     const onDragEnd = async (result) => {
         if (!result.destination) return;
@@ -191,9 +198,9 @@ const KanbanBoard = () => {
 
             // Pošalji API poziv za ažuriranje statusa
             try {
-                const newStatus = destCol.title; // Koristimo naziv kolone kao status
-                await updateProjectTask(task, newStatus);
-                console.log(`Task ${task.content} premešten u ${newStatus}`);
+                const newStatusId = destCol.statusId; // Koristimo statusId kolone
+                await updateProjectTask(task, newStatusId);
+                console.log(`Task ${task.content} premešten u statusId ${newStatusId}`);
             } catch (error) {
                 console.error('Greška pri ažuriranju task statusa:', error);
                 setError('Greška pri ažuriranju task statusa');
@@ -226,19 +233,52 @@ const KanbanBoard = () => {
         setNewTaskInputs(prev => ({ ...prev, [columnId]: '' }));
     };
 
-    const addColumn = () => {
-        const newColumnId = `column-${Date.now()}`;
-        const newColumn = {
-            id: newColumnId,
-            title: 'Nova kolona',
-            tasks: []
-        };
-        setColumns([...columns, newColumn]);
+    const addColumn = async () => {
+        const newColumnName = prompt('Unesite naziv novog statusa:');
+        if (!newColumnName || !newColumnName.trim()) return;
+        
+        try {
+            // Pošalji API poziv za dodavanje novog task statusa
+            const response = await axios.post(`${API_BASE_URL}/addTaskStatus`, {
+                name: newColumnName.trim(),
+                projectId: projectId
+            }, {
+                headers: getAuthHeaders()
+            });
+            
+            // Osveži podatke sa backend-a nakon uspešnog dodavanja
+            await fetchKanbanData();
+            
+            console.log(`Task status ${newColumnName} uspešno dodat`);
+        } catch (error) {
+            console.error('Greška pri dodavanju task statusa:', error);
+            setError('Greška pri dodavanju task statusa');
+        }
     };
 
-    const deleteColumn = (columnId) => {
+    const deleteColumn = async (columnId) => {
         if (columns.length <= 1) return; // Sprečavamo brisanje poslednje kolone
-        setColumns(columns.filter(col => col.id !== columnId));
+        
+        const columnToDelete = columns.find(col => col.id === columnId);
+        if (!columnToDelete) return;
+        
+        try {
+            // Pošalji API poziv za brisanje task statusa
+            await axios.delete(`${API_BASE_URL}/deleteTaskStatus`, {
+                headers: getAuthHeaders(),
+                params: {
+                    id: columnToDelete.statusId
+                }
+            });
+            
+            // Ažuriraj UI nakon uspešnog brisanja
+            setColumns(columns.filter(col => col.id !== columnId));
+            
+            console.log(`Task status ${columnToDelete.title} uspešno obrisan`);
+        } catch (error) {
+            console.error('Greška pri brisanju task statusa:', error);
+            setError('Greška pri brisanju task statusa');
+        }
     };
 
     const handleInputChange = (columnId, value) => {
@@ -253,7 +293,7 @@ const KanbanBoard = () => {
             assignedUsers: task.assignedUsers || [],
             dueDate: task.dueDate || '',
             priority: task.priority || 'medium',
-            status: task.status || 'active',
+            statusId: task.statusId || 1, // Koristimo statusId umesto status
             waitingFor: task.waitingFor || null,
             files: task.files || [],
             notes: task.notes || []
@@ -276,7 +316,7 @@ const KanbanBoard = () => {
             })));
 
             // Pošalji API poziv za ažuriranje - proslijedi i taskDetails
-            await updateProjectTask(editingTask, taskDetails.status, taskDetails);
+            await updateProjectTask(editingTask, taskDetails.statusId, taskDetails);
             console.log('Task uspešno ažuriran:', taskDetails.content);
 
             setEditDialogOpen(false);
@@ -287,7 +327,7 @@ const KanbanBoard = () => {
                 assignedUsers: [],
                 dueDate: '',
                 priority: 'medium',
-                status: 'active',
+                statusId: 1, // Resetujemo na početni statusId
                 waitingFor: null,
                 files: [],
                 notes: []
@@ -370,18 +410,18 @@ const KanbanBoard = () => {
         return columns.flatMap(col => 
             col.tasks.filter(task => 
                 task.id !== editingTask?.id && 
-                task.status !== 'done'
+                task.statusId !== 3 // Pretpostavljamo da je 3 = Done/Završeno
             )
         );
     };
 
-    const handleStatusChange = (newStatus) => {
-        if (newStatus === 'pending') {
+    const handleStatusChange = (newStatusId) => {
+        if (newStatusId === 2) { // Pretpostavljamo da je 2 = In Progress/U toku
             setWaitingForDialogOpen(true);
         } else {
             setTaskDetails({
                 ...taskDetails,
-                status: newStatus,
+                statusId: newStatusId,
                 waitingFor: null
             });
         }
@@ -390,17 +430,62 @@ const KanbanBoard = () => {
     const handleWaitingForSelect = (task) => {
         setTaskDetails({
             ...taskDetails,
-            status: 'pending',
+            statusId: 2, // Pretpostavljamo da je 2 = In Progress/U toku
             waitingFor: task
         });
         setWaitingForDialogOpen(false);
     };
 
-    const handleColumnTitleChange = (columnId, newTitle) => {
-        setColumns(columns.map(col =>
-            col.id === columnId ? { ...col, title: newTitle } : col
-        ));
-        setEditingColumnTitle(null);
+    const handleColumnTitleChange = async (columnId, newTitle) => {
+        if (!newTitle || !newTitle.trim()) {
+            setEditingColumnTitle(null);
+            return;
+        }
+        
+        const column = columns.find(col => col.id === columnId);
+        if (!column) return;
+        
+        try {
+            // Pošalji API poziv za ažuriranje task statusa
+            await axios.post(`${API_BASE_URL}/updateTaskStatus`, {
+                id: column.statusId,
+                name: newTitle.trim(),
+                projectId: projectId
+            }, {
+                headers: getAuthHeaders()
+            });
+            
+            // Ažuriraj UI nakon uspešnog ažuriranja
+            setColumns(columns.map(col =>
+                col.id === columnId ? { ...col, title: newTitle.trim() } : col
+            ));
+            
+            console.log(`Task status ${column.title} ažuriran na ${newTitle}`);
+        } catch (error) {
+            console.error('Greška pri ažuriranju task statusa:', error);
+            setError('Greška pri ažuriranju task statusa');
+        } finally {
+            setEditingColumnTitle(null);
+        }
+    };
+
+    // Helper funkcije za mapiranje statusId
+    const getStatusName = (statusId) => {
+        switch(statusId) {
+            case 1: return 'Čekanje';
+            case 2: return 'U toku';
+            case 3: return 'Završeno';
+            default: return 'Nepoznat';
+        }
+    };
+
+    const getStatusColor = (statusId) => {
+        switch(statusId) {
+            case 1: return 'warning';
+            case 2: return 'primary';
+            case 3: return 'success';
+            default: return 'secondary';
+        }
     };
 
     return (
@@ -496,11 +581,18 @@ const KanbanBoard = () => {
                                         fullWidth
                                         size="small"
                                         value={column.title}
-                                        onChange={(e) => setTaskDetails({...taskDetails, content: e.target.value})}
-                                        onBlur={() => setEditingColumnTitle(null)}
+                                        onChange={(e) => {
+                                            // Ažuriraj naziv kolone u stanju
+                                            setColumns(columns.map(col =>
+                                                col.id === column.id ? { ...col, title: e.target.value } : col
+                                            ));
+                                        }}
+                                        onBlur={() => {
+                                            handleColumnTitleChange(column.id, column.title);
+                                        }}
                                         onKeyPress={(e) => {
                                             if (e.key === 'Enter') {
-                                                handleColumnTitleChange(column.id, e.target.value);
+                                                handleColumnTitleChange(column.id, column.title);
                                             }
                                         }}
                                         autoFocus
@@ -787,17 +879,17 @@ const KanbanBoard = () => {
                                 </Typography>
                                 <Box display="flex" gap={1}>
                                     <Chip
-                                        icon={<CheckCircleIcon />}
-                                        label="Aktivan"
-                                        onClick={() => handleStatusChange('active')}
-                                        color={taskDetails.status === 'active' ? 'success' : 'default'}
+                                        icon={<PendingIcon />}
+                                        label="Čekanje"
+                                        onClick={() => handleStatusChange(1)}
+                                        color={taskDetails.statusId === 1 ? 'warning' : 'default'}
                                         sx={{ color: colors.grey[100] }}
                                     />
                                     <Chip
-                                        icon={<PendingIcon />}
-                                        label={taskDetails.waitingFor ? `Čeka: ${taskDetails.waitingFor.content}` : "Na čekanju"}
-                                        onClick={() => handleStatusChange('pending')}
-                                        color={taskDetails.status === 'pending' ? 'warning' : 'default'}
+                                        icon={<CheckCircleIcon />}
+                                        label={taskDetails.waitingFor ? `Čeka: ${taskDetails.waitingFor.content}` : "U toku"}
+                                        onClick={() => handleStatusChange(2)}
+                                        color={taskDetails.statusId === 2 ? 'primary' : 'default'}
                                         sx={{ 
                                             color: colors.grey[100],
                                             maxWidth: '300px',
@@ -809,17 +901,10 @@ const KanbanBoard = () => {
                                         }}
                                     />
                                     <Chip
-                                        icon={<BlockIcon />}
-                                        label="Blokiran"
-                                        onClick={() => handleStatusChange('blocked')}
-                                        color={taskDetails.status === 'blocked' ? 'error' : 'default'}
-                                        sx={{ color: colors.grey[100] }}
-                                    />
-                                    <Chip
                                         icon={<CheckCircleIcon />}
-                                        label="Završen"
-                                        onClick={() => handleStatusChange('done')}
-                                        color={taskDetails.status === 'done' ? 'success' : 'default'}
+                                        label="Završeno"
+                                        onClick={() => handleStatusChange(3)}
+                                        color={taskDetails.statusId === 3 ? 'success' : 'default'}
                                         sx={{ color: colors.grey[100] }}
                                     />
                                 </Box>
