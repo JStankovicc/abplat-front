@@ -16,6 +16,7 @@ import PendingIcon from '@mui/icons-material/Pending';
 
 // API konstante
 const API_BASE_URL = "http://localhost:8080/api/v1/project";
+const COMPANY_API_BASE_URL = "http://localhost:8080/api/v1/company";
 
 // Helper funkcija za auth headers
 const getAuthHeaders = () => {
@@ -58,6 +59,78 @@ const KanbanBoard = () => {
     const [waitingForDialogOpen, setWaitingForDialogOpen] = useState(false);
     const [userSearchQuery, setUserSearchQuery] = useState('');
     const [editingColumnTitle, setEditingColumnTitle] = useState(null);
+    const [availableUsers, setAvailableUsers] = useState([]);
+    const [taskUsers, setTaskUsers] = useState([]);
+
+    // API funkcije za korisnike
+    const fetchAllProjectUsers = async () => {
+        try {
+            const response = await axios.get(`${API_BASE_URL}/getAllProjectUsers`, {
+                headers: getAuthHeaders(),
+                params: {
+                    projectId: projectId
+                }
+            });
+            return response.data;
+        } catch (error) {
+            console.error('Failed to fetch all project users:', error);
+            return [];
+        }
+    };
+
+    const fetchTaskUsers = async (taskId) => {
+        try {
+            const response = await axios.get(`${COMPANY_API_BASE_URL}/getAllCompanyProjectWorkersOnTask`, {
+                headers: getAuthHeaders(),
+                params: {
+                    projectId: projectId,
+                    taskId: taskId
+                }
+            });
+            setTaskUsers(response.data);
+            return response.data;
+        } catch (error) {
+            console.error('Failed to fetch task users:', error);
+            setTaskUsers([]);
+            return [];
+        }
+    };
+
+    const fetchAvailableUsers = async (taskId) => {
+        try {
+            // Dohvati sve korisnike na projektu
+            const allProjectUsers = await fetchAllProjectUsers();
+            
+            // Dohvati korisnike koji su na tasku
+            const usersOnTask = await fetchTaskUsers(taskId);
+            
+            // Filtriraj korisnike koji NISU na tasku
+            const availableUsers = allProjectUsers.filter(projectUser => 
+                !usersOnTask.some(taskUser => taskUser.id === projectUser.id)
+            );
+            
+            setAvailableUsers(availableUsers);
+        } catch (error) {
+            console.error('Failed to fetch available users:', error);
+            setAvailableUsers([]);
+        }
+    };
+
+    const addUserToProjectTask = async (userId, taskId) => {
+        try {
+            await axios.post(`${API_BASE_URL}/addUserToProjectTask`, null, {
+                headers: getAuthHeaders(),
+                params: {
+                    userId: userId,
+                    projectId: projectId,
+                    taskId: taskId
+                }
+            });
+        } catch (error) {
+            console.error('Failed to add user to task:', error);
+            throw error;
+        }
+    };
 
     // API funkcije
     const updateProjectTask = async (task, newStatusId, taskDetails = null) => {
@@ -66,11 +139,9 @@ const KanbanBoard = () => {
                 id: task.originalTask.id,
                 name: taskDetails ? taskDetails.content : task.originalTask.name,
                 description: taskDetails ? taskDetails.description : task.originalTask.description,
-                projectId: projectId || task.originalTask.projectId || 1,
                 dateDue: taskDetails ? (taskDetails.dueDate ? new Date(taskDetails.dueDate).toISOString() : null) : task.originalTask.dateDue,
                 priority: taskDetails ? taskDetails.priority.toUpperCase() : (task.originalTask.priority || 'MEDIUM'),
-                statusId: newStatusId, // Koristimo statusId umesto status
-                userId: task.originalTask.user?.id
+                statusId: newStatusId
             };
 
             console.log('Sending task update:', taskToUpdate);
@@ -164,6 +235,16 @@ const KanbanBoard = () => {
     useEffect(() => {
         fetchKanbanData();
     }, [projectId]);
+
+    // useEffect za ažuriranje assignedUsers kada se učitaju korisnici
+    useEffect(() => {
+        if (taskUsers.length > 0 && editingTask) {
+            setTaskDetails(prev => ({
+                ...prev,
+                assignedUsers: taskUsers.map(user => user.id)
+            }));
+        }
+    }, [taskUsers, editingTask]);
 
     const onDragEnd = async (result) => {
         if (!result.destination) return;
@@ -285,12 +366,20 @@ const KanbanBoard = () => {
         setNewTaskInputs(prev => ({ ...prev, [columnId]: value }));
     };
 
-    const handleEditTask = (task) => {
+    const handleEditTask = async (task) => {
         setEditingTask(task);
+        
+        // Učitaj korisnike za ovaj task PRVO
+        await Promise.all([
+            fetchAvailableUsers(task.originalTask.id),
+            fetchTaskUsers(task.originalTask.id)
+        ]);
+        
+        // Zatim postavi taskDetails sa trenutnim korisnicima
         setTaskDetails({
             content: task.content,
             description: task.description || '',
-            assignedUsers: task.assignedUsers || [],
+            assignedUsers: [], // Počinjemo sa praznom listom - korisnici će biti dodati nakon učitavanja
             dueDate: task.dueDate || '',
             priority: task.priority || 'medium',
             statusId: task.statusId || 1, // Koristimo statusId umesto status
@@ -298,6 +387,7 @@ const KanbanBoard = () => {
             files: task.files || [],
             notes: task.notes || []
         });
+        
         setEditDialogOpen(true);
     };
 
@@ -317,6 +407,15 @@ const KanbanBoard = () => {
 
             // Pošalji API poziv za ažuriranje - proslijedi i taskDetails
             await updateProjectTask(editingTask, taskDetails.statusId, taskDetails);
+            
+            // Dodaj nove korisnike na task
+            const currentTaskUsers = taskUsers.map(user => user.id);
+            const selectedUsers = taskDetails.assignedUsers.filter(userId => !currentTaskUsers.includes(userId));
+            
+            for (const userId of selectedUsers) {
+                await addUserToProjectTask(userId, editingTask.originalTask.id);
+            }
+            
             console.log('Task uspešno ažuriran:', taskDetails.content);
 
             setEditDialogOpen(false);
@@ -874,38 +973,39 @@ const KanbanBoard = () => {
 
                                 <Divider sx={{ borderColor: colors.grey[700], my: 1 }} />
 
-                                <Typography variant="h6" sx={{ color: colors.grey[100] }}>
-                                    Status:
+                                <Typography variant="h6" sx={{ color: colors.grey[400], opacity: 0.6 }}>
+                                    Status: (zamrznuto)
                                 </Typography>
-                                <Box display="flex" gap={1}>
+                                <Box display="flex" gap={1} sx={{ opacity: 0.6 }}>
                                     <Chip
                                         icon={<PendingIcon />}
                                         label="Čekanje"
-                                        onClick={() => handleStatusChange(1)}
-                                        color={taskDetails.statusId === 1 ? 'warning' : 'default'}
-                                        sx={{ color: colors.grey[100] }}
+                                        color="default"
+                                        sx={{ 
+                                            color: colors.grey[400],
+                                            cursor: 'not-allowed',
+                                            opacity: 0.6
+                                        }}
                                     />
                                     <Chip
                                         icon={<CheckCircleIcon />}
-                                        label={taskDetails.waitingFor ? `Čeka: ${taskDetails.waitingFor.content}` : "U toku"}
-                                        onClick={() => handleStatusChange(2)}
-                                        color={taskDetails.statusId === 2 ? 'primary' : 'default'}
+                                        label="U toku"
+                                        color="primary"
                                         sx={{ 
-                                            color: colors.grey[100],
-                                            maxWidth: '300px',
-                                            '& .MuiChip-label': {
-                                                whiteSpace: 'nowrap',
-                                                overflow: 'hidden',
-                                                textOverflow: 'ellipsis'
-                                            }
+                                            color: colors.grey[400],
+                                            cursor: 'not-allowed',
+                                            opacity: 0.6
                                         }}
                                     />
                                     <Chip
                                         icon={<CheckCircleIcon />}
                                         label="Završeno"
-                                        onClick={() => handleStatusChange(3)}
-                                        color={taskDetails.statusId === 3 ? 'success' : 'default'}
-                                        sx={{ color: colors.grey[100] }}
+                                        color="default"
+                                        sx={{ 
+                                            color: colors.grey[400],
+                                            cursor: 'not-allowed',
+                                            opacity: 0.6
+                                        }}
                                     />
                                 </Box>
 
@@ -955,9 +1055,50 @@ const KanbanBoard = () => {
                                             },
                                         }}
                                     >
-                                        {mockUsers
+                                        {/* Trenutni korisnici na tasku */}
+                                        {taskUsers
                                             .filter(user => 
-                                                `${user.firstName} ${user.lastName}`
+                                                user.displayName
+                                                    .toLowerCase()
+                                                    .includes(userSearchQuery.toLowerCase())
+                                            )
+                                            .map(user => (
+                                                <FormControlLabel
+                                                    key={user.id}
+                                                    control={
+                                                        <Checkbox
+                                                            checked={true}
+                                                            disabled={true}
+                                                            sx={{
+                                                                color: colors.grey[100],
+                                                                '&.Mui-checked': {
+                                                                    color: colors.greenAccent[500],
+                                                                },
+                                                            }}
+                                                        />
+                                                    }
+                                                    label={
+                                                        <Box display="flex" alignItems="center" gap={1}>
+                                                            <Avatar sx={{
+                                                                bgcolor: colors.greenAccent[500],
+                                                                width: 24,
+                                                                height: 24
+                                                            }}>
+                                                                {user.displayName[0]}
+                                                            </Avatar>
+                                                            <Typography sx={{ color: colors.grey[100] }}>
+                                                                {user.displayName}
+                                                            </Typography>
+                                                        </Box>
+                                                    }
+                                                />
+                                            ))
+                                        }
+                                        
+                                        {/* Dostupni korisnici za dodavanje */}
+                                        {availableUsers
+                                            .filter(user => 
+                                                user.displayName
                                                     .toLowerCase()
                                                     .includes(userSearchQuery.toLowerCase())
                                             )
@@ -971,7 +1112,7 @@ const KanbanBoard = () => {
                                                             sx={{
                                                                 color: colors.grey[100],
                                                                 '&.Mui-checked': {
-                                                                    color: user.color,
+                                                                    color: colors.blueAccent[500],
                                                                 },
                                                             }}
                                                         />
@@ -979,14 +1120,14 @@ const KanbanBoard = () => {
                                                     label={
                                                         <Box display="flex" alignItems="center" gap={1}>
                                                             <Avatar sx={{
-                                                                bgcolor: user.color,
+                                                                bgcolor: colors.blueAccent[500],
                                                                 width: 24,
                                                                 height: 24
                                                             }}>
-                                                                {user.firstName[0]}{user.lastName[0]}
+                                                                {user.displayName[0]}
                                                             </Avatar>
                                                             <Typography sx={{ color: colors.grey[100] }}>
-                                                                {user.firstName} {user.lastName}
+                                                                {user.displayName}
                                                             </Typography>
                                                         </Box>
                                                     }
@@ -1055,21 +1196,20 @@ const KanbanBoard = () => {
                                                 fullWidth
                                                 variant="outlined"
                                                 startIcon={<CloudUploadIcon />}
+                                                disabled={true}
                                                 sx={{ 
-                                                    color: colors.greenAccent[500],
-                                                    borderColor: colors.greenAccent[500],
-                                                    '&:hover': {
-                                                        borderColor: colors.greenAccent[600],
-                                                        backgroundColor: 'rgba(0, 255, 0, 0.1)'
-                                                    }
+                                                    color: colors.grey[400],
+                                                    borderColor: colors.grey[600],
+                                                    opacity: 0.6,
+                                                    cursor: 'not-allowed'
                                                 }}
                                             >
-                                                Dodaj fajl
+                                                Dodaj fajl (nedostupno)
                                                 <input
                                                     type="file"
                                                     hidden
                                                     multiple
-                                                    onChange={handleFileUpload}
+                                                    disabled
                                                 />
                                             </Button>
                                         </Box>
