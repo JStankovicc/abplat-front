@@ -4,6 +4,7 @@ import { Box, TextField, IconButton, useTheme, Typography, Button, Dialog, Dialo
 import axios from 'axios';
 import { useParams } from 'react-router-dom';
 import { tokens } from '../../theme';
+import { API_BASE_URL } from '../../config/apiConfig';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
@@ -15,8 +16,8 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import PendingIcon from '@mui/icons-material/Pending';
 
 // API konstante
-const API_BASE_URL = "http://localhost:8080/api/v1/project";
-const COMPANY_API_BASE_URL = "http://localhost:8080/api/v1/company";
+const PROJECT_API_BASE_URL = `${API_BASE_URL}/project`;
+const COMPANY_API_BASE_URL = `${API_BASE_URL}/company`;
 
 // Helper funkcija za auth headers
 const getAuthHeaders = () => {
@@ -65,7 +66,7 @@ const KanbanBoard = () => {
     // API funkcije za korisnike
     const fetchAllProjectUsers = async () => {
         try {
-            const response = await axios.get(`${API_BASE_URL}/getAllProjectUsers`, {
+            const response = await axios.get(`${PROJECT_API_BASE_URL}/getAllProjectUsers`, {
                 headers: getAuthHeaders(),
                 params: {
                     projectId: projectId
@@ -118,7 +119,7 @@ const KanbanBoard = () => {
 
     const addUserToProjectTask = async (userId, taskId) => {
         try {
-            await axios.post(`${API_BASE_URL}/addUserToProjectTask`, null, {
+            await axios.post(`${PROJECT_API_BASE_URL}/addUserToProjectTask`, null, {
                 headers: getAuthHeaders(),
                 params: {
                     userId: userId,
@@ -146,7 +147,7 @@ const KanbanBoard = () => {
 
             console.log('Sending task update:', taskToUpdate);
 
-            await axios.put(`${API_BASE_URL}/tasks/update`, taskToUpdate, {
+            await axios.put(`${PROJECT_API_BASE_URL}/tasks/update`, taskToUpdate, {
                 headers: getAuthHeaders()
             });
             
@@ -170,13 +171,13 @@ const KanbanBoard = () => {
 
             // Paralelno dohvatamo task statuse i taskove
             const [statusResponse, tasksResponse] = await Promise.all([
-                axios.get(`${API_BASE_URL}/taskStatus/getAll`, {
+                axios.get(`${PROJECT_API_BASE_URL}/taskStatus/getAll`, {
                     headers: getAuthHeaders(),
                     params: {
                         projectId: projectId
                     }
                 }),
-                axios.get(`${API_BASE_URL}/tasks/my`, {
+                axios.get(`${PROJECT_API_BASE_URL}/tasks/my`, {
                     headers: getAuthHeaders(),
                     params: {
                         projectId: projectId
@@ -299,19 +300,53 @@ const KanbanBoard = () => {
         }
     };
 
-    const addTask = (columnId) => {
+    const addTask = async (columnId) => {
         const taskContent = newTaskInputs[columnId]?.trim();
-        if (!taskContent) return;
+        if (!taskContent) {
+            console.log('Task content je prazan ili undefined');
+            return;
+        }
 
-        const newTask = {
-            id: `task-${Date.now()}`,
-            content: taskContent,
-        };
+        try {
+            // Pronađi statusId za kolonu
+            const column = columns.find(col => col.id === columnId);
+            if (!column) {
+                console.log('Kolumna nije pronađena za columnId:', columnId);
+                return;
+            }
 
-        setColumns(columns.map(col =>
-            col.id === columnId ? {...col, tasks: [...col.tasks, newTask]} : col
-        ));
-        setNewTaskInputs(prev => ({ ...prev, [columnId]: '' }));
+            console.log('Kreiranje task-a:', {
+                taskContent,
+                projectId,
+                statusId: column.statusId,
+                url: `${PROJECT_API_BASE_URL}/addTask`,
+                body: {
+                    projectTaskName: taskContent,
+                    projectId: projectId,
+                    statusID: column.statusId
+                }
+            });
+
+            // Pošalji API poziv za kreiranje novog task-a
+            const response = await axios.post(`${PROJECT_API_BASE_URL}/addTask`, {
+                projectTaskName: taskContent,
+                projectId: projectId,
+                statusID: column.statusId
+            }, {
+                headers: {
+                    "Authorization": `Bearer ${localStorage.getItem('token')}`,
+                    "Content-Type": "application/json"
+                }
+            });
+
+            if (response.status === 200) {
+                // Refreshuj stranicu da se učita novi task
+                window.location.reload();
+            }
+        } catch (error) {
+            console.error('Greška pri kreiranju task-a:', error);
+            setError('Greška pri kreiranju task-a');
+        }
     };
 
     const addColumn = async () => {
@@ -320,7 +355,7 @@ const KanbanBoard = () => {
         
         try {
             // Pošalji API poziv za dodavanje novog task statusa
-            const response = await axios.post(`${API_BASE_URL}/addTaskStatus`, {
+            const response = await axios.post(`${PROJECT_API_BASE_URL}/addTaskStatus`, {
                 name: newColumnName.trim(),
                 projectId: projectId
             }, {
@@ -345,7 +380,7 @@ const KanbanBoard = () => {
         
         try {
             // Pošalji API poziv za brisanje task statusa
-            await axios.delete(`${API_BASE_URL}/deleteTaskStatus`, {
+            await axios.delete(`${PROJECT_API_BASE_URL}/deleteTaskStatus`, {
                 headers: getAuthHeaders(),
                 params: {
                     id: columnToDelete.statusId
@@ -546,7 +581,7 @@ const KanbanBoard = () => {
         
         try {
             // Pošalji API poziv za ažuriranje task statusa
-            await axios.post(`${API_BASE_URL}/updateTaskStatus`, {
+            await axios.post(`${PROJECT_API_BASE_URL}/updateTaskStatus`, {
                 id: column.statusId,
                 name: newTitle.trim(),
                 projectId: projectId
