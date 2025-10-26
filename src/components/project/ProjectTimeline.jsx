@@ -9,7 +9,7 @@ const ProjectTimeline = () => {
                 <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
                     <TimelineIcon sx={{ mr: 1 }} /> Vremenska linija
                 </Typography>
-                <Timeline compact />
+                <Timeline compact="true" />
             </CardContent>
         </Card>
     );

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, Typography, List, ListItem, ListItemText, Chip, CircularProgress, Alert, Button } from "@mui/material";
+import { Card, CardContent, Typography, List, ListItem, ListItemText, Chip, CircularProgress, Alert, Button, Box } from "@mui/material";
 import { Task as TaskIcon } from "@mui/icons-material";
 import axios from "axios";
 import { tokens } from "../../theme";
@@ -115,35 +115,34 @@ const MyTasks = () => {
 
                 <List dense>
                     {tasks.map(task => (
-                        <ListItem key={task.id} sx={{ py: 1, px: 0 }}>
+                        <ListItem key={task.id} sx={{ py: 1, px: 0, flexDirection: 'column', alignItems: 'flex-start' }}>
                             <ListItemText
                                 primary={task.title}
-                                secondary={
-                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px' }}>
-                                        <Chip
-                                            label={task.status}
-                                            size="small"
-                                            color={getStatusColor(task.status)}
-                                        />
-                                        {task.priority && (
-                                            <Chip
-                                                label={task.priority}
-                                                size="small"
-                                                color={getPriorityColor(task.priority)}
-                                                variant="outlined"
-                                            />
-                                        )}
-                                        {task.dateDue && (
-                                            <Chip
-                                                label={new Date(task.dateDue).toLocaleDateString('sr-RS')}
-                                                size="small"
-                                                variant="outlined"
-                                                sx={{ fontSize: '0.7rem' }}
-                                            />
-                                        )}
-                                    </div>
-                                }
+                                sx={{ width: '100%' }}
                             />
+                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: '4px', mt: 1 }}>
+                                <Chip
+                                    label={task.status}
+                                    size="small"
+                                    color={getStatusColor(task.status)}
+                                />
+                                {task.priority && (
+                                    <Chip
+                                        label={task.priority}
+                                        size="small"
+                                        color={getPriorityColor(task.priority)}
+                                        variant="outlined"
+                                    />
+                                )}
+                                {task.dateDue && (
+                                    <Chip
+                                        label={new Date(task.dateDue).toLocaleDateString('sr-RS')}
+                                        size="small"
+                                        variant="outlined"
+                                        sx={{ fontSize: '0.7rem' }}
+                                    />
+                                )}
+                            </Box>
                         </ListItem>
                     ))}
                     {!loading && tasks.length === 0 && !error && (

@@ -212,7 +212,7 @@ function App() {
                             } 
                             /> 
                             <Route
-                                path="/project"
+                                path="/project/:projectId"
                                 element={
                                     <PrivateRoute>
                                         <ProjectView />

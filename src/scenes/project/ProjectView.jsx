@@ -10,6 +10,7 @@ import {
     Typography
 } from "@mui/material";
 import axios from "axios";
+import { useParams } from "react-router-dom";
 import { tokens } from "../../theme";
 import {
     Menu as MenuIcon,
@@ -49,11 +50,17 @@ const ProjectView = () => {
     const [projectInfo, setProjectInfo] = useState({ name: "Projekat", description: "", note: "" });
     const [noteValue, setNoteValue] = useState("");
     const [noteLoading, setNoteLoading] = useState(false);
+    const { projectId } = useParams();
 
     // API funkcije
     const fetchProjectInfo = async () => {
         try {
-            const response = await axios.get(`${API_BASE_URL}/info`, {
+            if (!projectId) {
+                console.error('Nema projectId u URL-u');
+                return;
+            }
+
+            const response = await axios.get(`${API_BASE_URL}/${projectId}`, {
                 headers: getAuthHeaders()
             });
 
@@ -98,7 +105,7 @@ const ProjectView = () => {
     // useEffect za inicijalno učitavanje
     useEffect(() => {
         fetchProjectInfo();
-    }, []);
+    }, [projectId]);
 
     // Definiši sections unutar komponente da može da koristi state
     const sections = [

@@ -30,8 +30,7 @@ const LoginPage = ({ onLogin }) => {
             const token = response.data.token;
             onLogin(token); // Pass the token to the parent component
         } catch (error) {
-            console.error("Login failed", error);
-            notify("Login failed. Please check your credentials and try again.");
+            notify("Prijavljivanje nije uspelo. Molimo Vas da proverite svoje kredencijale i pokušate ponovno.");
         }
     };
 

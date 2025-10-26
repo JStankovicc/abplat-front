@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import { ProSidebar, Menu, MenuItem } from "react-pro-sidebar";
 import { Box, IconButton, Typography, useTheme, useMediaQuery } from "@mui/material";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
 import "react-pro-sidebar/dist/css/styles.css";
 import { tokens } from "../../theme";
+import { API_BASE_URL } from "../../config/apiConfig";
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
 import PeopleOutlinedIcon from "@mui/icons-material/PeopleOutlined";
 import ReceiptOutlinedIcon from "@mui/icons-material/ReceiptOutlined";
@@ -17,6 +19,7 @@ import DashboardOutlinedIcon from '@mui/icons-material/DashboardOutlined';
 import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined';
 import TrendingUpOutlinedIcon from '@mui/icons-material/TrendingUpOutlined';
 import DirectionsCarIcon from '@mui/icons-material/DirectionsCar';
+import FolderOutlinedIcon from '@mui/icons-material/FolderOutlined';
 
 const Item = ({ title, to, icon, selected, setSelected, onClick, disabled = false }) => {
     const theme = useTheme();
@@ -49,10 +52,45 @@ const Sidebar = ({ userProfile, companyInfo }) => {
     const [selected, setSelected] = useState("Dashboard");
     const isMobile = useMediaQuery("(max-width:600px)");
     const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+    const [projects, setProjects] = useState([]);
+    const navigate = useNavigate();
 
     const handleLogout = () => {
         localStorage.removeItem("token");
         window.location.href = "/login";
+    };
+
+    // Funkcija za učitavanje liste projekata
+    const fetchProjects = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            
+            if (!token) {
+                console.error("Nema JWT tokena");
+                return;
+            }
+
+            const response = await axios.get(
+                `${API_BASE_URL}/project/list`,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                }
+            );
+
+            setProjects(response.data);
+        } catch (error) {
+            console.error("Greška pri učitavanju projekata:", error);
+        }
+    };
+
+    // Funkcija za navigaciju na projekat
+    const handleProjectClick = (projectId) => {
+        navigate(`/project/${projectId}`);
+        if (isMobile) {
+            setIsMobileSidebarOpen(false);
+        }
     };
 
     // Funkcija za konverziju byte array u base64 string
@@ -105,6 +143,11 @@ const Sidebar = ({ userProfile, companyInfo }) => {
             setIsMobileSidebarOpen(false);
         }
     }, [isMobile]);
+
+    // Učitaj projekte pri prvom renderovanju
+    useEffect(() => {
+        fetchProjects();
+    }, []);
 
     return (
         <>
@@ -294,16 +337,18 @@ const Sidebar = ({ userProfile, companyInfo }) => {
                                 selected={selected}
                                 setSelected={setSelected}
                                 onClick={() => isMobile && setIsMobileSidebarOpen(false)}
-                                disabled={true}
                             />
-                            <Item
-                                title="Projekat X"
-                                to="/project"
-                                icon={<CalendarTodayOutlinedIcon />}
-                                selected={selected}
-                                setSelected={setSelected}
-                                onClick={() => isMobile && setIsMobileSidebarOpen(false)}
-                            />
+                            {/* Dinamička lista projekata */}
+                            {projects.map((project) => (
+                                <Item
+                                    key={project.id}
+                                    title={project.name}
+                                    icon={<FolderOutlinedIcon />}
+                                    selected={selected}
+                                    setSelected={setSelected}
+                                    onClick={() => handleProjectClick(project.id)}
+                                />
+                            ))}
 
                             {/* Imovina sekcija */}
                             <Typography variant="h6" color={colors.grey[300]} sx={{ m: "15px 0 5px 20px" }}>

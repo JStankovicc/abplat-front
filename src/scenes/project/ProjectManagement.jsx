@@ -1,4 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import axios from "axios";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import {
     Box,
     Button,
@@ -24,9 +27,11 @@ import {
     Menu,
     MenuItem,
     ListItemIcon,
-    ListItemText
+    ListItemText,
+    CircularProgress
 } from "@mui/material";
 import { tokens } from "../../theme";
+import { API_BASE_URL } from "../../config/apiConfig";
 import AddIcon from "@mui/icons-material/Add";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import EditIcon from "@mui/icons-material/Edit";
@@ -39,34 +44,9 @@ const ProjectManagement = () => {
     const colors = tokens(theme.palette.mode);
     const navigate = useNavigate();
 
-    // Mock data za projekte
-    const [projects, setProjects] = useState([
-        {
-            id: 1,
-            name: "Projekat X",
-            description: "Opis projekta X",
-            status: "Aktivan",
-            startDate: "2024-01-01",
-            endDate: "2024-06-30",
-            team: [
-                { id: 1, name: "Jovan Stanković", avatar: "../../assets/testSpiderman.png" },
-                { id: 2, name: "Ana Petrović", avatar: "../../assets/testSpiderman.png" },
-                { id: 3, name: "Marko Jovanović", avatar: "../../assets/testSpiderman.png" }
-            ]
-        },
-        {
-            id: 2,
-            name: "Projekat Y",
-            description: "Opis projekta Y",
-            status: "U toku",
-            startDate: "2024-02-01",
-            endDate: "2024-07-31",
-            team: [
-                { id: 1, name: "Jovan Stanković", avatar: "../../assets/testSpiderman.png" },
-                { id: 2, name: "Ana Petrović", avatar: "../../assets/testSpiderman.png" }
-            ]
-        }
-    ]);
+    // State za projekte
+    const [projects, setProjects] = useState([]);
+    const [loading, setLoading] = useState(true);
 
     // State za dijaloge
     const [openNewProject, setOpenNewProject] = useState(false);
@@ -75,12 +55,15 @@ const ProjectManagement = () => {
     const [openTeamManagement, setOpenTeamManagement] = useState(false);
     const [selectedProject, setSelectedProject] = useState(null);
     const [anchorEl, setAnchorEl] = useState(null);
+    
+    // State za listu dostupnih radnika
+    const [availableWorkers, setAvailableWorkers] = useState([]);
 
     // State za novi projekat
     const [newProject, setNewProject] = useState({
         name: "",
         description: "",
-        startDate: "",
+        startDate: new Date().toISOString().split('T')[0], // Današnji datum kao default
         endDate: "",
         team: []
     });
@@ -101,8 +84,161 @@ const ProjectManagement = () => {
     const handleOpenTeamManagement = (project) => {
         setSelectedProject(project);
         setOpenTeamManagement(true);
+        fetchAvailableWorkers(project.id); // Učitaj dostupne radnike kada se otvori dialog
     };
     const handleCloseTeamManagement = () => setOpenTeamManagement(false);
+
+    // Učitavanje projekata pri prvom renderovanju
+    useEffect(() => {
+        fetchProjects();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    // Funkcija za učitavanje svih projekata
+    const fetchProjects = async () => {
+        try {
+            setLoading(true);
+            const token = localStorage.getItem('token');
+            
+            if (!token) {
+                toast.error("Niste prijavljeni. Molimo vas da se prijavite.", {
+                    position: "bottom-right",
+                    autoClose: 5000,
+                });
+                setLoading(false);
+                return;
+            }
+
+            const response = await axios.get(
+                `${API_BASE_URL}/project/allByCompany`,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                }
+            );
+
+            // Mapiranje projekata sa backend-a u format koji koristi frontend
+            const mappedProjects = response.data.map(project => ({
+                id: project.id,
+                name: project.name,
+                description: project.description,
+                status: determineProjectStatus(project),
+                startDate: project.startDate ? new Date(project.startDate).toISOString().split('T')[0] : null,
+                endDate: project.updatedAt ? new Date(project.updatedAt).toISOString().split('T')[0] : null,
+                createdAt: project.createdAt,
+                updatedAt: project.updatedAt,
+                note: project.note,
+                team: project.users ? project.users.map(user => ({
+                    id: user.id,
+                    name: user.displayName || 'Nepoznat korisnik',
+                    avatar: user.profilePic ? `data:image/jpeg;base64,${convertProfilePicToBase64(user.profilePic)}` : "../../assets/testSpiderman.png"
+                })) : []
+            }));
+
+            setProjects(mappedProjects);
+            setLoading(false);
+        } catch (error) {
+            console.error("Greška pri učitavanju projekata:", error);
+            toast.error(
+                error.response?.data?.message || "Došlo je do greške pri učitavanju projekata.",
+                {
+                    position: "bottom-right",
+                    autoClose: 5000,
+                }
+            );
+            setLoading(false);
+        }
+    };
+
+    // Helper funkcija za određivanje statusa projekta
+    const determineProjectStatus = (project) => {
+        // Možete prilagoditi logiku određivanja statusa prema vašim potrebama
+        if (project.startDate) {
+            const startDate = new Date(project.startDate);
+            const today = new Date();
+            
+            if (startDate > today) {
+                return "Planiran";
+            } else {
+                return "U toku";
+            }
+        }
+        return "Aktivan";
+    };
+
+    // Helper funkcija za formatiranje datuma u dd/mm/yyyy format
+    const formatDate = (dateString) => {
+        if (!dateString) return 'N/A';
+        const date = new Date(dateString);
+        const day = date.getDate().toString().padStart(2, '0');
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}/${month}/${year}`;
+    };
+
+    // Helper funkcija za konverziju byte array-a u Base64 string
+    const convertProfilePicToBase64 = (profilePic) => {
+        if (!profilePic || profilePic.length === 0) return null;
+        
+        // Ako je već string (Base64), vrati ga
+        if (typeof profilePic === 'string') return profilePic;
+        
+        // Ako je array of bytes, konvertuj u Base64
+        if (Array.isArray(profilePic)) {
+            const binary = profilePic.reduce((acc, byte) => acc + String.fromCharCode(byte), '');
+            return btoa(binary);
+        }
+        
+        return null;
+    };
+
+    // Funkcija za učitavanje dostupnih radnika
+    const fetchAvailableWorkers = async (projectId) => {
+        try {
+            const token = localStorage.getItem('token');
+            
+            if (!token) {
+                toast.error("Niste prijavljeni. Molimo vas da se prijavite.", {
+                    position: "bottom-right",
+                    autoClose: 5000,
+                });
+                return;
+            }
+
+            // Ako postoji projectId, dodaj ga kao query parametar
+            const url = projectId 
+                ? `${API_BASE_URL}/company/getAllCompanyProjectWorkersNotOnProject?projectId=${projectId}`
+                : `${API_BASE_URL}/company/getAllCompanyProjectWorkersNotOnProject`;
+
+            const response = await axios.get(
+                url,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                }
+            );
+
+            setAvailableWorkers(response.data);
+        } catch (error) {
+            console.error("Greška pri učitavanju radnika:", error);
+            
+            // Detaljnije logovanje greške
+            if (error.response) {
+                console.error("Status:", error.response.status);
+                console.error("Data:", error.response.data);
+            }
+            
+            toast.error(
+                error.response?.data?.message || "Došlo je do greške pri učitavanju radnika.",
+                {
+                    position: "bottom-right",
+                    autoClose: 5000,
+                }
+            );
+        }
+    };
 
     // Handler za menu
     const handleMenuClick = (event, project) => {
@@ -115,22 +251,73 @@ const ProjectManagement = () => {
     };
 
     // Handlers za akcije
-    const handleCreateProject = () => {
-        const project = {
-            id: projects.length + 1,
-            ...newProject,
-            status: "Aktivan",
-            team: []
-        };
-        setProjects([...projects, project]);
-        handleCloseNewProject();
-        setNewProject({
-            name: "",
-            description: "",
-            startDate: "",
-            endDate: "",
-            team: []
-        });
+    const handleCreateProject = async () => {
+        try {
+            // Validacija polja
+            if (!newProject.name || !newProject.name.trim()) {
+                toast.error("Naziv projekta je obavezan!", {
+                    position: "bottom-right",
+                    autoClose: 3000,
+                });
+                return;
+            }
+
+            // Preuzimanje JWT tokena iz localStorage
+            const token = localStorage.getItem('token');
+            
+            if (!token) {
+                toast.error("Niste prijavljeni. Molimo vas da se prijavite.", {
+                    position: "bottom-right",
+                    autoClose: 5000,
+                });
+                return;
+            }
+
+            // Formatiranje datuma za backend (ako postoji)
+            const projectData = {
+                name: newProject.name,
+                description: newProject.description,
+                startDate: newProject.startDate ? new Date(newProject.startDate) : null
+            };
+
+            // Slanje POST zahteva
+            const response = await axios.post(
+                `${API_BASE_URL}/project/add`,
+                projectData,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
+
+            toast.success("Projekat je uspešno kreiran!", {
+                position: "bottom-right",
+                autoClose: 3000,
+            });
+
+            // Osveži listu projekata sa backend-a
+            await fetchProjects();
+
+            handleCloseNewProject();
+            setNewProject({
+                name: "",
+                description: "",
+                startDate: new Date().toISOString().split('T')[0], // Reset na današnji datum
+                endDate: "",
+                team: []
+            });
+        } catch (error) {
+            console.error("Greška pri kreiranju projekta:", error);
+            toast.error(
+                error.response?.data?.message || "Došlo je do greške pri kreiranju projekta. Molimo pokušajte ponovo.",
+                {
+                    position: "bottom-right",
+                    autoClose: 5000,
+                }
+            );
+        }
     };
 
     const handleEditProject = () => {
@@ -180,48 +367,72 @@ const ProjectManagement = () => {
                             <TableCell sx={{ color: colors.grey[100] }}>Naziv Projekta</TableCell>
                             <TableCell sx={{ color: colors.grey[100] }}>Status</TableCell>
                             <TableCell sx={{ color: colors.grey[100] }}>Tim</TableCell>
-                            <TableCell sx={{ color: colors.grey[100] }}>Period</TableCell>
+                            <TableCell sx={{ color: colors.grey[100] }}>Trajanje Projekta</TableCell>
                             <TableCell sx={{ color: colors.grey[100] }}>Akcije</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {projects.map((project) => (
-                            <TableRow key={project.id} hover>
-                                <TableCell 
-                                    sx={{ 
-                                        color: colors.grey[100],
-                                        cursor: 'pointer'
-                                    }}
-                                    onClick={() => handleNavigateToProject(project.id)}
-                                >
-                                    {project.name}
-                                </TableCell>
-                                <TableCell>
-                                    <Chip
-                                        label={project.status}
-                                        color={project.status === "Aktivan" ? "success" : "warning"}
-                                        sx={{ color: colors.grey[100] }}
-                                    />
-                                </TableCell>
-                                <TableCell>
-                                    <AvatarGroup max={3}>
-                                        {project.team.map((member) => (
-                                            <Tooltip key={member.id} title={member.name}>
-                                                <Avatar src={member.avatar} />
-                                            </Tooltip>
-                                        ))}
-                                    </AvatarGroup>
-                                </TableCell>
-                                <TableCell sx={{ color: colors.grey[100] }}>
-                                    {project.startDate} - {project.endDate}
-                                </TableCell>
-                                <TableCell>
-                                    <IconButton onClick={(e) => handleMenuClick(e, project)}>
-                                        <MoreVertIcon sx={{ color: colors.grey[100] }} />
-                                    </IconButton>
+                        {loading ? (
+                            <TableRow>
+                                <TableCell colSpan={5} align="center" sx={{ py: 5 }}>
+                                    <CircularProgress sx={{ color: colors.blueAccent[500] }} />
+                                    <Typography variant="h6" sx={{ mt: 2, color: colors.grey[100] }}>
+                                        Učitavanje projekata...
+                                    </Typography>
                                 </TableCell>
                             </TableRow>
-                        ))}
+                        ) : projects.length === 0 ? (
+                            <TableRow>
+                                <TableCell colSpan={5} align="center" sx={{ py: 5 }}>
+                                    <Typography variant="h6" sx={{ color: colors.grey[300] }}>
+                                        Nemate kreiranih projekata.
+                                    </Typography>
+                                    <Typography variant="body2" sx={{ color: colors.grey[400], mt: 1 }}>
+                                        Kliknite na "Novi Projekat" da kreirate svoj prvi projekat.
+                                    </Typography>
+                                </TableCell>
+                            </TableRow>
+                        ) : (
+                            projects.map((project) => (
+                                <TableRow key={project.id} hover>
+                                    <TableCell 
+                                        sx={{ 
+                                            color: colors.grey[100],
+                                            cursor: 'pointer'
+                                        }}
+                                        onClick={() => handleNavigateToProject(project.id)}
+                                    >
+                                        {project.name}
+                                    </TableCell>
+                                    <TableCell>
+                                        <Chip
+                                            label={project.status}
+                                            color={project.status === "Aktivan" ? "success" : "warning"}
+                                            sx={{ color: colors.grey[100] }}
+                                        />
+                                    </TableCell>
+                                    <TableCell sx={{ textAlign: 'left' }}>
+                                        <Box sx={{ display: 'flex', justifyContent: 'flex-start' }}>
+                                            <AvatarGroup max={3}>
+                                                {project.team.map((member) => (
+                                                    <Tooltip key={member.id} title={member.name}>
+                                                        <Avatar src={member.avatar} />
+                                                    </Tooltip>
+                                                ))}
+                                            </AvatarGroup>
+                                        </Box>
+                                    </TableCell>
+                                    <TableCell sx={{ color: colors.grey[100] }}>
+                                        {formatDate(project.startDate)} - {formatDate(project.endDate)}
+                                    </TableCell>
+                                    <TableCell>
+                                        <IconButton onClick={(e) => handleMenuClick(e, project)}>
+                                            <MoreVertIcon sx={{ color: colors.grey[100] }} />
+                                        </IconButton>
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        )}
                     </TableBody>
                 </Table>
             </TableContainer>
@@ -577,21 +788,90 @@ const ProjectManagement = () => {
                         <Typography variant="h6" sx={{ mb: 2, color: colors.grey[100] }}>
                             Dodaj Člana Tima
                         </Typography>
+                        {availableWorkers.length === 0 ? (
+                            <Typography variant="body2" sx={{ color: colors.grey[300], fontStyle: 'italic' }}>
+                                Nema dostupnih radnika za dodavanje.
+                            </Typography>
+                        ) : (
                         <Box sx={{ display: 'flex', gap: 1 }}>
                             <TextField
                                 select
                                 fullWidth
                                 value=""
-                                onChange={(e) => {
-                                    const newMember = {
-                                        id: Date.now(),
-                                        name: e.target.value,
-                                        avatar: "../../assets/testSpiderman.png"
-                                    };
-                                    setSelectedProject({
-                                        ...selectedProject,
-                                        team: [...selectedProject.team, newMember]
-                                    });
+                                onChange={async (e) => {
+                                    const selectedWorkerId = e.target.value;
+                                    if (!selectedWorkerId) return;
+                                    
+                                    const worker = availableWorkers.find(w => w.id.toString() === selectedWorkerId);
+                                    if (!worker) return;
+                                    
+                                    // Provera da radnik već nije u timu
+                                    const alreadyInTeam = selectedProject.team.some(m => m.id === worker.id);
+                                    if (alreadyInTeam) {
+                                        toast.warning("Ovaj radnik je već u timu!", {
+                                            position: "bottom-right",
+                                            autoClose: 3000,
+                                        });
+                                        return;
+                                    }
+
+                                    try {
+                                        const token = localStorage.getItem('token');
+                                        
+                                        if (!token) {
+                                            toast.error("Niste prijavljeni. Molimo vas da se prijavite.", {
+                                                position: "bottom-right",
+                                                autoClose: 5000,
+                                            });
+                                            return;
+                                        }
+
+                                        // Slanje POST zahteva za dodavanje korisnika na projekat
+                                        await axios.post(
+                                            `${API_BASE_URL}/project/addUserToProject`,
+                                            null,
+                                            {
+                                                headers: {
+                                                    'Authorization': `Bearer ${token}`
+                                                },
+                                                params: {
+                                                    userId: worker.id,
+                                                    projectId: selectedProject.id
+                                                }
+                                            }
+                                        );
+
+                                        // Dodavanje u lokalnu listu nakon uspešnog poziva
+                                        const base64Pic = convertProfilePicToBase64(worker.profilePic);
+                                        const newMember = {
+                                            id: worker.id,
+                                            name: worker.displayName,
+                                            avatar: base64Pic ? `data:image/jpeg;base64,${base64Pic}` : "../../assets/testSpiderman.png"
+                                        };
+                                        
+                                        setSelectedProject({
+                                            ...selectedProject,
+                                            team: [...selectedProject.team, newMember]
+                                        });
+
+                                        toast.success("Korisnik je uspešno dodat na projekat!", {
+                                            position: "bottom-right",
+                                            autoClose: 3000,
+                                        });
+
+                                        // Osveži listu dostupnih radnika
+                                        await fetchAvailableWorkers(selectedProject.id);
+
+                                    } catch (error) {
+                                        console.error("Greška pri dodavanju korisnika na projekat:", error);
+                                        toast.error(
+                                            error.response?.data?.message || "Došlo je do greške pri dodavanju korisnika na projekat.",
+                                            {
+                                                position: "bottom-right",
+                                                autoClose: 5000,
+                                            }
+                                        );
+                                    }
                                 }}
                                 SelectProps={{
                                     native: true,
@@ -604,12 +884,14 @@ const ProjectManagement = () => {
                                 }}
                             >
                                 <option value="">Izaberi člana</option>
-                                <option value="Marko Jovanović">Marko Jovanović</option>
-                                <option value="Ana Petrović">Ana Petrović</option>
-                                <option value="Petar Marković">Petar Marković</option>
-                                <option value="Jana Stojanović">Jana Stojanović</option>
+                                {availableWorkers.map((worker) => (
+                                    <option key={worker.id} value={worker.id}>
+                                        {worker.displayName}
+                                    </option>
+                                ))}
                             </TextField>
                         </Box>
+                        )}
                     </Box>
                 </DialogContent>
                 <DialogActions>
@@ -633,6 +915,8 @@ const ProjectManagement = () => {
                     </Button>
                 </DialogActions>
             </Dialog>
+            
+            <ToastContainer />
         </Box>
     );
 };
