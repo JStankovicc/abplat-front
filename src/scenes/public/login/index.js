@@ -26,7 +26,7 @@ const LoginPage = ({ onLogin }) => {
             return;
         }
         try {
-            const response = await axios.post("http://localhost:8080/api/v1/auth/signin", { email, password });
+            const response = await axios.post("http://3.73.118.83:8080/api/v1/auth/signin", { email, password });
             const token = response.data.token;
             onLogin(token); // Pass the token to the parent component
         } catch (error) {

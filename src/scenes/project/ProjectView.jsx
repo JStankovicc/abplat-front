@@ -30,7 +30,7 @@ import MobileMenu from "../../components/project/MobileMenu";
 // Premesti sections definiciju u komponentu da može da koristi state
 
 // API konstante
-const API_BASE_URL = "http://localhost:8080/api/v1/project";
+const API_BASE_URL = "http://3.73.118.83:8080/api/v1/project";
 
 // Helper funkcija za auth headers
 const getAuthHeaders = () => {

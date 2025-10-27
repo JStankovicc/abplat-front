@@ -40,7 +40,7 @@ import {
 } from "@mui/icons-material";
 
 // API konstante
-const API_BASE_URL = "http://localhost:8080/api/v1/team";
+const API_BASE_URL = "http://3.73.118.83:8080/api/v1/team";
 
 // Helper funkcija za auth headers
 const getAuthHeaders = () => {

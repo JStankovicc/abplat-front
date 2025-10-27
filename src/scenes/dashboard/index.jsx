@@ -31,8 +31,8 @@ import chatService from "../../services/chatService";
 import Shimmer from "../../components/Shimmer";
 
 // API konstante
-const API_BASE_URL = "http://localhost:8080/api/v1/project";
-const COMPANY_API_BASE_URL = "http://localhost:8080/api/v1/company";
+const API_BASE_URL = "http://3.73.118.83:8080/api/v1/project";
+const COMPANY_API_BASE_URL = "http://3.73.118.83:8080/api/v1/company";
 
 // Helper funkcija za auth headers
 const getAuthHeaders = () => {

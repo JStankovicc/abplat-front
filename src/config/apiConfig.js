@@ -1,12 +1,12 @@
 // API konfiguracija za različita okruženja
 const API_CONFIG = {
   development: {
-    baseURL: "http://localhost:8080/api/v1",
-    wsURL: "http://localhost:8080/ws-chat"
+    baseURL: "http://3.73.118.83:8080/api/v1",
+    wsURL: "http://3.73.118.83:8080/ws-chat"
   },
   serveo: {
-    baseURL: "http://localhost:8080/api/v1",
-    wsURL: "http://localhost:8080/ws-chat"
+    baseURL: "http://3.73.118.83:8080/api/v1",
+    wsURL: "http://3.73.118.83:8080/ws-chat"
   },
   docker: {
     baseURL: "/api/v1",  // Koristimo relativni URL jer nginx proxy-uje

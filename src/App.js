@@ -41,7 +41,7 @@ function App() {
     // API pozivi za korisničke podatke
     const fetchUserProfile = async (token) => {
         try {
-            const response = await axios.get("http://localhost:8080/api/v1/userProfile/getUserProfile", {
+            const response = await axios.get("http://3.73.118.83:8080/api/v1/userProfile/getUserProfile", {
                 headers: {
                     "Authorization": `Bearer ${token}`
                 }
@@ -55,7 +55,7 @@ function App() {
 
     const fetchCompanyInfo = async (token) => {
         try {
-            const response = await axios.get("http://localhost:8080/api/v1/company/getCompanyInfo", {
+            const response = await axios.get("http://3.73.118.83:8080/api/v1/company/getCompanyInfo", {
                 headers: {
                     "Authorization": `Bearer ${token}`
                 }
