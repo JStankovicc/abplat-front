@@ -26,7 +26,6 @@ import TaskIcon from "@mui/icons-material/Task";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import FolderIcon from "@mui/icons-material/Folder";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
-import ConstructionIcon from "@mui/icons-material/Construction";
 import chatService from "../../services/chatService";
 import Shimmer from "../../components/Shimmer";
 import Header from "../../components/Header";
