@@ -29,8 +29,24 @@ import MobileMenu from "../../components/project/MobileMenu";
 
 // Premesti sections definiciju u komponentu da može da koristi state
 
-// API konstante
-const API_BASE_URL = "http://3.73.118.83:8080/api/v1/project";
+import React, { useState, useEffect } from "react";
+import { Box, useTheme, CircularProgress, Alert } from "@mui/material";
+import Header from "../../components/Header";
+import axios from "axios";
+import { useParams } from "react-router-dom";
+import { tokens } from "../../theme";
+import OverviewSection from "../../components/project/OverviewSection";
+import GeneralInfoSection from "../../components/project/GeneralInfoSection";
+import DataSection from "../../components/project/DataSection";
+import TimelineSection from "../../components/project/TimelineSection";
+import KanbanBoard from "../../components/project/KanbanBoard";
+import MyTasks from "../../components/project/MyTasks";
+import Notes from "../../components/project/Notes";
+import Notifications from "../../components/project/Notifications";
+import ProjectCalendar from "../../components/project/ProjectCalendar";
+import ProjectTimeline from "../../components/project/ProjectTimeline";
+import MobileMenu from "../../components/project/MobileMenu";
+import { API_BASE_URL } from "../../config/apiConfig";
 
 // Helper funkcija za auth headers
 const getAuthHeaders = () => {

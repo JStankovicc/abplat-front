@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 import axios from "axios";
+import { API_BASE_URL } from "./config/apiConfig";
 import HomePage from "./scenes/public/homepage";
 import PublicNavbar from "./scenes/global/PublicNavbar";
 import Sidebar from "./scenes/global/Sidebar";
@@ -41,7 +42,7 @@ function App() {
     // API pozivi za korisničke podatke
     const fetchUserProfile = async (token) => {
         try {
-            const response = await axios.get("http://3.73.118.83:8080/api/v1/userProfile/getUserProfile", {
+            const response = await axios.get(`${API_BASE_URL}/userProfile/getUserProfile`, {
                 headers: {
                     "Authorization": `Bearer ${token}`
                 }
@@ -55,7 +56,7 @@ function App() {
 
     const fetchCompanyInfo = async (token) => {
         try {
-            const response = await axios.get("http://3.73.118.83:8080/api/v1/company/getCompanyInfo", {
+            const response = await axios.get(`${API_BASE_URL}/company/getCompanyInfo`, {
                 headers: {
                     "Authorization": `Bearer ${token}`
                 }

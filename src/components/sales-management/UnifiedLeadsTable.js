@@ -48,8 +48,55 @@ import {
     Visibility as VisibilityIcon
 } from "@mui/icons-material";
 
-// API konstante
-const API_BASE_URL = "http://3.73.118.83:8080/api/v1/contact";
+import React, { useState, useEffect } from "react";
+import {
+    Box,
+    Paper,
+    Typography,
+    useTheme,
+    useMediaQuery,
+    CircularProgress,
+    Alert,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+    IconButton,
+    Tooltip,
+    Chip,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    Button,
+    TextField,
+    MenuItem,
+    Select,
+    FormControl,
+    InputLabel,
+    Avatar,
+    Badge
+} from "@mui/material";
+import axios from "axios";
+import { tokens } from "../../theme";
+import {
+    Edit as EditIcon,
+    Delete as DeleteIcon,
+    Visibility as VisibilityIcon,
+    Person as PersonIcon,
+    Email as EmailIcon,
+    Phone as PhoneIcon,
+    Business as BusinessIcon,
+    LocationOn as LocationIcon,
+    CalendarToday as CalendarIcon,
+    AttachMoney as MoneyIcon,
+    TrendingUp as TrendingUpIcon,
+    Group as GroupIcon,
+    Visibility as VisibilityIcon
+} from "@mui/icons-material";
+import { API_BASE_URL } from "../../config/apiConfig";
 
 // Helper funkcija za auth headers
 const getAuthHeaders = () => {

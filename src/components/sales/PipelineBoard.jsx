@@ -12,9 +12,11 @@ import axios from "axios";
 import { tokens } from "../../theme";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 
-// API konstante
-const API_BASE_URL_CONTACTS = "http://3.73.118.83:8080/api/v1/contact";
-const API_BASE_URL_STATUS = "http://3.73.118.83:8080/api/v1/contactStatus";
+import React, { useState, useEffect } from "react";
+import { Box, Typography, useTheme, IconButton, Tooltip } from "@mui/material";
+import { tokens } from "../../theme";
+import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+import { API_BASE_URL } from "../../config/apiConfig";
 
 // Helper funkcija za auth headers
 const getAuthHeaders = () => {
@@ -36,7 +38,7 @@ const PipelineBoard = () => {
     // API funkcije
     const updateContactStatus = async (email, newStatus) => {
         try {
-            const response = await axios.post(`${API_BASE_URL_CONTACTS}/updateStatus`, {
+            const response = await axios.post(`${API_BASE_URL}/contact/updateStatus`, {
                 email: email
             }, {
                 headers: getAuthHeaders(),
@@ -58,10 +60,10 @@ const PipelineBoard = () => {
 
             // Paralelno dohvatamo status-e i kontakte
             const [statusResponse, contactsResponse] = await Promise.all([
-                axios.get(`${API_BASE_URL_STATUS}/all`, {
+                axios.get(`${API_BASE_URL}/contactStatus/all`, {
                     headers: getAuthHeaders()
                 }),
-                axios.get(`${API_BASE_URL_CONTACTS}/user/sales/all`, {
+                axios.get(`${API_BASE_URL}/contact/user/sales/all`, {
                     headers: getAuthHeaders()
                 })
             ]);

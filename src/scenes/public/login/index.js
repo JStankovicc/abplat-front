@@ -3,6 +3,7 @@ import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { Box, Button, TextField, Typography, Link, useTheme } from "@mui/material";
+import { API_BASE_URL } from "../../config/apiConfig";
 
 const LoginPage = ({ onLogin }) => {
     const [email, setEmail] = useState("");
@@ -26,7 +27,7 @@ const LoginPage = ({ onLogin }) => {
             return;
         }
         try {
-            const response = await axios.post("http://3.73.118.83:8080/api/v1/auth/signin", { email, password });
+            const response = await axios.post(`${API_BASE_URL}/auth/signin`, { email, password });
             const token = response.data.token;
             onLogin(token); // Pass the token to the parent component
         } catch (error) {

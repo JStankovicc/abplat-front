@@ -21,8 +21,39 @@ import axios from "axios";
 import { tokens } from "../../theme";
 import AddLeadModal from "./modals/AddLeadModal";
 
-// API konstante
-const API_BASE_URL = "http://3.73.118.83:8080/api/v1/contact";
+import React, { useState, useEffect } from "react";
+import {
+    Box,
+    Paper,
+    Typography,
+    useTheme,
+    useMediaQuery,
+    CircularProgress,
+    Alert,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+    IconButton,
+    Tooltip,
+    Chip,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    Button,
+    TextField,
+    MenuItem,
+    Select,
+    FormControl,
+    InputLabel
+} from "@mui/material";
+import axios from "axios";
+import { tokens } from "../../theme";
+import AddLeadModal from "./modals/AddLeadModal";
+import { API_BASE_URL } from "../../config/apiConfig";
 
 // Helper funkcija za auth headers
 const getAuthHeaders = () => {

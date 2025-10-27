@@ -69,8 +69,12 @@ const Calendar = () => {
     groupParticipants: []
   });
 
-  // API Base URL
-  const API_BASE_URL = "http://3.73.118.83:8080/api/v1/calendar";
+import React, { useState, useEffect } from "react";
+import { Box, useTheme, CircularProgress, Alert } from "@mui/material";
+import Header from "../../components/Header";
+import axios from "axios";
+import { tokens } from "../../theme";
+import { API_BASE_URL } from "../../config/apiConfig";
 
   // Helper function to get auth headers
   const getAuthHeaders = () => {

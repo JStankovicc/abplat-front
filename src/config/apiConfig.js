@@ -1,20 +1,24 @@
 // API konfiguracija za različita okruženja
 const API_CONFIG = {
   development: {
-    baseURL: "http://3.73.118.83:8080/api/v1",
-    wsURL: "http://3.73.118.83:8080/ws-chat"
+    baseURL: "https://api.abplat.com",
+    apiPath: "/api/v1",
+    wsPath: "/ws-chat"
   },
   serveo: {
-    baseURL: "http://3.73.118.83:8080/api/v1",
-    wsURL: "http://3.73.118.83:8080/ws-chat"
+    baseURL: "https://api.abplat.com",
+    apiPath: "/api/v1",
+    wsPath: "/ws-chat"
   },
   docker: {
-    baseURL: "/api/v1",  // Koristimo relativni URL jer nginx proxy-uje
-    wsURL: "/ws-chat"
+    baseURL: "",  // Relativni URL za Docker
+    apiPath: "/api/v1",
+    wsPath: "/ws-chat"
   },
   production: {
-    baseURL: "/api/v1",  // Koristimo relativni URL za production
-    wsURL: "/ws-chat"
+    baseURL: "",  // Relativni URL za production
+    apiPath: "/api/v1",
+    wsPath: "/ws-chat"
   }
 };
 
@@ -25,7 +29,16 @@ const getEnvironment = () => {
 };
 
 const environment = getEnvironment();
-export const API_BASE_URL = API_CONFIG[environment].baseURL;
-export const WS_BASE_URL = API_CONFIG[environment].wsURL;
+const config = API_CONFIG[environment];
+
+// Globalne promenljive
+export const BASE_URL = config.baseURL;
+export const API_BASE_URL = `${config.baseURL}${config.apiPath}`;
+export const WS_BASE_URL = `${config.baseURL}${config.wsPath}`;
+
+// Helper funkcija za kreiranje punih URL-ova
+export const createApiUrl = (endpoint) => {
+  return `${API_BASE_URL}${endpoint}`;
+};
 
 export default API_CONFIG;
