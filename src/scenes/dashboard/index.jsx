@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { 
     Box, 
     Typography, 
@@ -29,26 +29,18 @@ import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import ConstructionIcon from "@mui/icons-material/Construction";
 import chatService from "../../services/chatService";
 import Shimmer from "../../components/Shimmer";
-
-import React, { useState, useEffect } from "react";
-import { Box, useTheme, CircularProgress, Alert } from "@mui/material";
 import Header from "../../components/Header";
 import StatBox from "../../components/StatBox";
 import LineChart from "../../components/LineChart";
 import BarChart from "../../components/BarChart";
 import PieChart from "../../components/PieChart";
 import GeographyChart from "../../components/GeographyChart";
-import axios from "axios";
-import { tokens } from "../../theme";
 import {
     Person as PersonIcon,
     TrendingUp as TrendingUpIcon,
     TrendingDown as TrendingDownIcon,
     Construction as ConstructionIcon
 } from "@mui/icons-material";
-import ConstructionIcon from "@mui/icons-material/Construction";
-import chatService from "../../services/chatService";
-import Shimmer from "../../components/Shimmer";
 import { API_BASE_URL } from "../../config/apiConfig";
 
 // Helper funkcija za auth headers

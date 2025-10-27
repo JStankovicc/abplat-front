@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
     Box,
     Paper,
@@ -31,7 +31,9 @@ import {
     Chip,
     TablePagination,
     CircularProgress,
-    Alert
+    Alert,
+    Avatar,
+    Badge
 } from "@mui/material";
 import axios from "axios";
 import { tokens } from "../../theme";
@@ -40,52 +42,6 @@ import {
     Edit as EditIcon, 
     Delete as DeleteIcon, 
     Person as PersonIcon, 
-    Business as BusinessIcon,
-    MoreVert as MoreVertIcon,
-    FileUpload as FileUploadIcon,
-    FileDownload as FileDownloadIcon,
-    Group as GroupIcon,
-    Visibility as VisibilityIcon
-} from "@mui/icons-material";
-
-import React, { useState, useEffect } from "react";
-import {
-    Box,
-    Paper,
-    Typography,
-    useTheme,
-    useMediaQuery,
-    CircularProgress,
-    Alert,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    IconButton,
-    Tooltip,
-    Chip,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
-    Button,
-    TextField,
-    MenuItem,
-    Select,
-    FormControl,
-    InputLabel,
-    Avatar,
-    Badge
-} from "@mui/material";
-import axios from "axios";
-import { tokens } from "../../theme";
-import {
-    Edit as EditIcon,
-    Delete as DeleteIcon,
-    Visibility as VisibilityIcon,
-    Person as PersonIcon,
     Email as EmailIcon,
     Phone as PhoneIcon,
     Business as BusinessIcon,
@@ -93,6 +49,9 @@ import {
     CalendarToday as CalendarIcon,
     AttachMoney as MoneyIcon,
     TrendingUp as TrendingUpIcon,
+    MoreVert as MoreVertIcon,
+    FileUpload as FileUploadIcon,
+    FileDownload as FileDownloadIcon,
     Group as GroupIcon,
     Visibility as VisibilityIcon
 } from "@mui/icons-material";

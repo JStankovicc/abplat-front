@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
@@ -39,41 +39,7 @@ import {
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import { tokens } from "../../theme";
-
-const Calendar = () => {
-  const theme = useTheme();
-  const colors = tokens(theme.palette.mode);
-  const [currentEvents, setCurrentEvents] = useState([]);
-  const [openDialog, setOpenDialog] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState(null);
-  const [dateClickInfo, setDateClickInfo] = useState(null);
-  
-  // Loading and error states
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  
-  // Data states
-  const [companyUsers, setCompanyUsers] = useState([]);
-  const [teams, setTeams] = useState([]);
-  const [departments, setDepartments] = useState([]);
-
-  const [eventDetails, setEventDetails] = useState({
-    title: "",
-    description: "",
-    start: "",
-    end: "",
-    location: "",
-    priority: "NORMAL",
-    participantUserIds: [],
-    groupParticipants: []
-  });
-
-import React, { useState, useEffect } from "react";
-import { Box, useTheme, CircularProgress, Alert } from "@mui/material";
 import Header from "../../components/Header";
-import axios from "axios";
-import { tokens } from "../../theme";
 import { API_BASE_URL } from "../../config/apiConfig";
 
   // Helper function to get auth headers

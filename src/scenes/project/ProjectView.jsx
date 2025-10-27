@@ -1,5 +1,5 @@
 // src/scenes/project/ProjectView.jsx
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
     Box,
     IconButton,
@@ -7,7 +7,9 @@ import {
     useMediaQuery,
     Tabs,
     Tab,
-    Typography
+    Typography,
+    CircularProgress,
+    Alert
 } from "@mui/material";
 import axios from "axios";
 import { useParams } from "react-router-dom";
@@ -20,21 +22,7 @@ import {
     TableChart as DataIcon,
     CalendarMonth as CalendarIcon
 } from "@mui/icons-material";
-import OverviewSection from "../../components/project/OverviewSection";
-import KanbanBoard from "../../components/project/KanbanBoard";
-import TimelineSection from "../../components/project/TimelineSection";
-import DataSection from "../../components/project/DataSection";
-import ProjectCalendar from "../../components/project/ProjectCalendar";
-import MobileMenu from "../../components/project/MobileMenu";
-
-// Premesti sections definiciju u komponentu da može da koristi state
-
-import React, { useState, useEffect } from "react";
-import { Box, useTheme, CircularProgress, Alert } from "@mui/material";
 import Header from "../../components/Header";
-import axios from "axios";
-import { useParams } from "react-router-dom";
-import { tokens } from "../../theme";
 import OverviewSection from "../../components/project/OverviewSection";
 import GeneralInfoSection from "../../components/project/GeneralInfoSection";
 import DataSection from "../../components/project/DataSection";
