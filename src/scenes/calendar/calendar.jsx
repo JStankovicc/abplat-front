@@ -42,6 +42,35 @@ import { tokens } from "../../theme";
 import Header from "../../components/Header";
 import { API_BASE_URL } from "../../config/apiConfig";
 
+const Calendar = () => {
+  const theme = useTheme();
+  const colors = tokens(theme.palette.mode);
+  const [currentEvents, setCurrentEvents] = useState([]);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [dateClickInfo, setDateClickInfo] = useState(null);
+  
+  // Loading and error states
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  
+  // Data states
+  const [companyUsers, setCompanyUsers] = useState([]);
+  const [teams, setTeams] = useState([]);
+  const [departments, setDepartments] = useState([]);
+
+  const [eventDetails, setEventDetails] = useState({
+    title: "",
+    description: "",
+    start: "",
+    end: "",
+    location: "",
+    priority: "NORMAL",
+    participantUserIds: [],
+    groupParticipants: []
+  });
+
   // Helper function to get auth headers
   const getAuthHeaders = () => {
     const token = localStorage.getItem('token');
