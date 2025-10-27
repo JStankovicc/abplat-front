@@ -3,7 +3,7 @@ import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { Box, Button, TextField, Typography, Link, useTheme } from "@mui/material";
-import { API_BASE_URL } from "../../config/apiConfig";
+import { API_BASE_URL } from "../../../config/apiConfig";
 
 const LoginPage = ({ onLogin }) => {
     const [email, setEmail] = useState("");
