@@ -100,7 +100,7 @@ const Calendar = () => {
       
       const calendarViewRequest = {};
 
-      const response = await axios.post(`${API_BASE_URL}/events/my`, calendarViewRequest, {
+      const response = await axios.post(`${API_BASE_URL}/calendar/events/my`, calendarViewRequest, {
         headers: getAuthHeaders()
       });
       console.log('My events response:', response.data);
@@ -266,13 +266,13 @@ const Calendar = () => {
 
       if (isEditing && selectedEvent) {
         // Update existing event
-        const response = await axios.put(`${API_BASE_URL}/events/${selectedEvent.event.id}`, eventPayload, {
+        const response = await axios.put(`${API_BASE_URL}/calendar/events/${selectedEvent.event.id}`, eventPayload, {
           headers: getAuthHeaders()
         });
         console.log('Update event response:', response.data);
       } else {
         // Create new event
-        const response = await axios.post(`${API_BASE_URL}/events`, eventPayload, {
+        const response = await axios.post(`${API_BASE_URL}/calendar/events`, eventPayload, {
           headers: getAuthHeaders()
         });
         console.log('Create event response:', response.data);
@@ -295,7 +295,7 @@ const Calendar = () => {
       setLoading(true);
       setError(null);
 
-      const response = await axios.delete(`${API_BASE_URL}/events/${selectedEvent.event.id}`, {
+      const response = await axios.delete(`${API_BASE_URL}/calendar/events/${selectedEvent.event.id}`, {
         headers: getAuthHeaders()
       });
       console.log('Delete event response:', response.status);
@@ -342,7 +342,7 @@ const Calendar = () => {
       setLoading(true);
       setError(null);
 
-      const response = await axios.get(`${API_BASE_URL}/events/team/${teamId}`, {
+      const response = await axios.get(`${API_BASE_URL}/calendar/events/team/${teamId}`, {
         headers: getAuthHeaders(),
         params: {
           startDate: startDate.toISOString(),
@@ -367,7 +367,7 @@ const Calendar = () => {
       setLoading(true);
       setError(null);
 
-      const response = await axios.post(`${API_BASE_URL}/events/${eventId}/respond`, null, {
+      const response = await axios.post(`${API_BASE_URL}/calendar/events/${eventId}/respond`, null, {
         headers: getAuthHeaders(),
         params: { response: participationStatus }
       });

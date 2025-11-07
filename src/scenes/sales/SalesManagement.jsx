@@ -28,11 +28,11 @@ import MobileMenu from "../../components/sales-management/MobileMenu";
 
 const sections = [
     { id: 0, label: "Tim", icon: <TeamIcon />, component: <TeamManagement />, disabled: false },
-    { id: 1, label: "Ciljevi", icon: <GoalIcon />, component: <GoalTracker />, disabled: true },
-    { id: 2, label: "Strategija", icon: <StrategyIcon />, component: <StrategyConfig />, disabled: true },
-    { id: 3, label: "Cene", icon: <PricingIcon />, component: <PricingEngine />, disabled: true },
+    { id: 1, label: "Ciljevi", icon: <GoalIcon />, component: <GoalTracker />, disabled: false },
+    { id: 2, label: "Strategija", icon: <StrategyIcon />, component: <StrategyConfig />, disabled: false },
+    { id: 3, label: "Cene", icon: <PricingIcon />, component: <PricingEngine />, disabled: false },
     { id: 4, label: "Kontakti", icon: <TeamIcon />, component: <UnifiedLeadsTable />, disabled: false },
-    { id: 5, label: "Analitika", icon: <AnalyticsIcon />, component: <PerformanceDashboard />, disabled: true },
+    { id: 5, label: "Analitika", icon: <AnalyticsIcon />, component: <PerformanceDashboard />, disabled: false },
 ];
 
 const SalesManagement = () => {

@@ -95,7 +95,7 @@ const TeamManagement = () => {
             setLoading(true);
             setError(null);
             
-            const response = await axios.get(`${API_BASE_URL}/getAllSalesTeams`, {
+            const response = await axios.get(`${API_BASE_URL}/team/getAllSalesTeams`, {
                 headers: getAuthHeaders()
             });
 

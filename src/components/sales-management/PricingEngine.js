@@ -29,34 +29,34 @@ const mockPricingData = [
         id: 1,
         product: "Osnovni paket",
         description: "Osnovne funkcionalnosti",
-        basePrice: 50000,
+        basePrice: 9.99,
         discount: 0,
-        finalPrice: 50000,
-        currency: "RSD",
+        finalPrice: 9.99,
+        currency: "€",
         validFrom: "2024-01-01",
-        validTo: "2024-12-31"
+        validTo: "2027-12-31"
     },
     {
         id: 2,
         product: "Standard paket",
         description: "Standardne funkcionalnosti",
-        basePrice: 100000,
-        discount: 10,
-        finalPrice: 90000,
-        currency: "RSD",
+        basePrice: 19.99,
+        discount: 0,
+        finalPrice: 19.99,
+        currency: "€",
         validFrom: "2024-01-01",
-        validTo: "2024-12-31"
+        validTo: "2027-12-31"
     },
     {
         id: 3,
         product: "Premium paket",
         description: "Sve funkcionalnosti",
-        basePrice: 200000,
-        discount: 15,
-        finalPrice: 170000,
-        currency: "RSD",
+        basePrice: 24.99,
+        discount: 0,
+        finalPrice: 24.99,
+        currency: "€",
         validFrom: "2024-01-01",
-        validTo: "2024-12-31"
+        validTo: "2027-12-31"
     }
 ];
 
@@ -72,7 +72,7 @@ const PricingEngine = () => {
         description: "",
         basePrice: "",
         discount: "",
-        currency: "RSD",
+        currency: "€",
         validFrom: "",
         validTo: ""
     });
@@ -88,7 +88,7 @@ const PricingEngine = () => {
                 description: "",
                 basePrice: "",
                 discount: "",
-                currency: "RSD",
+                currency: "€",
                 validFrom: "",
                 validTo: ""
             });
@@ -126,7 +126,7 @@ const PricingEngine = () => {
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat('sr-RS', {
             style: 'currency',
-            currency: 'RSD',
+            currency: 'EUR',
             minimumFractionDigits: 0,
             maximumFractionDigits: 0
         }).format(amount);

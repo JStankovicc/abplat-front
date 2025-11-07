@@ -209,7 +209,7 @@ const UnifiedLeadsTable = () => {
             
             // Paralelno dohvatamo i CLIENT i LEAD liste sa query parametrima
             const [clientResponse, leadResponse] = await Promise.all([
-                axios.post(`${API_BASE_URL}/lists/all?type=CLIENT`, 
+                axios.post(`${API_BASE_URL}/contact/lists/all?type=CLIENT`, 
                     null,  // Nema body
                     { 
                         headers: {
@@ -217,7 +217,7 @@ const UnifiedLeadsTable = () => {
                         }
                     }
                 ),
-                axios.post(`${API_BASE_URL}/lists/all?type=LEAD`, 
+                axios.post(`${API_BASE_URL}/contact/lists/all?type=LEAD`, 
                     null,  // Nema body
                     { 
                         headers: {

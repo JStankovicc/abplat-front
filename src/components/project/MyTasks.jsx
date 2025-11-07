@@ -33,7 +33,7 @@ const MyTasks = () => {
                 return;
             }
             
-            const response = await axios.get(`${API_BASE_URL}/tasks/my`, {
+            const response = await axios.get(`${API_BASE_URL}/project/tasks/my`, {
                 headers: getAuthHeaders(),
                 params: {
                     projectId: projectId

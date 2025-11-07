@@ -62,7 +62,7 @@ const ContactTable = () => {
             setLoading(true);
             setError(null);
             
-            const response = await axios.get(`${API_BASE_URL}/user/sales/all`, {
+            const response = await axios.get(`${API_BASE_URL}/contact/user/sales/all`, {
                 headers: getAuthHeaders()
             });
 

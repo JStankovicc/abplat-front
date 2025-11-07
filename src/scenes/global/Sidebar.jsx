@@ -285,7 +285,7 @@ const Sidebar = ({ userProfile, companyInfo }) => {
                                 selected={selected}
                                 setSelected={setSelected}
                                 onClick={() => isMobile && setIsMobileSidebarOpen(false)}
-                                disabled={true}
+                                disabled={false}
                             />
                             <Item
                                 title="Podesavanja kompanije"
@@ -294,7 +294,7 @@ const Sidebar = ({ userProfile, companyInfo }) => {
                                 selected={selected}
                                 setSelected={setSelected}
                                 onClick={() => isMobile && setIsMobileSidebarOpen(false)}
-                                disabled={true}
+                                disabled={false}
                             />
                             <Item
                                 title="Pregled kompanije"
@@ -303,7 +303,7 @@ const Sidebar = ({ userProfile, companyInfo }) => {
                                 selected={selected}
                                 setSelected={setSelected}
                                 onClick={() => isMobile && setIsMobileSidebarOpen(false)}
-                                disabled={true}
+                                disabled={false}
                             />
 
                             <Typography variant="h6" color={colors.grey[300]} sx={{ m: "15px 0 5px 20px" }}>
@@ -361,7 +361,7 @@ const Sidebar = ({ userProfile, companyInfo }) => {
                                 selected={selected}
                                 setSelected={setSelected}
                                 onClick={() => isMobile && setIsMobileSidebarOpen(false)}
-                                disabled={true}
+                                disabled={false}
                             />
                             <Item
                                 title="Imovina"
@@ -370,7 +370,7 @@ const Sidebar = ({ userProfile, companyInfo }) => {
                                 selected={selected}
                                 setSelected={setSelected}
                                 onClick={() => isMobile && setIsMobileSidebarOpen(false)}
-                                disabled={true}
+                                disabled={false}
                             />
                             <Item
                                 title="Vozila"
@@ -379,7 +379,7 @@ const Sidebar = ({ userProfile, companyInfo }) => {
                                 selected={selected}
                                 setSelected={setSelected}
                                 onClick={() => isMobile && setIsMobileSidebarOpen(false)}
-                                disabled={true}
+                                disabled={false}
                             />
 
                             {isMobile && (

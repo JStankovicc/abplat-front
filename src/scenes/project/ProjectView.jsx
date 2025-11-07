@@ -64,7 +64,7 @@ const ProjectView = () => {
                 return;
             }
 
-            const response = await axios.get(`${API_BASE_URL}/${projectId}`, {
+            const response = await axios.get(`${API_BASE_URL}/project/${projectId}`, {
                 headers: getAuthHeaders()
             });
 
@@ -79,7 +79,7 @@ const ProjectView = () => {
     const updateProjectNote = async (newNote) => {
         try {
             setNoteLoading(true);
-            await axios.put(`${API_BASE_URL}/updateNote`, {
+            await axios.put(`${API_BASE_URL}/project/updateNote`, {
                 id: projectInfo.id,
                 note: newNote
             }, {

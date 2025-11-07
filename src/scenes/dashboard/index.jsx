@@ -67,7 +67,7 @@ const Dashboard = () => {
     // Dohvati sve projekte korisnika
     const fetchProjects = async () => {
         try {
-            const response = await axios.get(`${API_BASE_URL}/allByCompany`, {
+            const response = await axios.get(`${API_BASE_URL}/project/allByCompany`, {
                 headers: getAuthHeaders()
             });
             setProjects(response.data);
@@ -75,7 +75,7 @@ const Dashboard = () => {
             // Dohvati taskove za svaki projekat
             const tasksPromises = response.data.map(async (project) => {
                 try {
-                    const tasksResponse = await axios.get(`${API_BASE_URL}/tasks/my`, {
+                    const tasksResponse = await axios.get(`${API_BASE_URL}/project/tasks/my`, {
                         headers: getAuthHeaders(),
                         params: { projectId: project.id }
                     });
