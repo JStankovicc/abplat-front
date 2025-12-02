@@ -22,7 +22,6 @@ import {
     useTheme,
     Chip,
     Avatar,
-    AvatarGroup,
     Tooltip,
     Menu,
     MenuItem,
@@ -412,14 +411,41 @@ const ProjectManagement = () => {
                                         />
                                     </TableCell>
                                     <TableCell sx={{ textAlign: 'left' }}>
-                                        <Box sx={{ display: 'flex', justifyContent: 'flex-start' }}>
-                                            <AvatarGroup max={3}>
-                                                {project.team.map((member) => (
-                                                    <Tooltip key={member.id} title={member.name}>
-                                                        <Avatar src={member.avatar} />
-                                                    </Tooltip>
-                                                ))}
-                                            </AvatarGroup>
+                                        <Box sx={{ display: 'flex', justifyContent: 'flex-start', gap: 1, flexWrap: 'wrap' }}>
+                                            {project.team.slice(0, 3).map((member) => (
+                                                <Tooltip key={member.id} title={member.name}>
+                                                    <Avatar 
+                                                        src={member.avatar} 
+                                                        sx={{
+                                                            backgroundColor: colors.primary[500],
+                                                            border: `2px solid ${colors.primary[600]}`,
+                                                            width: 40,
+                                                            height: 40,
+                                                            '& img': {
+                                                                backgroundColor: colors.primary[500],
+                                                                objectFit: 'cover'
+                                                            }
+                                                        }}
+                                                    />
+                                                </Tooltip>
+                                            ))}
+                                            {project.team.length > 3 && (
+                                                <Tooltip title={`+${project.team.length - 3} više`}>
+                                                    <Avatar 
+                                                        sx={{
+                                                            backgroundColor: colors.blueAccent[500],
+                                                            border: `2px solid ${colors.primary[600]}`,
+                                                            width: 40,
+                                                            height: 40,
+                                                            color: colors.grey[100],
+                                                            fontSize: '0.875rem',
+                                                            fontWeight: 'bold'
+                                                        }}
+                                                    >
+                                                        +{project.team.length - 3}
+                                                    </Avatar>
+                                                </Tooltip>
+                                            )}
                                         </Box>
                                     </TableCell>
                                     <TableCell sx={{ color: colors.grey[100] }}>

@@ -51,6 +51,55 @@ const getAuthHeaders = () => {
     };
 };
 
+// Mock podaci za obaveštenja
+const mockNotifications = [
+    {
+        id: 1,
+        type: "task",
+        title: "Nov zadatak vam je dodeljen",
+        description: "Implementacija dashboard-a za projekat ABPLAT",
+        time: "Pre 5 minuta",
+        read: false,
+        icon: "task"
+    },
+    {
+        id: 2,
+        type: "project",
+        title: "Projekat ažuriran",
+        description: "Kosta Marković je ažurirao projekat 'Website Redesign'",
+        time: "Pre 1 sat",
+        read: false,
+        icon: "project"
+    },
+    {
+        id: 3,
+        type: "message",
+        title: "Nova poruka od Ognjen Gašić",
+        description: "Da li možemo da razgovaramo o budžetu projekta?",
+        time: "Pre 2 sata",
+        read: true,
+        icon: "message"
+    },
+    {
+        id: 4,
+        type: "deadline",
+        title: "Rok ističe uskoro",
+        description: "Završetak faze 2 projekta - još 2 dana",
+        time: "Pre 3 sata",
+        read: true,
+        icon: "deadline"
+    },
+    {
+        id: 5,
+        type: "task",
+        title: "Zadatak završen",
+        description: "Jovan Stanković je završio zadatak 'API integracija'",
+        time: "Juče",
+        read: true,
+        icon: "task"
+    }
+];
+
 const Dashboard = () => {
     const theme = useTheme();
     const colors = tokens(theme.palette.mode);
@@ -63,6 +112,7 @@ const Dashboard = () => {
     const [lastMessage, setLastMessage] = useState(null);
     const [conversations, setConversations] = useState([]);
     const [contacts, setContacts] = useState([]);
+    const [notifications] = useState(mockNotifications);
 
     // Dohvati sve projekte korisnika
     const fetchProjects = async () => {
@@ -150,7 +200,7 @@ const Dashboard = () => {
                     setLastMessage({
                         conversationId: formattedConversation.conversationId,
                         sender: formattedConversation.name,
-                        content: formattedConversation.lastMessage || "Nema poruka",
+                        content: formattedConversation.lastMessage || "Pozdrav!",
                         timestamp: formattedConversation.lastMessageTime ? 
                             formattedConversation.lastMessageTime.toLocaleTimeString('sr-RS', { hour: '2-digit', minute: '2-digit' }) : 
                             '',
@@ -169,7 +219,7 @@ const Dashboard = () => {
                     setLastMessage({
                         conversationId: mostRecentConversation.conversationId,
                         sender: mostRecentConversation.name || 'Nepoznat korisnik',
-                        content: mostRecentConversation.lastMessagePreview || "Nema poruka",
+                        content: mostRecentConversation.lastMessagePreview || "Pozdrav!",
                         timestamp: mostRecentConversation.lastMessageAt ? 
                             new Date(mostRecentConversation.lastMessageAt).toLocaleTimeString('sr-RS', { hour: '2-digit', minute: '2-digit' }) : 
                             '',
@@ -252,7 +302,6 @@ const Dashboard = () => {
                 height="calc(100vh - 120px)" 
                 overflow="hidden"
                 display="flex"
-                alignItems="center"
                 justifyContent="center"
             >
                 <Box
@@ -261,6 +310,7 @@ const Dashboard = () => {
                     gridTemplateRows="repeat(5, 1fr)"
                     gap="15px"
                     height="100%"
+                    width="75%"
                     overflow="hidden"
                 >
                     {/* Shimmer za obaveštenja */}
@@ -366,7 +416,6 @@ const Dashboard = () => {
             height="calc(100vh - 120px)" 
             overflow="hidden"
             display="flex"
-            alignItems="center"
             justifyContent="center"
         >
             {/* GRID LAYOUT */}
@@ -376,6 +425,7 @@ const Dashboard = () => {
                 gridTemplateRows="repeat(5, 1fr)"
                 gap="15px"
                 height="100%"
+                width="75%"
                 overflow="hidden"
             >
                 {/* OBAVEŠTENJA SEKCIJA - NAJVECI */}
@@ -387,78 +437,151 @@ const Dashboard = () => {
                         backgroundColor: colors.primary[400],
                         borderRadius: "12px",
                         p: "15px",
-                        opacity: 0.7,
-                        cursor: 'not-allowed',
                         background: `linear-gradient(135deg, ${colors.primary[400]} 0%, ${colors.primary[500]} 100%)`,
-                        border: `2px dashed ${colors.grey[500]}`,
-                        position: 'relative',
                         overflow: 'hidden',
-                        '&::before': {
-                            content: '""',
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            width: '100%',
-                            height: '100%',
-                            background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent)',
-                            transform: 'skewX(-15deg)',
-                            animation: 'shimmer 3s infinite',
-                        },
-                        '@keyframes shimmer': {
-                            '0%': { transform: 'translateX(-100%) skewX(-15deg)' },
-                            '100%': { transform: 'translateX(200%) skewX(-15deg)' }
-                        }
+                        position: 'relative',
+                        height: '100%'
                     }}
                 >
-                    <Box display="flex" alignItems="center" mb="10px">
-                        <Box
-                            sx={{
-                                backgroundColor: colors.grey[400],
-                                borderRadius: '50%',
-                                p: 1,
-                                mr: 2,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                animation: 'pulse 2s infinite',
-                                '@keyframes pulse': {
-                                    '0%': { opacity: 0.6 },
-                                    '50%': { opacity: 1 },
-                                    '100%': { opacity: 0.6 }
-                                }
-                            }}
-                        >
-                            <ConstructionIcon sx={{ color: colors.grey[100], fontSize: '1.2rem' }} />
+                    <Box display="flex" alignItems="center" justifyContent="space-between" mb="15px">
+                        <Box display="flex" alignItems="center">
+                            <Box
+                                sx={{
+                                    backgroundColor: colors.blueAccent[500],
+                                    borderRadius: '50%',
+                                    p: 1,
+                                    mr: 2,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                }}
+                            >
+                                <NotificationsIcon sx={{ color: colors.grey[100], fontSize: '1.2rem' }} />
+                            </Box>
+                            <Typography variant="h6" fontWeight="600" color={colors.grey[100]}>
+                                Obaveštenja
+                            </Typography>
                         </Box>
-                        <Typography variant="h6" fontWeight="600" color={colors.grey[400]}>
-                            Obaveštenja
-                        </Typography>
-                        <Chip 
-                            label="U RAZVOJU" 
-                            size="small" 
-                            color="warning" 
-                            sx={{ 
-                                ml: 2, 
-                                fontSize: '0.7rem', 
-                                height: '20px',
-                                animation: 'blink 1.5s infinite',
-                                '@keyframes blink': {
-                                    '0%': { opacity: 1 },
-                                    '50%': { opacity: 0.5 },
-                                    '100%': { opacity: 1 }
-                                }
-                            }} 
-                        />
+                        {notifications.filter(n => !n.read).length > 0 && (
+                            <Badge 
+                                badgeContent={notifications.filter(n => !n.read).length} 
+                                color="error"
+                            />
+                        )}
                     </Box>
                     
-                    <Box textAlign="center" py={2} display="flex" flexDirection="column" alignItems="center" justifyContent="center" height="100%">
-                        <ConstructionIcon sx={{ fontSize: '4rem', color: colors.grey[400], mb: 2 }} />
-                        <Typography color={colors.grey[400]} variant="h6" sx={{ fontStyle: 'italic', mb: 1 }}>
-                            🚧 Funkcionalnost je trenutno u razvoju
-                        </Typography>
-                        <Typography color={colors.grey[500]} variant="body1" sx={{ fontStyle: 'italic', textAlign: 'center', maxWidth: '80%' }}>
-                            Ova sekcija će biti dostupna uskoro i omogućiće vam praćenje svih važnih obaveštenja, ažuriranja projekata i sistema komunikacije sa timom.
-                        </Typography>
+                    <Box 
+                        sx={{ 
+                            height: 'calc(100% - 60px)',
+                            overflowY: 'auto',
+                            '&::-webkit-scrollbar': {
+                                width: '6px',
+                            },
+                            '&::-webkit-scrollbar-track': {
+                                backgroundColor: 'rgba(0,0,0,0.1)',
+                                borderRadius: '3px',
+                            },
+                            '&::-webkit-scrollbar-thumb': {
+                                backgroundColor: 'rgba(0,0,0,0.3)',
+                                borderRadius: '3px',
+                                '&:hover': {
+                                    backgroundColor: 'rgba(0,0,0,0.5)',
+                                },
+                            },
+                        }}
+                    >
+                        <List sx={{ p: 0 }}>
+                            {notifications.map((notification, index) => (
+                                <React.Fragment key={notification.id}>
+                                    <ListItem 
+                                        sx={{ 
+                                            p: 2,
+                                            borderRadius: '8px',
+                                            mb: 1,
+                                            backgroundColor: notification.read ? 'transparent' : `${colors.blueAccent[700]}40`,
+                                            transition: 'all 0.2s ease',
+                                            cursor: 'pointer',
+                                            '&:hover': {
+                                                backgroundColor: colors.primary[300],
+                                                transform: 'translateX(5px)'
+                                            }
+                                        }}
+                                    >
+                                        <ListItemAvatar>
+                                            <Avatar 
+                                                sx={{ 
+                                                    bgcolor: notification.type === 'task' ? colors.greenAccent[500] :
+                                                           notification.type === 'project' ? colors.blueAccent[500] :
+                                                           notification.type === 'message' ? colors.primary[300] :
+                                                           colors.redAccent[500],
+                                                    width: 40,
+                                                    height: 40
+                                                }}
+                                            >
+                                                {notification.type === 'task' && <TaskIcon />}
+                                                {notification.type === 'project' && <FolderIcon />}
+                                                {notification.type === 'message' && <MessageIcon />}
+                                                {notification.type === 'deadline' && <AccessTimeIcon />}
+                                            </Avatar>
+                                        </ListItemAvatar>
+                                        <ListItemText
+                                            primary={
+                                                <Box display="flex" alignItems="center" justifyContent="space-between">
+                                                    <Typography 
+                                                        variant="subtitle1" 
+                                                        color={colors.grey[100]}
+                                                        fontWeight={notification.read ? 400 : 600}
+                                                        sx={{ fontSize: '0.95rem' }}
+                                                    >
+                                                        {notification.title}
+                                                    </Typography>
+                                                    {!notification.read && (
+                                                        <Box
+                                                            sx={{
+                                                                width: 8,
+                                                                height: 8,
+                                                                borderRadius: '50%',
+                                                                backgroundColor: colors.redAccent[500],
+                                                                ml: 1
+                                                            }}
+                                                        />
+                                                    )}
+                                                </Box>
+                                            }
+                                            secondary={
+                                                <Box>
+                                                    <Typography 
+                                                        variant="body2" 
+                                                        color={colors.grey[300]}
+                                                        sx={{ 
+                                                            mb: 0.5,
+                                                            fontSize: '0.85rem',
+                                                            overflow: 'hidden',
+                                                            textOverflow: 'ellipsis',
+                                                            display: '-webkit-box',
+                                                            WebkitLineClamp: 2,
+                                                            WebkitBoxOrient: 'vertical'
+                                                        }}
+                                                    >
+                                                        {notification.description}
+                                                    </Typography>
+                                                    <Typography 
+                                                        variant="caption" 
+                                                        color={colors.grey[400]}
+                                                        sx={{ fontSize: '0.75rem' }}
+                                                    >
+                                                        {notification.time}
+                                                    </Typography>
+                                                </Box>
+                                            }
+                                        />
+                                    </ListItem>
+                                    {index < notifications.length - 1 && (
+                                        <Divider sx={{ backgroundColor: colors.grey[700], opacity: 0.3 }} />
+                                    )}
+                                </React.Fragment>
+                            ))}
+                        </List>
                     </Box>
                 </Paper>
 
@@ -497,7 +620,7 @@ const Dashboard = () => {
                             <MessageIcon sx={{ color: colors.grey[100], fontSize: '1.2rem' }} />
                         </Box>
                         <Typography variant="h6" fontWeight="600" color={colors.grey[100]}>
-                            Poslednja poruka
+                            Poslednje poruke
                         </Typography>
                         {lastMessage?.unreadCount > 0 && (
                             <Badge 
@@ -567,7 +690,7 @@ const Dashboard = () => {
                         <Box textAlign="center" py={2}>
                             <MessageIcon sx={{ fontSize: '3rem', color: colors.grey[400], mb: 2 }} />
                             <Typography color={colors.grey[300]} variant="body1">
-                                Nema poruka
+                                Pozdrav!
                             </Typography>
                             <Box mt={2}>
                                 <Shimmer width="120px" height="12px" sx={{ mx: 'auto', mb: 1 }} />

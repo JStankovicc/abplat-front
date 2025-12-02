@@ -522,7 +522,7 @@ const ChatInterface = () => {
                                                                 maxWidth: '70%'
                                                             }}
                                                         >
-                                                            {chat.lastMessage || "Nema poruka"}
+                                                            {chat.lastMessage || "Pozdrav!"}
                                                         </Typography>
                                                         <Typography
                                                             variant="caption"
@@ -756,7 +756,7 @@ const ChatInterface = () => {
                                                             maxWidth: '60%'
                                                         }}
                                                     >
-                                                        {chat.lastMessage || "Nema poruka"}
+                                                        {chat.lastMessage || "Pozdrav!"}
                                                     </Typography>
                                                     <Typography
                                                         variant="caption"
