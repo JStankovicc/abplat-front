@@ -1,7 +1,7 @@
 // API konfiguracija za različita okruženja
 const API_CONFIG = {
   development: {
-    //baseURL: "http://localhost:8080",
+    baseURL: "http://localhost:8080",
      baseURL: "https://api.abplat.com",
     apiPath: "/api/v1",
     wsPath: "/ws-chat"

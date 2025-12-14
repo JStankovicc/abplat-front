@@ -65,20 +65,20 @@ const Topbar = ({ companyInfo }) => {
 
         {/* ICONS Section */}
         <Box display="flex">
-          <IconButton onClick={colorMode.toggleColorMode}>
+          <IconButton onClick={colorMode.toggleColorMode} disabled>
             {theme.palette.mode === "dark" ? (
                 <DarkModeOutlinedIcon />
             ) : (
                 <LightModeOutlinedIcon />
             )}
           </IconButton>
-          <IconButton>
+          <IconButton disabled>
             <NotificationsOutlinedIcon />
           </IconButton>
-          <IconButton>
+          <IconButton disabled>
             <SettingsOutlinedIcon />
           </IconButton>
-          <IconButton>
+          <IconButton disabled>
             <PersonOutlinedIcon />
           </IconButton>
         </Box>
