@@ -1,12 +1,8 @@
-import React, { useContext } from "react";
-import { Box, Button, IconButton, useTheme } from "@mui/material";
-import { ColorModeContext } from "../../theme";
-import LightModeOutlinedIcon from "@mui/icons-material/LightModeOutlined";
-import DarkModeOutlinedIcon from "@mui/icons-material/DarkModeOutlined";
+import React from "react";
+import { Box, Button, useTheme } from "@mui/material";
 
 const PublicNavbar = () => {
     const theme = useTheme();
-    const colorMode = useContext(ColorModeContext);
 
     return (
         <Box
@@ -50,20 +46,10 @@ const PublicNavbar = () => {
             {/* Navigation - center */}
             <Box display="flex" gap={2}>
                 <Button color="inherit" href="/">Početna</Button>
-                <Button color="inherit" href="/product">Proizvod</Button>
-                <Button color="inherit" href="/contact">Kontakt</Button>
             </Box>
 
-            {/* Theme toggle and login button - right */}
+            {/* Login button - right */}
             <Box display="flex" gap={2}>
-                <IconButton onClick={colorMode.toggleColorMode}>
-                    {theme.palette.mode === "dark" ? (
-                        <DarkModeOutlinedIcon />
-                    ) : (
-                        <LightModeOutlinedIcon />
-                    )}
-                </IconButton>
-
                 <Button color="inherit" href="/login" sx={{ minWidth: 'auto' }}>
                     Uloguj se
                 </Button>

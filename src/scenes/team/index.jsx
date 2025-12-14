@@ -120,6 +120,14 @@ const Team = () => {
                     onClick={() => navigate(`/user/${params.row.id}`)}
                     color="secondary"
                     size="small"
+                    disabled
+                    sx={{
+                        opacity: 0.5,
+                        cursor: 'not-allowed',
+                        '&:hover': {
+                            backgroundColor: 'transparent'
+                        }
+                    }}
                 >
                     <ArrowForwardIosIcon fontSize={isMobile ? "small" : "medium"} />
                 </IconButton>

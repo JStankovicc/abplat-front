@@ -38,7 +38,8 @@ import {
     Person as PersonIcon,
     TrendingUp as TrendingUpIcon,
     TrendingDown as TrendingDownIcon,
-    Construction as ConstructionIcon
+    Construction as ConstructionIcon,
+    Lock as LockIcon
 } from "@mui/icons-material";
 import { API_BASE_URL } from "../../config/apiConfig";
 
@@ -51,54 +52,6 @@ const getAuthHeaders = () => {
     };
 };
 
-// Mock podaci za obaveštenja
-const mockNotifications = [
-    {
-        id: 1,
-        type: "task",
-        title: "Nov zadatak vam je dodeljen",
-        description: "Implementacija dashboard-a za projekat ABPLAT",
-        time: "Pre 5 minuta",
-        read: false,
-        icon: "task"
-    },
-    {
-        id: 2,
-        type: "project",
-        title: "Projekat ažuriran",
-        description: "Kosta Marković je ažurirao projekat 'Website Redesign'",
-        time: "Pre 1 sat",
-        read: false,
-        icon: "project"
-    },
-    {
-        id: 3,
-        type: "message",
-        title: "Nova poruka od Ognjen Gašić",
-        description: "Da li možemo da razgovaramo o budžetu projekta?",
-        time: "Pre 2 sata",
-        read: true,
-        icon: "message"
-    },
-    {
-        id: 4,
-        type: "deadline",
-        title: "Rok ističe uskoro",
-        description: "Završetak faze 2 projekta - još 2 dana",
-        time: "Pre 3 sata",
-        read: true,
-        icon: "deadline"
-    },
-    {
-        id: 5,
-        type: "task",
-        title: "Zadatak završen",
-        description: "Jovan Stanković je završio zadatak 'API integracija'",
-        time: "Juče",
-        read: true,
-        icon: "task"
-    }
-];
 
 const Dashboard = () => {
     const theme = useTheme();
@@ -112,7 +65,6 @@ const Dashboard = () => {
     const [lastMessage, setLastMessage] = useState(null);
     const [conversations, setConversations] = useState([]);
     const [contacts, setContacts] = useState([]);
-    const [notifications] = useState(mockNotifications);
 
     // Dohvati sve projekte korisnika
     const fetchProjects = async () => {
@@ -480,7 +432,7 @@ const Dashboard = () => {
                 width="75%"
                 overflow="hidden"
             >
-                {/* OBAVEŠTENJA SEKCIJA - NAJVECI */}
+                {/* OBAVEŠTENJA SEKCIJA - ZAKLJUČANA */}
                 <Paper
                     elevation={3}
                     sx={{
@@ -495,11 +447,12 @@ const Dashboard = () => {
                         height: '100%'
                     }}
                 >
+                    {/* Header */}
                     <Box display="flex" alignItems="center" justifyContent="space-between" mb="15px">
                         <Box display="flex" alignItems="center">
                             <Box
                                 sx={{
-                                    backgroundColor: colors.blueAccent[500],
+                                    backgroundColor: colors.grey[600],
                                     borderRadius: '50%',
                                     p: 1,
                                     mr: 2,
@@ -508,132 +461,110 @@ const Dashboard = () => {
                                     justifyContent: 'center'
                                 }}
                             >
-                                <NotificationsIcon sx={{ color: colors.grey[100], fontSize: '1.2rem' }} />
+                                <NotificationsIcon sx={{ color: colors.grey[400], fontSize: '1.2rem' }} />
                             </Box>
-                            <Typography variant="h6" fontWeight="600" color={colors.grey[100]}>
+                            <Typography variant="h6" fontWeight="600" color={colors.grey[400]}>
                                 Obaveštenja
                             </Typography>
                         </Box>
-                        {notifications.filter(n => !n.read).length > 0 && (
-                            <Badge 
-                                badgeContent={notifications.filter(n => !n.read).length} 
-                                color="error"
-                            />
-                        )}
+                        <Chip 
+                            label="Uskoro" 
+                            size="small" 
+                            sx={{ 
+                                bgcolor: colors.grey[700],
+                                color: colors.grey[300],
+                                fontSize: '0.7rem'
+                            }}
+                        />
                     </Box>
                     
+                    {/* Locked overlay */}
                     <Box 
                         sx={{ 
                             height: 'calc(100% - 60px)',
-                            overflowY: 'auto',
-                            '&::-webkit-scrollbar': {
-                                width: '6px',
-                            },
-                            '&::-webkit-scrollbar-track': {
-                                backgroundColor: 'rgba(0,0,0,0.1)',
-                                borderRadius: '3px',
-                            },
-                            '&::-webkit-scrollbar-thumb': {
-                                backgroundColor: 'rgba(0,0,0,0.3)',
-                                borderRadius: '3px',
-                                '&:hover': {
-                                    backgroundColor: 'rgba(0,0,0,0.5)',
-                                },
-                            },
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            position: 'relative',
                         }}
                     >
-                        <List sx={{ p: 0 }}>
-                            {notifications.map((notification, index) => (
-                                <React.Fragment key={notification.id}>
-                                    <ListItem 
-                                        sx={{ 
-                                            p: 2,
-                                            borderRadius: '8px',
-                                            mb: 1,
-                                            backgroundColor: notification.read ? 'transparent' : `${colors.blueAccent[700]}40`,
-                                            transition: 'all 0.2s ease',
-                                            cursor: 'pointer',
-                                            '&:hover': {
-                                                backgroundColor: colors.primary[300],
-                                                transform: 'translateX(5px)'
-                                            }
+                        {/* Blurred background content */}
+                        <Box
+                            sx={{
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                bottom: 0,
+                                opacity: 0.15,
+                                filter: 'blur(2px)',
+                            }}
+                        >
+                            {[1, 2, 3, 4].map((item) => (
+                                <Box
+                                    key={item}
+                                    sx={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        p: 2,
+                                        mb: 1,
+                                        borderRadius: '8px',
+                                        bgcolor: colors.primary[500],
+                                    }}
+                                >
+                                    <Box
+                                        sx={{
+                                            width: 40,
+                                            height: 40,
+                                            borderRadius: '50%',
+                                            bgcolor: colors.grey[600],
+                                            mr: 2,
                                         }}
-                                    >
-                                        <ListItemAvatar>
-                                            <Avatar 
-                                                sx={{ 
-                                                    bgcolor: notification.type === 'task' ? colors.greenAccent[500] :
-                                                           notification.type === 'project' ? colors.blueAccent[500] :
-                                                           notification.type === 'message' ? colors.primary[300] :
-                                                           colors.redAccent[500],
-                                                    width: 40,
-                                                    height: 40
-                                                }}
-                                            >
-                                                {notification.type === 'task' && <TaskIcon />}
-                                                {notification.type === 'project' && <FolderIcon />}
-                                                {notification.type === 'message' && <MessageIcon />}
-                                                {notification.type === 'deadline' && <AccessTimeIcon />}
-                                            </Avatar>
-                                        </ListItemAvatar>
-                                        <ListItemText
-                                            primary={
-                                                <Box display="flex" alignItems="center" justifyContent="space-between">
-                                                    <Typography 
-                                                        variant="subtitle1" 
-                                                        color={colors.grey[100]}
-                                                        fontWeight={notification.read ? 400 : 600}
-                                                        sx={{ fontSize: '0.95rem' }}
-                                                    >
-                                                        {notification.title}
-                                                    </Typography>
-                                                    {!notification.read && (
-                                                        <Box
-                                                            sx={{
-                                                                width: 8,
-                                                                height: 8,
-                                                                borderRadius: '50%',
-                                                                backgroundColor: colors.redAccent[500],
-                                                                ml: 1
-                                                            }}
-                                                        />
-                                                    )}
-                                                </Box>
-                                            }
-                                            secondary={
-                                                <Box>
-                                                    <Typography 
-                                                        variant="body2" 
-                                                        color={colors.grey[300]}
-                                                        sx={{ 
-                                                            mb: 0.5,
-                                                            fontSize: '0.85rem',
-                                                            overflow: 'hidden',
-                                                            textOverflow: 'ellipsis',
-                                                            display: '-webkit-box',
-                                                            WebkitLineClamp: 2,
-                                                            WebkitBoxOrient: 'vertical'
-                                                        }}
-                                                    >
-                                                        {notification.description}
-                                                    </Typography>
-                                                    <Typography 
-                                                        variant="caption" 
-                                                        color={colors.grey[400]}
-                                                        sx={{ fontSize: '0.75rem' }}
-                                                    >
-                                                        {notification.time}
-                                                    </Typography>
-                                                </Box>
-                                            }
-                                        />
-                                    </ListItem>
-                                    {index < notifications.length - 1 && (
-                                        <Divider sx={{ backgroundColor: colors.grey[700], opacity: 0.3 }} />
-                                    )}
-                                </React.Fragment>
+                                    />
+                                    <Box flex={1}>
+                                        <Box sx={{ height: 12, width: '60%', bgcolor: colors.grey[600], borderRadius: 1, mb: 1 }} />
+                                        <Box sx={{ height: 8, width: '80%', bgcolor: colors.grey[700], borderRadius: 1 }} />
+                                    </Box>
+                                </Box>
                             ))}
-                        </List>
+                        </Box>
+
+                        {/* Lock icon and text */}
+                        <Box
+                            sx={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                zIndex: 1,
+                                bgcolor: `${colors.primary[500]}E0`,
+                                borderRadius: 3,
+                                p: 4,
+                                backdropFilter: 'blur(4px)',
+                            }}
+                        >
+                            <Box
+                                sx={{
+                                    width: 64,
+                                    height: 64,
+                                    borderRadius: '50%',
+                                    bgcolor: colors.grey[700],
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    mb: 2,
+                                }}
+                            >
+                                <LockIcon sx={{ fontSize: 32, color: colors.grey[400] }} />
+                            </Box>
+                            <Typography variant="h6" color={colors.grey[300]} fontWeight="500" mb={1}>
+                                Funkcionalnost u izradi
+                            </Typography>
+                            <Typography variant="body2" color={colors.grey[500]} textAlign="center">
+                                Obaveštenja će biti dostupna uskoro
+                            </Typography>
+                        </Box>
                     </Box>
                 </Paper>
 
