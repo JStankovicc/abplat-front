@@ -167,9 +167,31 @@ const ChatInterface = () => {
 
             // Transform conversations to chat format using your DTO
             const transformedChats = await Promise.all(
-                threadsData.map(conversation => 
-                    chatService.formatConversationForDisplay(conversation, contactsData)
-                )
+                threadsData.map(async (conversation) => {
+                    const formatted = await chatService.formatConversationForDisplay(conversation, contactsData);
+                    
+                    // Ako nema lastMessagePreview ili je prazan, učitaj najnoviju poruku direktno
+                    if (!formatted.lastMessage || formatted.lastMessage.trim() === '') {
+                        try {
+                            const messagesData = await chatService.getMessages(conversation.conversationId, 0, 10);
+                            if (messagesData.content && messagesData.content.length > 0) {
+                                // Sortiraj poruke po datumu (najnovije prvo) i uzmi prvu
+                                const sortedMessages = [...messagesData.content].sort((a, b) => {
+                                    const dateA = new Date(a.createdAt).getTime();
+                                    const dateB = new Date(b.createdAt).getTime();
+                                    return dateB - dateA; // Najnovije prvo
+                                });
+                                const lastMessage = sortedMessages[0];
+                                formatted.lastMessage = lastMessage.content || '';
+                                formatted.lastMessageTime = lastMessage.createdAt ? new Date(lastMessage.createdAt) : formatted.lastMessageTime;
+                            }
+                        } catch (error) {
+                            console.error(`Error loading last message for conversation ${conversation.conversationId}:`, error);
+                        }
+                    }
+                    
+                    return formatted;
+                })
             );
 
             setChats(transformedChats);
@@ -196,6 +218,26 @@ const ChatInterface = () => {
             transformedMessages.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp)); // Sort chronologically (oldest first)
 
             setMessages(transformedMessages);
+
+            // Ažuriraj listu prepiski sa najnovijom porukom iz učitane liste
+            if (transformedMessages.length > 0) {
+                const lastMessage = transformedMessages[transformedMessages.length - 1];
+                setChats(prevChats => prevChats.map(chat => {
+                    if (chat.conversationId === threadId) {
+                        // Ažuriraj samo ako je nova poruka novija od trenutne
+                        const currentLastTime = chat.lastMessageTime ? new Date(chat.lastMessageTime).getTime() : 0;
+                        const newLastTime = new Date(lastMessage.timestamp).getTime();
+                        if (newLastTime > currentLastTime) {
+                            return {
+                                ...chat,
+                                lastMessage: lastMessage.text,
+                                lastMessageTime: new Date(lastMessage.timestamp)
+                            };
+                        }
+                    }
+                    return chat;
+                }));
+            }
 
             // Mark messages as read (need last message ID)
             if (transformedMessages.length > 0) {
@@ -295,11 +337,28 @@ const ChatInterface = () => {
             try {
                 setSendingMessage(true);
                 
+                const messageText = message.trim();
+                
                 // Šalje preko REST API-ja
-                await chatService.sendMessage(selectedChatId, message.trim());
+                await chatService.sendMessage(selectedChatId, messageText);
+                
+                // Ažuriraj lokalno stanje liste prepiski sa novom porukom
+                setChats(prevChats => prevChats.map(chat => {
+                    if (chat.conversationId === selectedChatId) {
+                        return {
+                            ...chat,
+                            lastMessage: messageText,
+                            lastMessageTime: new Date()
+                        };
+                    }
+                    return chat;
+                }));
                 
                 // Odmah učitaj poruke da vidiš novu poruku
                 await loadMessages(selectedChatId);
+                
+                // Takođe osveži listu prepiski da dobiješ najnovije podatke sa backend-a
+                await loadChatsAndContacts();
 
             setMessage("");
                 
