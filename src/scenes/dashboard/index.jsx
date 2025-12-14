@@ -197,35 +197,40 @@ const Dashboard = () => {
                     
                     console.log('🎨 Dashboard: Formatted conversation:', formattedConversation);
                     
-                    // Ako nema lastMessage ili je prazan, učitaj najnoviju poruku direktno
-                    let lastMessageContent = formattedConversation.lastMessage;
-                    let lastMessageTime = formattedConversation.lastMessageTime;
+                    // Uvek učitaj najnoviju poruku direktno iz API-ja da osiguramo da je stvarna
+                    let lastMessageContent = '';
+                    let lastMessageTime = null;
                     
-                    if (!lastMessageContent || lastMessageContent.trim() === '') {
-                        try {
-                            console.log('📥 Dashboard: Loading last message directly from API...');
-                            const messagesData = await chatService.getMessages(mostRecentConversation.conversationId, 0, 10);
-                            if (messagesData.content && messagesData.content.length > 0) {
-                                // Sortiraj poruke po datumu (najnovije prvo) i uzmi prvu
-                                const sortedMessages = [...messagesData.content].sort((a, b) => {
-                                    const dateA = new Date(a.createdAt).getTime();
-                                    const dateB = new Date(b.createdAt).getTime();
-                                    return dateB - dateA; // Najnovije prvo
-                                });
-                                const lastMessage = sortedMessages[0];
-                                lastMessageContent = lastMessage.content || '';
-                                lastMessageTime = lastMessage.createdAt ? new Date(lastMessage.createdAt) : lastMessageTime;
-                                console.log('✅ Dashboard: Loaded last message from API:', lastMessageContent);
-                            }
-                        } catch (error) {
-                            console.error('❌ Dashboard: Error loading last message:', error);
+                    try {
+                        console.log('📥 Dashboard: Loading last message directly from API...');
+                        const messagesData = await chatService.getMessages(mostRecentConversation.conversationId, 0, 10);
+                        if (messagesData.content && messagesData.content.length > 0) {
+                            // Sortiraj poruke po datumu (najnovije prvo) i uzmi prvu
+                            const sortedMessages = [...messagesData.content].sort((a, b) => {
+                                const dateA = new Date(a.createdAt).getTime();
+                                const dateB = new Date(b.createdAt).getTime();
+                                return dateB - dateA; // Najnovije prvo
+                            });
+                            const lastMessage = sortedMessages[0];
+                            lastMessageContent = lastMessage.content || '';
+                            lastMessageTime = lastMessage.createdAt ? new Date(lastMessage.createdAt) : null;
+                            console.log('✅ Dashboard: Loaded last message from API:', lastMessageContent);
+                        } else {
+                            // Ako nema poruka, koristi podatke iz formatConversationForDisplay
+                            lastMessageContent = formattedConversation.lastMessage || '';
+                            lastMessageTime = formattedConversation.lastMessageTime;
                         }
+                    } catch (error) {
+                        console.error('❌ Dashboard: Error loading last message:', error);
+                        // Fallback na podatke iz formatConversationForDisplay
+                        lastMessageContent = formattedConversation.lastMessage || '';
+                        lastMessageTime = formattedConversation.lastMessageTime;
                     }
                     
                     setLastMessage({
                         conversationId: formattedConversation.conversationId,
                         sender: formattedConversation.name,
-                        content: lastMessageContent || "Pozdrav!",
+                        content: lastMessageContent || "Nema poruka",
                         timestamp: lastMessageTime ? 
                             lastMessageTime.toLocaleTimeString('sr-RS', { hour: '2-digit', minute: '2-digit' }) : 
                             '',
@@ -240,14 +245,36 @@ const Dashboard = () => {
                     });
                 } catch (formatError) {
                     console.error('❌ Dashboard: Failed to format conversation:', formatError);
-                    // Fallback - koristi raw podatke
+                    // Pokušaj da učitam najnoviju poruku direktno
+                    let lastMessageContent = '';
+                    let lastMessageTime = null;
+                    
+                    try {
+                        const messagesData = await chatService.getMessages(mostRecentConversation.conversationId, 0, 10);
+                        if (messagesData.content && messagesData.content.length > 0) {
+                            const sortedMessages = [...messagesData.content].sort((a, b) => {
+                                const dateA = new Date(a.createdAt).getTime();
+                                const dateB = new Date(b.createdAt).getTime();
+                                return dateB - dateA;
+                            });
+                            const lastMessage = sortedMessages[0];
+                            lastMessageContent = lastMessage.content || '';
+                            lastMessageTime = lastMessage.createdAt ? new Date(lastMessage.createdAt) : null;
+                        }
+                    } catch (error) {
+                        console.error('❌ Dashboard: Error loading last message in fallback:', error);
+                    }
+                    
+                    // Fallback - koristi raw podatke ili učitane podatke
                     setLastMessage({
                         conversationId: mostRecentConversation.conversationId,
                         sender: mostRecentConversation.name || 'Nepoznat korisnik',
-                        content: mostRecentConversation.lastMessagePreview || "Pozdrav!",
-                        timestamp: mostRecentConversation.lastMessageAt ? 
-                            new Date(mostRecentConversation.lastMessageAt).toLocaleTimeString('sr-RS', { hour: '2-digit', minute: '2-digit' }) : 
-                            '',
+                        content: lastMessageContent || mostRecentConversation.lastMessagePreview || "Nema poruka",
+                        timestamp: lastMessageTime ? 
+                            lastMessageTime.toLocaleTimeString('sr-RS', { hour: '2-digit', minute: '2-digit' }) : 
+                            (mostRecentConversation.lastMessageAt ? 
+                                new Date(mostRecentConversation.lastMessageAt).toLocaleTimeString('sr-RS', { hour: '2-digit', minute: '2-digit' }) : 
+                                ''),
                         unread: (mostRecentConversation.unreadCount || 0) > 0,
                         unreadCount: mostRecentConversation.unreadCount || 0
                     });
@@ -722,7 +749,7 @@ const Dashboard = () => {
                         <Box textAlign="center" py={2}>
                             <MessageIcon sx={{ fontSize: '3rem', color: colors.grey[400], mb: 2 }} />
                             <Typography color={colors.grey[300]} variant="body1">
-                                Pozdrav!
+                                Nema poruka
                             </Typography>
                             <Box mt={2}>
                                 <Shimmer width="120px" height="12px" sx={{ mx: 'auto', mb: 1 }} />

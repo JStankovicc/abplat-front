@@ -170,24 +170,27 @@ const ChatInterface = () => {
                 threadsData.map(async (conversation) => {
                     const formatted = await chatService.formatConversationForDisplay(conversation, contactsData);
                     
-                    // Ako nema lastMessagePreview ili je prazan, učitaj najnoviju poruku direktno
-                    if (!formatted.lastMessage || formatted.lastMessage.trim() === '') {
-                        try {
-                            const messagesData = await chatService.getMessages(conversation.conversationId, 0, 10);
-                            if (messagesData.content && messagesData.content.length > 0) {
-                                // Sortiraj poruke po datumu (najnovije prvo) i uzmi prvu
-                                const sortedMessages = [...messagesData.content].sort((a, b) => {
-                                    const dateA = new Date(a.createdAt).getTime();
-                                    const dateB = new Date(b.createdAt).getTime();
-                                    return dateB - dateA; // Najnovije prvo
-                                });
-                                const lastMessage = sortedMessages[0];
-                                formatted.lastMessage = lastMessage.content || '';
-                                formatted.lastMessageTime = lastMessage.createdAt ? new Date(lastMessage.createdAt) : formatted.lastMessageTime;
-                            }
-                        } catch (error) {
-                            console.error(`Error loading last message for conversation ${conversation.conversationId}:`, error);
+                    // Uvek učitaj najnoviju poruku direktno iz API-ja da osiguramo da je stvarna
+                    try {
+                        const messagesData = await chatService.getMessages(conversation.conversationId, 0, 10);
+                        if (messagesData.content && messagesData.content.length > 0) {
+                            // Sortiraj poruke po datumu (najnovije prvo) i uzmi prvu
+                            const sortedMessages = [...messagesData.content].sort((a, b) => {
+                                const dateA = new Date(a.createdAt).getTime();
+                                const dateB = new Date(b.createdAt).getTime();
+                                return dateB - dateA; // Najnovije prvo
+                            });
+                            const lastMessage = sortedMessages[0];
+                            formatted.lastMessage = lastMessage.content || '';
+                            formatted.lastMessageTime = lastMessage.createdAt ? new Date(lastMessage.createdAt) : formatted.lastMessageTime;
+                        } else {
+                            // Ako nema poruka, koristi podatke iz formatConversationForDisplay
+                            formatted.lastMessage = formatted.lastMessage || '';
                         }
+                    } catch (error) {
+                        console.error(`Error loading last message for conversation ${conversation.conversationId}:`, error);
+                        // Fallback na podatke iz formatConversationForDisplay
+                        formatted.lastMessage = formatted.lastMessage || '';
                     }
                     
                     return formatted;
@@ -581,7 +584,7 @@ const ChatInterface = () => {
                                                                 maxWidth: '70%'
                                                             }}
                                                         >
-                                                            {chat.lastMessage || "Pozdrav!"}
+                                                            {chat.lastMessage || "Nema poruka"}
                                                         </Typography>
                                                         <Typography
                                                             variant="caption"

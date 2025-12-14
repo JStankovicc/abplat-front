@@ -3,7 +3,7 @@ const HomePage = () => {
     return (
         <>
             <Box m="20px">
-                <Typography variant="h4">Početna stranica</Typography>
+                <Typography variant="h4">Početna stranica...</Typography>
             </Box>
         </>
     );
