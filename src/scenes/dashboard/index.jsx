@@ -197,12 +197,37 @@ const Dashboard = () => {
                     
                     console.log('🎨 Dashboard: Formatted conversation:', formattedConversation);
                     
+                    // Ako nema lastMessage ili je prazan, učitaj najnoviju poruku direktno
+                    let lastMessageContent = formattedConversation.lastMessage;
+                    let lastMessageTime = formattedConversation.lastMessageTime;
+                    
+                    if (!lastMessageContent || lastMessageContent.trim() === '') {
+                        try {
+                            console.log('📥 Dashboard: Loading last message directly from API...');
+                            const messagesData = await chatService.getMessages(mostRecentConversation.conversationId, 0, 10);
+                            if (messagesData.content && messagesData.content.length > 0) {
+                                // Sortiraj poruke po datumu (najnovije prvo) i uzmi prvu
+                                const sortedMessages = [...messagesData.content].sort((a, b) => {
+                                    const dateA = new Date(a.createdAt).getTime();
+                                    const dateB = new Date(b.createdAt).getTime();
+                                    return dateB - dateA; // Najnovije prvo
+                                });
+                                const lastMessage = sortedMessages[0];
+                                lastMessageContent = lastMessage.content || '';
+                                lastMessageTime = lastMessage.createdAt ? new Date(lastMessage.createdAt) : lastMessageTime;
+                                console.log('✅ Dashboard: Loaded last message from API:', lastMessageContent);
+                            }
+                        } catch (error) {
+                            console.error('❌ Dashboard: Error loading last message:', error);
+                        }
+                    }
+                    
                     setLastMessage({
                         conversationId: formattedConversation.conversationId,
                         sender: formattedConversation.name,
-                        content: formattedConversation.lastMessage || "Pozdrav!",
-                        timestamp: formattedConversation.lastMessageTime ? 
-                            formattedConversation.lastMessageTime.toLocaleTimeString('sr-RS', { hour: '2-digit', minute: '2-digit' }) : 
+                        content: lastMessageContent || "Pozdrav!",
+                        timestamp: lastMessageTime ? 
+                            lastMessageTime.toLocaleTimeString('sr-RS', { hour: '2-digit', minute: '2-digit' }) : 
                             '',
                         unread: formattedConversation.unreadCount > 0,
                         unreadCount: formattedConversation.unreadCount
@@ -210,8 +235,8 @@ const Dashboard = () => {
                     
                     console.log('💾 Dashboard: Set last message:', {
                         sender: formattedConversation.name,
-                        content: formattedConversation.lastMessage,
-                        timestamp: formattedConversation.lastMessageTime
+                        content: lastMessageContent,
+                        timestamp: lastMessageTime
                     });
                 } catch (formatError) {
                     console.error('❌ Dashboard: Failed to format conversation:', formatError);
@@ -258,7 +283,7 @@ const Dashboard = () => {
     };
 
     const handleInboxClick = () => {
-        navigate('/chat');
+        navigate('/messages');
     };
 
     const getStatusColor = (statusId) => {
@@ -672,7 +697,14 @@ const Dashboard = () => {
                             >
                                 {lastMessage.content}
                             </Typography>
-                            <Box mt={2} display="flex" alignItems="center" justifyContent="space-between">
+                            <Box 
+                                mt={2} 
+                                display="flex" 
+                                alignItems="center" 
+                                justifyContent="space-between"
+                                onClick={handleInboxClick}
+                                sx={{ cursor: 'pointer' }}
+                            >
                                 <Typography variant="caption" color={colors.greenAccent[500]} fontWeight="500">
                                     Kliknite da otvorite inbox →
                                 </Typography>
