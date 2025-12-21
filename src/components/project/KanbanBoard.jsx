@@ -28,13 +28,6 @@ const getAuthHeaders = () => {
     };
 };
 
-const mockUsers = [
-    { id: 1, firstName: "Marko", lastName: "Marković", color: "#ff5722" },
-    { id: 2, firstName: "Ana", lastName: "Anić", color: "#2196f3" },
-    { id: 3, firstName: "Jovan", lastName: "Jovanović", color: "#4caf50" },
-    { id: 4, firstName: "Milica", lastName: "Milić", color: "#9c27b0" }
-];
-
 const KanbanBoard = () => {
     const theme = useTheme();
     const colors = tokens(theme.palette.mode);
@@ -486,15 +479,43 @@ const KanbanBoard = () => {
         setTaskDetails({ ...taskDetails, assignedUsers: users });
     };
 
-    const handleDeleteTask = (columnId, taskId) => {
-        setColumns(columns.map(col =>
-            col.id === columnId
-                ? {
-                    ...col,
-                    tasks: col.tasks.filter(task => task.id !== taskId)
+    const handleDeleteTask = async (columnId, taskId) => {
+        // Pronađi task da bi dobili originalTask.id
+        const column = columns.find(col => col.id === columnId);
+        if (!column) return;
+        
+        const task = column.tasks.find(t => t.id === taskId);
+        if (!task || !task.originalTask) {
+            console.error('Task nije pronađen ili nema originalTask referencu');
+            return;
+        }
+
+        const realTaskId = task.originalTask.id;
+
+        try {
+            // Pošalji API poziv za brisanje taska
+            await axios.delete(`${PROJECT_API_BASE_URL}/tasks/delete`, {
+                headers: getAuthHeaders(),
+                params: {
+                    id: realTaskId
                 }
-                : col
-        ));
+            });
+
+            // Ažuriraj UI nakon uspešnog brisanja
+            setColumns(columns.map(col =>
+                col.id === columnId
+                    ? {
+                        ...col,
+                        tasks: col.tasks.filter(task => task.id !== taskId)
+                    }
+                    : col
+            ));
+
+            console.log(`Task ${task.content} uspešno obrisan`);
+        } catch (error) {
+            console.error('Greška pri brisanju taska:', error);
+            setError('Greška pri brisanju taska');
+        }
     };
 
     const handleFileUpload = (event) => {
@@ -1284,7 +1305,7 @@ const KanbanBoard = () => {
                                                     </ListItemIcon>
                                                     <ListItemText 
                                                         primary={note.content}
-                                                        secondary={`${new Date(note.createdAt).toLocaleString()} - ${mockUsers.find(u => u.id === note.createdBy)?.firstName}`}
+                                                        secondary={new Date(note.createdAt).toLocaleString()}
                                                         sx={{ color: colors.grey[100] }}
                                                     />
                                                     <ListItemSecondaryAction>
