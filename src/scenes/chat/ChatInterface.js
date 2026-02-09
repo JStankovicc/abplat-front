@@ -409,6 +409,13 @@ const ChatInterface = () => {
         setMessage(formalizedMessage);
     };
 
+    const handleKeyDown = (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            handleSendMessage();
+        }
+    };
+
     const formatTime = (date) => {
         return date?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) || '';
     };
@@ -714,6 +721,7 @@ const ChatInterface = () => {
                                         placeholder="Napiši poruku..."
                                         value={message}
                                         onChange={(e) => setMessage(e.target.value)}
+                                        onKeyDown={handleKeyDown}
                                         size="small"
                                     />
                                     <Button
@@ -932,6 +940,7 @@ const ChatInterface = () => {
                                         placeholder="Napiši poruku..."
                                         value={message}
                                         onChange={(e) => setMessage(e.target.value)}
+                                        onKeyDown={handleKeyDown}
                                         size="medium"
                                     />
                                     <Button

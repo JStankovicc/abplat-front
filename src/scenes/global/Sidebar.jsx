@@ -363,7 +363,7 @@ const Sidebar = ({ userProfile, companyInfo }) => {
                                 selected={selected}
                                 setSelected={setSelected}
                                 onClick={() => isMobile && setIsMobileSidebarOpen(false)}
-                                disabled={true}
+                                disabled={false}
                             />
                             <Item
                                 title="Imovina"
@@ -372,7 +372,7 @@ const Sidebar = ({ userProfile, companyInfo }) => {
                                 selected={selected}
                                 setSelected={setSelected}
                                 onClick={() => isMobile && setIsMobileSidebarOpen(false)}
-                                disabled={true}
+                                disabled={false}
                             />
                             <Item
                                 title="Vozila"

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
     Box,
     Button,
@@ -26,58 +26,99 @@ import {
     Chip,
     Tabs,
     Tab,
-    InputAdornment
+    InputAdornment,
+    CircularProgress,
+    Alert
 } from "@mui/material";
 import { tokens } from "../../theme";
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, QrCode2 as QrCodeIcon, Search as SearchIcon, Description as DescriptionIcon, History as HistoryIcon, Build as BuildIcon } from "@mui/icons-material";
+import { getMovableAssets, createMovableAsset, changeMovableAssetStatus } from "../../services/assetService";
+import { getAllCompanyUsers } from "../../services/companyService";
+import { QRCodeSVG } from "qrcode.react";
 
-// Dummy QR code generator (zamena za pravu biblioteku)
-const QRCode = ({ value }) => (
-    <Box sx={{ width: 80, height: 80, background: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 2, fontSize: 12 }}>
-        QR: {value}
-    </Box>
-);
-
-const statusColors = {
-    "Aktivan": "success",
-    "U popravci": "warning",
-    "Rashodovan": "default",
-    "Izgubljen": "error",
-    "Iznajmljen": "info",
-    "Rezervisan": "secondary"
+/** Prikazuje QR kod na osnovu barcode-a (ili id ako barcode nije dostupan). */
+const AssetQRCode = ({ value, size = 80, ...boxSx }) => {
+    const text = value != null && String(value).trim() !== "" ? String(value) : null;
+    return (
+        <Box sx={{ width: size, height: size, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 2, backgroundColor: "#fff", p: 0.5, ...boxSx }}>
+            {text ? (
+                <QRCodeSVG value={text} size={size - 8} level="M" />
+            ) : (
+                <Typography variant="caption" color="text.secondary">Nema barcode</Typography>
+            )}
+        </Box>
+    );
 };
 
-const initialAssets = [
-    {
-        id: "A-0001",
-        name: "Laptop Dell XPS 13",
-        type: "Laptop",
-        model: "XPS 13 9310",
-        manufacturer: "Dell",
-        year: 2022,
-        category: "IT Oprema",
-        serialNumber: "SN123456",
-        location: "Kancelarija 101",
-        assignedTo: "Marko Marković",
-        status: "Aktivan",
-        purchaseDate: "2022-03-10",
-        warranty: "2025-03-10",
-        value: 1800,
-        depreciation: 600,
-        documents: ["garancija.pdf", "faktura.pdf"],
-        maintenance: [
-            { date: "2023-05-01", type: "Servis", cost: 50, note: "Zamena tastature" }
-        ],
-        movement: [
-            { date: "2022-03-10", location: "Magacin", user: "Admin" },
-            { date: "2022-03-15", location: "Kancelarija 101", user: "Marko Marković" }
-        ],
-        notes: "Laptop koristi za rad na terenu."
-    },
-    // Dodajte još primera po potrebi
+export const ASSET_STATUS = {
+    AVAILABLE: "AVAILABLE",
+    UNDER_REPAIR: "UNDER_REPAIR",
+    DECOMMISSIONED: "DECOMMISSIONED",
+    LOST: "LOST",
+    RENTED: "RENTED",
+    DISCARDED: "DISCARDED",
+    IN_USE: "IN_USE"
+};
+
+const assetStatusLabels = {
+    [ASSET_STATUS.AVAILABLE]: "Dostupno",
+    [ASSET_STATUS.UNDER_REPAIR]: "U popravci",
+    [ASSET_STATUS.DECOMMISSIONED]: "Rashodovano",
+    [ASSET_STATUS.LOST]: "Izgubljeno",
+    [ASSET_STATUS.RENTED]: "Iznajmljeno",
+    [ASSET_STATUS.DISCARDED]: "Otpisano",
+    [ASSET_STATUS.IN_USE]: "U upotrebi"
+};
+
+export const translateAssetStatus = (status) => assetStatusLabels[status] ?? status;
+
+const statusColors = {
+    [ASSET_STATUS.AVAILABLE]: "success",
+    [ASSET_STATUS.UNDER_REPAIR]: "warning",
+    [ASSET_STATUS.DECOMMISSIONED]: "default",
+    [ASSET_STATUS.LOST]: "error",
+    [ASSET_STATUS.RENTED]: "info",
+    [ASSET_STATUS.DISCARDED]: "default",
+    [ASSET_STATUS.IN_USE]: "info"
+};
+
+const assetStatuses = Object.values(ASSET_STATUS);
+
+/** Kategorije opreme – lako se dopunjavaju ili menjaju. */
+const ASSET_CATEGORIES = [
+    "",
+    "IT Oprema",
+    "Oprema za kancelariju",
+    "Kancelarijski materijal",
+    "Alati",
+    "Vozila",
+    "Mašine i oprema",
+    "Električna oprema",
+    "Oprema za održavanje",
+    "Sigurnosna oprema",
+    "Medicinska oprema",
+    "Kuhinjska oprema",
+    "Sport i rekreacija",
+    "Ostalo"
 ];
 
-const assetStatuses = ["Aktivan", "U popravci", "Rashodovan", "Izgubljen", "Iznajmljen", "Rezervisan"];
+const initialFormState = {
+    identifier: "",
+    name: "",
+    barcode: "",
+    type: "",
+    model: "",
+    manufacturer: "",
+    category: "",
+    serialNumber: "",
+    currentUserId: "",
+    movableAssetStatus: ASSET_STATUS.AVAILABLE,
+    purchaseDate: "",
+    insuranceDate: "",
+    comment: "",
+    unit: "",
+    amount: ""
+};
 
 const MovingAssets = () => {
     const theme = useTheme();
@@ -85,31 +126,120 @@ const MovingAssets = () => {
     const [open, setOpen] = useState(false);
     const [editMode, setEditMode] = useState(false);
     const [selectedAsset, setSelectedAsset] = useState(null);
-    const [assets, setAssets] = useState(initialAssets);
+    const [assets, setAssets] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [search, setSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState("");
     const [tab, setTab] = useState(0);
     const [detailDialog, setDetailDialog] = useState(false);
     const [detailAsset, setDetailAsset] = useState(null);
+    const [qrDialogAsset, setQrDialogAsset] = useState(null);
+    const [formState, setFormState] = useState(initialFormState);
+    const [saving, setSaving] = useState(false);
+    const [submitError, setSubmitError] = useState(null);
+    const [quickEditAsset, setQuickEditAsset] = useState(null);
+    const [quickEditStatus, setQuickEditStatus] = useState("");
+    const [quickEditCurrentUserId, setQuickEditCurrentUserId] = useState("");
+    const [quickEditSaving, setQuickEditSaving] = useState(false);
+    const [quickEditError, setQuickEditError] = useState(null);
+    const [companyUsers, setCompanyUsers] = useState([]);
+
+    useEffect(() => {
+        let cancelled = false;
+        const fetchAssets = async () => {
+            setLoading(true);
+            setError(null);
+            try {
+                const list = await getMovableAssets();
+                if (!cancelled) setAssets(list);
+            } catch (err) {
+                if (!cancelled) {
+                    setError(err.response?.data?.message || err.message || "Greška pri učitavanju imovine.");
+                    setAssets([]);
+                }
+            } finally {
+                if (!cancelled) setLoading(false);
+            }
+        };
+        fetchAssets();
+        return () => { cancelled = true; };
+    }, []);
+
+    useEffect(() => {
+        let cancelled = false;
+        const fetchUsers = async () => {
+            try {
+                const users = await getAllCompanyUsers();
+                if (!cancelled) setCompanyUsers(users);
+            } catch {
+                if (!cancelled) setCompanyUsers([]);
+            }
+        };
+        fetchUsers();
+        return () => { cancelled = true; };
+    }, []);
 
     // Filter i pretraga
-    const filteredAssets = assets.filter(a =>
-        (!statusFilter || a.status === statusFilter) &&
-        (a.name.toLowerCase().includes(search.toLowerCase()) ||
-         a.serialNumber.toLowerCase().includes(search.toLowerCase()) ||
-         a.id.toLowerCase().includes(search.toLowerCase()))
-    );
+    const filteredAssets = assets.filter(a => {
+        const searchLower = search.toLowerCase();
+        const matchSearch = !searchLower ||
+            (a.name && a.name.toLowerCase().includes(searchLower)) ||
+            (a.serialNumber && a.serialNumber.toLowerCase().includes(searchLower)) ||
+            (String(a.id).toLowerCase().includes(searchLower)) ||
+            (a.identifier && a.identifier.toLowerCase().includes(searchLower)) ||
+            (a.barcode && a.barcode.toLowerCase().includes(searchLower));
+        return (!statusFilter || a.status === statusFilter) && matchSearch;
+    });
 
     // Akcije
     const handleOpen = () => {
         setOpen(true);
         setEditMode(false);
         setSelectedAsset(null);
+        setFormState(initialFormState);
+        setSubmitError(null);
     };
     const handleClose = () => {
         setOpen(false);
         setEditMode(false);
         setSelectedAsset(null);
+        setSubmitError(null);
+    };
+    const handleSubmitAdd = async () => {
+        setSaving(true);
+        setSubmitError(null);
+        try {
+            const currentUserId = formState.currentUserId === "" || formState.currentUserId == null ? null : Number(formState.currentUserId);
+            if (currentUserId !== null && Number.isNaN(currentUserId)) {
+                setSubmitError("Izaberite korisnika ili ostavite prazno.");
+                return;
+            }
+            await createMovableAsset({
+                identifier: formState.identifier || null,
+                name: formState.name || null,
+                barcode: formState.barcode || null,
+                type: formState.type || null,
+                model: formState.model || null,
+                manufacturer: formState.manufacturer || null,
+                category: formState.category || null,
+                serialNumber: formState.serialNumber || null,
+                currentUserId,
+                movableAssetStatus: formState.movableAssetStatus || null,
+                purchaseDate: formState.purchaseDate || null,
+                insuranceDate: formState.insuranceDate || null,
+                comment: formState.comment || null,
+                unit: formState.unit || null,
+                amount: formState.amount
+            });
+            const list = await getMovableAssets();
+            setAssets(list);
+            handleClose();
+        } catch (err) {
+            setSubmitError(err.response?.data?.message || err.message || "Greška pri čuvanju imovine.");
+        } finally {
+            setSaving(false);
+        }
     };
     const handleEdit = (asset) => {
         setSelectedAsset(asset);
@@ -127,6 +257,47 @@ const MovingAssets = () => {
     const handleDetailClose = () => {
         setDetailDialog(false);
         setDetailAsset(null);
+    };
+
+    const openQuickEdit = (asset) => {
+        setQuickEditAsset(asset);
+        setQuickEditStatus(asset.status || ASSET_STATUS.AVAILABLE);
+        setQuickEditCurrentUserId(asset.currentUserId != null ? String(asset.currentUserId) : "");
+        setQuickEditError(null);
+    };
+    const closeQuickEdit = () => {
+        setQuickEditAsset(null);
+        setQuickEditError(null);
+    };
+    const handleQuickEditSubmit = async () => {
+        if (!quickEditAsset) return;
+        const rawId = quickEditAsset.id ?? quickEditAsset.movableAssetId;
+        const assetId = rawId !== undefined && rawId !== null ? Number(rawId) : NaN;
+        if (Number.isNaN(assetId) || assetId < 0) {
+            setQuickEditError(`ID imovine nije dostupan (vrednost: ${JSON.stringify(quickEditAsset.id)}). Osvežite listu ili proverite odgovor API-ja.`);
+            return;
+        }
+        setQuickEditSaving(true);
+        setQuickEditError(null);
+        try {
+            const currentUserId = quickEditCurrentUserId === "" || quickEditCurrentUserId == null ? null : Number(quickEditCurrentUserId);
+            if (currentUserId !== null && Number.isNaN(currentUserId)) {
+                setQuickEditError("Izaberite korisnika ili ostavite prazno.");
+                setQuickEditSaving(false);
+                return;
+            }
+            await changeMovableAssetStatus(assetId, {
+                status: quickEditStatus,
+                currentUserId
+            });
+            const list = await getMovableAssets();
+            setAssets(list);
+            closeQuickEdit();
+        } catch (err) {
+            setQuickEditError(err.response?.data?.message || err.message || "Greška pri promeni statusa.");
+        } finally {
+            setQuickEditSaving(false);
+        }
     };
 
     return (
@@ -159,7 +330,9 @@ const MovingAssets = () => {
                             onChange={e => setStatusFilter(e.target.value)}
                         >
                             <MenuItem value="">Svi statusi</MenuItem>
-                            {assetStatuses.map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}
+                            {assetStatuses.map(s => (
+                                <MenuItem key={s} value={s}>{translateAssetStatus(s)}</MenuItem>
+                            ))}
                         </Select>
                     </FormControl>
                     <Button
@@ -176,21 +349,34 @@ const MovingAssets = () => {
                 </Box>
             </Box>
 
+            {error && (
+                <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+                    {error}
+                </Alert>
+            )}
+
+            {loading ? (
+                <Box display="flex" justifyContent="center" alignItems="center" minHeight={200}>
+                    <CircularProgress sx={{ color: colors.greenAccent[500] }} />
+                </Box>
+            ) : (
+            <>
             {/* Tabela imovine */}
             <TableContainer component={Paper} sx={{ backgroundColor: colors.primary[400] }}>
                 <Table size="small">
                     <TableHead>
                         <TableRow>
-                            <TableCell>ID</TableCell>
+                            <TableCell>Identifikator</TableCell>
                             <TableCell>Naziv</TableCell>
                             <TableCell>Tip</TableCell>
                             <TableCell>Model</TableCell>
                             <TableCell>Proizvođač</TableCell>
                             <TableCell>Status</TableCell>
+                            <TableCell>Jedinica</TableCell>
+                            <TableCell>Količina</TableCell>
                             <TableCell>Lokacija</TableCell>
                             <TableCell>Dodeljeno</TableCell>
-                            <TableCell>Vrednost (€)</TableCell>
-                            <TableCell>Amortizacija (€)</TableCell>
+                            <TableCell>Dodelio</TableCell>
                             <TableCell>Akcije</TableCell>
                         </TableRow>
                     </TableHead>
@@ -199,14 +385,14 @@ const MovingAssets = () => {
                             <TableRow key={asset.id} hover>
                                 <TableCell>
                                     <Tooltip title="Prikaži QR kod">
-                                        <IconButton size="small" onClick={() => alert('QR za: ' + asset.id)}>
+                                        <IconButton size="small" onClick={() => setQrDialogAsset(asset)}>
                                             <QrCodeIcon fontSize="small" />
                                         </IconButton>
                                     </Tooltip>
-                                    {asset.id}
+                                    {asset.identifier || asset.id}
                                 </TableCell>
                                 <TableCell>
-                                    <Button color="inherit" onClick={() => handleDetail(asset)} sx={{ textTransform: 'none', fontWeight: 600 }}>
+                                    <Button color="inherit" onClick={() => openQuickEdit(asset)} sx={{ textTransform: 'none', fontWeight: 600 }} title="Klik za promenu statusa i dodeljenosti">
                                         {asset.name}
                                     </Button>
                                 </TableCell>
@@ -214,12 +400,20 @@ const MovingAssets = () => {
                                 <TableCell>{asset.model}</TableCell>
                                 <TableCell>{asset.manufacturer}</TableCell>
                                 <TableCell>
-                                    <Chip label={asset.status} color={statusColors[asset.status] || "default"} size="small" />
+                                    <Chip
+                                        label={translateAssetStatus(asset.status)}
+                                        color={statusColors[asset.status] || "default"}
+                                        size="small"
+                                        onClick={() => openQuickEdit(asset)}
+                                        sx={{ cursor: "pointer" }}
+                                        title="Klik za promenu statusa i dodeljenosti"
+                                    />
                                 </TableCell>
+                                <TableCell>{asset.unit || "—"}</TableCell>
+                                <TableCell>{asset.amount ?? "—"}</TableCell>
                                 <TableCell>{asset.location}</TableCell>
-                                <TableCell>{asset.assignedTo}</TableCell>
-                                <TableCell>{asset.value}</TableCell>
-                                <TableCell>{asset.depreciation}</TableCell>
+                                <TableCell>{asset.assignedTo || "—"}</TableCell>
+                                <TableCell>{asset.issuedBy || "—"}</TableCell>
                                 <TableCell>
                                     <Tooltip title="Detalji">
                                         <IconButton onClick={() => handleDetail(asset)}><DescriptionIcon /></IconButton>
@@ -237,25 +431,98 @@ const MovingAssets = () => {
                 </Table>
             </TableContainer>
 
+            {/* Dijalog za QR kod (barcode) */}
+            <Dialog open={!!qrDialogAsset} onClose={() => setQrDialogAsset(null)} maxWidth="xs" fullWidth PaperProps={{ sx: { backgroundColor: colors.primary[400], color: colors.grey[100] } }}>
+                <DialogTitle>QR kod – {qrDialogAsset?.name}</DialogTitle>
+                <DialogContent>
+                    <Box display="flex" flexDirection="column" alignItems="center" gap={2} pt={1}>
+                        <AssetQRCode value={qrDialogAsset?.barcode ?? qrDialogAsset?.id} size={160} />
+                        <Typography variant="body2" color={colors.grey[100]}>
+                            Barcode: <strong>{qrDialogAsset?.barcode || qrDialogAsset?.identifier || qrDialogAsset?.id || "—"}</strong>
+                        </Typography>
+                    </Box>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setQrDialogAsset(null)}>Zatvori</Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Brza promena statusa i dodeljenosti */}
+            <Dialog open={!!quickEditAsset} onClose={closeQuickEdit} maxWidth="xs" fullWidth PaperProps={{ sx: { backgroundColor: colors.primary[400], color: colors.grey[100] } }}>
+                <DialogTitle>Promena statusa i dodeljenosti – {quickEditAsset?.name}</DialogTitle>
+                <DialogContent>
+                    <Typography variant="caption" color={colors.grey[400]} display="block" sx={{ mb: 1 }}>
+                        ID imovine: {quickEditAsset?.id ?? quickEditAsset?.movableAssetId ?? "—"}
+                    </Typography>
+                    {quickEditError && (
+                        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setQuickEditError(null)}>
+                            {quickEditError}
+                        </Alert>
+                    )}
+                    <Box display="flex" flexDirection="column" gap={2} pt={1}>
+                        <FormControl fullWidth>
+                            <InputLabel>Status</InputLabel>
+                            <Select
+                                label="Status"
+                                value={quickEditStatus}
+                                onChange={e => setQuickEditStatus(e.target.value)}
+                            >
+                                {assetStatuses.map(s => (
+                                    <MenuItem key={s} value={s}>{translateAssetStatus(s)}</MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                        <FormControl fullWidth>
+                            <InputLabel>Dodeljeno (korisnik)</InputLabel>
+                            <Select
+                                label="Dodeljeno (korisnik)"
+                                value={quickEditCurrentUserId ?? ""}
+                                onChange={e => setQuickEditCurrentUserId(e.target.value)}
+                            >
+                                <MenuItem value="">Niko</MenuItem>
+                                {companyUsers.map((u) => (
+                                    <MenuItem key={u.id} value={String(u.id)}>{u.displayName || `Korisnik #${u.id}`}</MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                        {quickEditAsset?.issuedBy && (
+                            <Typography variant="caption" color={colors.grey[300]}>
+                                Trenutno izdao: {quickEditAsset.issuedBy}
+                            </Typography>
+                        )}
+                    </Box>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={closeQuickEdit} disabled={quickEditSaving}>Otkaži</Button>
+                    <Button variant="contained" onClick={handleQuickEditSubmit} disabled={quickEditSaving}>
+                        {quickEditSaving ? "Čuvanje…" : "Sačuvaj"}
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
             {/* Detaljan prikaz imovine */}
             <Dialog open={detailDialog} onClose={handleDetailClose} maxWidth="md" fullWidth PaperProps={{ sx: { backgroundColor: colors.primary[400], color: colors.grey[100], boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)' } }}>
                 <DialogTitle>Detalji imovine: {detailAsset?.name}</DialogTitle>
                 <DialogContent>
                     <Box display="flex" gap={3} mb={2}>
-                        <QRCode value={detailAsset?.id} sx={{ backgroundColor: colors.primary[500], color: colors.grey[100] }} />
+                        <AssetQRCode value={detailAsset?.barcode ?? detailAsset?.identifier ?? detailAsset?.id} size={100} />
                         <Box>
                             <Typography variant="subtitle2" color={colors.grey[100]}>ID: {detailAsset?.id}</Typography>
+                            <Typography variant="subtitle2" color={colors.grey[100]}>Identifikator: {detailAsset?.identifier || "—"}</Typography>
                             <Typography variant="subtitle2" color={colors.grey[100]}>Tip: {detailAsset?.type}</Typography>
                             <Typography variant="subtitle2" color={colors.grey[100]}>Model: {detailAsset?.model}</Typography>
                             <Typography variant="subtitle2" color={colors.grey[100]}>Proizvođač: {detailAsset?.manufacturer}</Typography>
                             <Typography variant="subtitle2" color={colors.grey[100]}>Serijski broj: {detailAsset?.serialNumber}</Typography>
                             <Typography variant="subtitle2" color={colors.grey[100]}>Lokacija: {detailAsset?.location}</Typography>
-                            <Typography variant="subtitle2" color={colors.grey[100]}>Dodeljeno: {detailAsset?.assignedTo}</Typography>
-                            <Typography variant="subtitle2" color={colors.grey[100]}>Status: <Chip label={detailAsset?.status} color={statusColors[detailAsset?.status] || "default"} size="small" /></Typography>
-                            <Typography variant="subtitle2" color={colors.grey[100]}>Vrednost: €{detailAsset?.value}</Typography>
-                            <Typography variant="subtitle2" color={colors.grey[100]}>Amortizacija: €{detailAsset?.depreciation}</Typography>
-                            <Typography variant="subtitle2" color={colors.grey[100]}>Datum nabavke: {detailAsset?.purchaseDate}</Typography>
-                            <Typography variant="subtitle2" color={colors.grey[100]}>Garancija do: {detailAsset?.warranty}</Typography>
+                            <Typography variant="subtitle2" color={colors.grey[100]}>Dodeljeno: {detailAsset?.assignedTo || "—"}</Typography>
+                            <Typography variant="subtitle2" color={colors.grey[100]}>Izdato od: {detailAsset?.issuedBy || "—"}</Typography>
+                            <Typography variant="subtitle2" color={colors.grey[100]}>Status: <Chip label={translateAssetStatus(detailAsset?.status)} color={statusColors[detailAsset?.status] || "default"} size="small" /></Typography>
+                            <Typography variant="subtitle2" color={colors.grey[100]}>Jedinica: {detailAsset?.unit || "—"}</Typography>
+                            <Typography variant="subtitle2" color={colors.grey[100]}>Količina: {detailAsset?.amount ?? "—"}</Typography>
+                            <Typography variant="subtitle2" color={colors.grey[100]}>Datum nabavke: {detailAsset?.purchaseDate || "—"}</Typography>
+                            <Typography variant="subtitle2" color={colors.grey[100]}>Osiguranje do: {detailAsset?.warranty || "—"}</Typography>
+                            <Typography variant="subtitle2" color={colors.grey[100]}>Kreirano: {detailAsset?.createdAt || "—"}</Typography>
+                            <Typography variant="subtitle2" color={colors.grey[100]}>Ažurirano: {detailAsset?.updatedAt || "—"}</Typography>
                         </Box>
                     </Box>
                     <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2 }}>
@@ -334,80 +601,194 @@ const MovingAssets = () => {
                 </DialogActions>
             </Dialog>
 
-            {/* Dialog za dodavanje/izmenu (osnovni podaci, može se proširiti po potrebi) */}
+            {/* Dialog za dodavanje/izmenu */}
             <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth PaperProps={{ sx: { backgroundColor: colors.primary[400], color: colors.grey[100], boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)' } }}>
                 <DialogTitle>
                     {editMode ? "Izmeni imovinu" : "Dodaj novu imovinu"}
                 </DialogTitle>
                 <DialogContent>
+                    {submitError && (
+                        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setSubmitError(null)}>
+                            {submitError}
+                        </Alert>
+                    )}
                     <Grid container spacing={2} sx={{ mt: 1 }}>
                         <Grid item xs={12} sm={6}>
-                            <TextField fullWidth label="Naziv" defaultValue={selectedAsset?.name} />
+                            <TextField
+                                fullWidth
+                                label="Identifikator"
+                                value={editMode ? selectedAsset?.identifier : formState.identifier}
+                                onChange={e => !editMode && setFormState(s => ({ ...s, identifier: e.target.value }))}
+                                disabled={editMode}
+                                placeholder="Opciono"
+                            />
                         </Grid>
                         <Grid item xs={12} sm={6}>
-                            <TextField fullWidth label="ID (barcode/QR)" defaultValue={selectedAsset?.id} />
+                            <TextField
+                                fullWidth
+                                label="Naziv"
+                                value={editMode ? selectedAsset?.name : formState.name}
+                                onChange={e => !editMode && setFormState(s => ({ ...s, name: e.target.value }))}
+                                disabled={editMode}
+                            />
                         </Grid>
                         <Grid item xs={12} sm={6}>
-                            <TextField fullWidth label="Tip" defaultValue={selectedAsset?.type} />
+                            <TextField
+                                fullWidth
+                                label="Barcode"
+                                value={editMode ? selectedAsset?.barcode : formState.barcode}
+                                onChange={e => !editMode && setFormState(s => ({ ...s, barcode: e.target.value }))}
+                                disabled={editMode}
+                            />
                         </Grid>
                         <Grid item xs={12} sm={6}>
-                            <TextField fullWidth label="Model" defaultValue={selectedAsset?.model} />
+                            <TextField
+                                fullWidth
+                                label="Tip"
+                                value={editMode ? selectedAsset?.type : formState.type}
+                                onChange={e => !editMode && setFormState(s => ({ ...s, type: e.target.value }))}
+                                disabled={editMode}
+                            />
                         </Grid>
                         <Grid item xs={12} sm={6}>
-                            <TextField fullWidth label="Proizvođač" defaultValue={selectedAsset?.manufacturer} />
+                            <TextField
+                                fullWidth
+                                label="Model"
+                                value={editMode ? selectedAsset?.model : formState.model}
+                                onChange={e => !editMode && setFormState(s => ({ ...s, model: e.target.value }))}
+                                disabled={editMode}
+                            />
                         </Grid>
                         <Grid item xs={12} sm={6}>
-                            <FormControl fullWidth>
+                            <TextField
+                                fullWidth
+                                label="Proizvođač"
+                                value={editMode ? selectedAsset?.manufacturer : formState.manufacturer}
+                                onChange={e => !editMode && setFormState(s => ({ ...s, manufacturer: e.target.value }))}
+                                disabled={editMode}
+                            />
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                            <FormControl fullWidth disabled={editMode}>
                                 <InputLabel>Kategorija</InputLabel>
-                                <Select label="Kategorija" defaultValue={selectedAsset?.category}>
-                                    <MenuItem value="IT Oprema">IT Oprema</MenuItem>
-                                    <MenuItem value="Oprema za kancelariju">Oprema za kancelariju</MenuItem>
-                                    <MenuItem value="Alati">Alati</MenuItem>
-                                    <MenuItem value="Vozila">Vozila</MenuItem>
+                                <Select
+                                    label="Kategorija"
+                                    value={editMode ? selectedAsset?.category : formState.category}
+                                    onChange={e => !editMode && setFormState(s => ({ ...s, category: e.target.value }))}
+                                >
+                                    {ASSET_CATEGORIES.map(cat => (
+                                        <MenuItem key={cat || "empty"} value={cat}>{cat || "—"}</MenuItem>
+                                    ))}
                                 </Select>
                             </FormControl>
                         </Grid>
                         <Grid item xs={12} sm={6}>
-                            <TextField fullWidth label="Serijski broj" defaultValue={selectedAsset?.serialNumber} />
+                            <TextField
+                                fullWidth
+                                label="Serijski broj"
+                                value={editMode ? selectedAsset?.serialNumber : formState.serialNumber}
+                                onChange={e => !editMode && setFormState(s => ({ ...s, serialNumber: e.target.value }))}
+                                disabled={editMode}
+                            />
                         </Grid>
                         <Grid item xs={12} sm={6}>
-                            <TextField fullWidth label="Lokacija" defaultValue={selectedAsset?.location} />
+                            <FormControl fullWidth disabled={editMode}>
+                                <InputLabel>Dodeljeno (korisnik)</InputLabel>
+                                <Select
+                                    label="Dodeljeno (korisnik)"
+                                    value={editMode ? "" : (formState.currentUserId ?? "")}
+                                    onChange={e => !editMode && setFormState(s => ({ ...s, currentUserId: e.target.value }))}
+                                >
+                                    <MenuItem value="">Niko</MenuItem>
+                                    {companyUsers.map((u) => (
+                                        <MenuItem key={u.id} value={String(u.id)}>{u.displayName || `Korisnik #${u.id}`}</MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
                         </Grid>
                         <Grid item xs={12} sm={6}>
-                            <TextField fullWidth label="Dodeljeno" defaultValue={selectedAsset?.assignedTo} />
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                            <FormControl fullWidth>
+                            <FormControl fullWidth disabled={editMode}>
                                 <InputLabel>Status</InputLabel>
-                                <Select label="Status" defaultValue={selectedAsset?.status}>
-                                    {assetStatuses.map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}
+                                <Select
+                                    label="Status"
+                                    value={editMode ? selectedAsset?.status : formState.movableAssetStatus}
+                                    onChange={e => !editMode && setFormState(s => ({ ...s, movableAssetStatus: e.target.value }))}
+                                >
+                                    {assetStatuses.map(s => (
+                                        <MenuItem key={s} value={s}>{translateAssetStatus(s)}</MenuItem>
+                                    ))}
                                 </Select>
                             </FormControl>
                         </Grid>
                         <Grid item xs={12} sm={6}>
-                            <TextField fullWidth label="Vrednost (€)" type="number" defaultValue={selectedAsset?.value} />
+                            <TextField
+                                fullWidth
+                                label="Datum nabavke"
+                                type="date"
+                                value={editMode ? selectedAsset?.purchaseDate : formState.purchaseDate}
+                                onChange={e => !editMode && setFormState(s => ({ ...s, purchaseDate: e.target.value }))}
+                                disabled={editMode}
+                                InputLabelProps={{ shrink: true }}
+                            />
                         </Grid>
                         <Grid item xs={12} sm={6}>
-                            <TextField fullWidth label="Amortizacija (€)" type="number" defaultValue={selectedAsset?.depreciation} />
+                            <TextField
+                                fullWidth
+                                label="Osiguranje do"
+                                type="date"
+                                value={editMode ? selectedAsset?.warranty : formState.insuranceDate}
+                                onChange={e => !editMode && setFormState(s => ({ ...s, insuranceDate: e.target.value }))}
+                                disabled={editMode}
+                                InputLabelProps={{ shrink: true }}
+                            />
                         </Grid>
                         <Grid item xs={12} sm={6}>
-                            <TextField fullWidth label="Datum nabavke" type="date" defaultValue={selectedAsset?.purchaseDate} InputLabelProps={{ shrink: true }} />
+                            <TextField
+                                fullWidth
+                                label="Jedinica"
+                                value={editMode ? selectedAsset?.unit : formState.unit}
+                                onChange={e => !editMode && setFormState(s => ({ ...s, unit: e.target.value }))}
+                                disabled={editMode}
+                                placeholder="npr. kom, kg"
+                            />
                         </Grid>
                         <Grid item xs={12} sm={6}>
-                            <TextField fullWidth label="Garancija do" type="date" defaultValue={selectedAsset?.warranty} InputLabelProps={{ shrink: true }} />
+                            <TextField
+                                fullWidth
+                                label="Količina"
+                                type="number"
+                                inputProps={{ min: 0 }}
+                                value={editMode ? selectedAsset?.amount : formState.amount}
+                                onChange={e => !editMode && setFormState(s => ({ ...s, amount: e.target.value }))}
+                                disabled={editMode}
+                            />
                         </Grid>
                         <Grid item xs={12}>
-                            <TextField fullWidth label="Napomene" defaultValue={selectedAsset?.notes} multiline minRows={2} />
+                            <TextField
+                                fullWidth
+                                label="Napomene"
+                                multiline
+                                minRows={2}
+                                value={editMode ? selectedAsset?.notes : formState.comment}
+                                onChange={e => !editMode && setFormState(s => ({ ...s, comment: e.target.value }))}
+                                disabled={editMode}
+                            />
                         </Grid>
                     </Grid>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={handleClose}>Otkaži</Button>
-                    <Button variant="contained" onClick={handleClose}>
-                        {editMode ? "Sačuvaj izmene" : "Dodaj"}
-                    </Button>
+                    <Button onClick={handleClose} disabled={saving}>Otkaži</Button>
+                    {editMode ? (
+                        <Button variant="contained" onClick={handleClose}>Zatvori</Button>
+                    ) : (
+                        <Button variant="contained" onClick={handleSubmitAdd} disabled={saving}>
+                            {saving ? "Čuvanje…" : "Dodaj"}
+                        </Button>
+                    )}
                 </DialogActions>
             </Dialog>
+            </>
+            )}
         </Box>
     );
 };
