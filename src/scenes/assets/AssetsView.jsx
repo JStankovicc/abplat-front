@@ -12,17 +12,18 @@ import NonMovingAssets from "../../components/assets/NonMovingAssets";
 import AssetDashboard from "../../components/assets/AssetDashboard";
 
 const sections = [
-    { id: 0, label: "Pregled", component: <AssetDashboard /> },
-    { id: 1, label: "Pokretna imovina", component: <MovingAssets /> },
-    { id: 2, label: "Nepokretna imovina", component: <NonMovingAssets /> },
+    { id: 0, label: "Pregled", component: <AssetDashboard />, disabled: true },
+    { id: 1, label: "Pokretna imovina", component: <MovingAssets />, disabled: false },
+    { id: 2, label: "Nepokretna imovina", component: <NonMovingAssets />, disabled: true },
 ];
 
 const AssetsView = () => {
     const theme = useTheme();
     const colors = tokens(theme.palette.mode);
-    const [activeSection, setActiveSection] = useState(0);
+    const [activeSection, setActiveSection] = useState(1);
 
     const handleSectionChange = (event, newValue) => {
+        if (sections[newValue]?.disabled) return;
         setActiveSection(newValue);
     };
 
@@ -76,10 +77,12 @@ const AssetsView = () => {
                         <Tab
                             key={section.id}
                             label={section.label}
+                            disabled={section.disabled}
                             sx={{
                                 minWidth: 100,
                                 minHeight: "25px",
                                 color: colors.grey[100],
+                                opacity: section.disabled ? 0.6 : 1,
                                 '&.Mui-selected': {
                                     color: colors.greenAccent[500],
                                 }
