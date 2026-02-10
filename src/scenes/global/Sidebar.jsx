@@ -128,7 +128,7 @@ const Sidebar = ({ userProfile, companyInfo }) => {
             const base64String = byteArrayToBase64(userProfile.profilePic);
             return `data:image/jpeg;base64,${base64String}`;
         }
-        return "../../assets/testSpiderman.png"; // fallback
+        return process.env.PUBLIC_URL + "/assets/default_profile_picture.png";
     };
 
     // ABPlat logo uvek u sidebar-u

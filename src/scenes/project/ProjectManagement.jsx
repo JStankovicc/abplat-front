@@ -131,7 +131,7 @@ const ProjectManagement = () => {
                 team: project.users ? project.users.map(user => ({
                     id: user.id,
                     name: user.displayName || 'Nepoznat korisnik',
-                    avatar: user.profilePic ? `data:image/jpeg;base64,${convertProfilePicToBase64(user.profilePic)}` : "../../assets/testSpiderman.png"
+                    avatar: user.profilePic ? `data:image/jpeg;base64,${convertProfilePicToBase64(user.profilePic)}` : process.env.PUBLIC_URL + "/assets/default_profile_picture.png"
                 })) : []
             }));
 
@@ -872,7 +872,7 @@ const ProjectManagement = () => {
                                         const newMember = {
                                             id: worker.id,
                                             name: worker.displayName,
-                                            avatar: base64Pic ? `data:image/jpeg;base64,${base64Pic}` : "../../assets/testSpiderman.png"
+                                            avatar: base64Pic ? `data:image/jpeg;base64,${base64Pic}` : process.env.PUBLIC_URL + "/assets/default_profile_picture.png"
                                         };
                                         
                                         setSelectedProject({

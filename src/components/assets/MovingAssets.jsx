@@ -32,7 +32,7 @@ import {
 } from "@mui/material";
 import { tokens } from "../../theme";
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, QrCode2 as QrCodeIcon, Search as SearchIcon, Description as DescriptionIcon, History as HistoryIcon, Build as BuildIcon } from "@mui/icons-material";
-import { getMovableAssets, createMovableAsset, changeMovableAssetStatus } from "../../services/assetService";
+import { getMovableAssets, createMovableAsset, updateMovableAsset, changeMovableAssetStatus, deleteMovableAsset } from "../../services/assetService";
 import { getAllCompanyUsers } from "../../services/companyService";
 import { QRCodeSVG } from "qrcode.react";
 
@@ -182,13 +182,26 @@ const MovingAssets = () => {
 
     // Filter i pretraga
     const filteredAssets = assets.filter(a => {
-        const searchLower = search.toLowerCase();
-        const matchSearch = !searchLower ||
-            (a.name && a.name.toLowerCase().includes(searchLower)) ||
-            (a.serialNumber && a.serialNumber.toLowerCase().includes(searchLower)) ||
-            (String(a.id).toLowerCase().includes(searchLower)) ||
-            (a.identifier && a.identifier.toLowerCase().includes(searchLower)) ||
-            (a.barcode && a.barcode.toLowerCase().includes(searchLower));
+        const searchLower = search.trim().toLowerCase();
+        if (!searchLower) return !statusFilter || a.status === statusFilter;
+        const text = (val) => (val != null && val !== "" ? String(val).toLowerCase() : "");
+        const statusLabel = translateAssetStatus(a.status).toLowerCase();
+        const matchSearch =
+            text(a.identifier).includes(searchLower) ||
+            text(a.id).includes(searchLower) ||
+            text(a.name).includes(searchLower) ||
+            text(a.type).includes(searchLower) ||
+            text(a.model).includes(searchLower) ||
+            text(a.manufacturer).includes(searchLower) ||
+            text(a.serialNumber).includes(searchLower) ||
+            text(a.barcode).includes(searchLower) ||
+            text(a.status).includes(searchLower) ||
+            statusLabel.includes(searchLower) ||
+            text(a.unit).includes(searchLower) ||
+            text(a.amount).includes(searchLower) ||
+            text(a.location).includes(searchLower) ||
+            text(a.assignedTo).includes(searchLower) ||
+            text(a.issuedBy).includes(searchLower);
         return (!statusFilter || a.status === statusFilter) && matchSearch;
     });
 
@@ -241,13 +254,89 @@ const MovingAssets = () => {
             setSaving(false);
         }
     };
+    const handleSubmitEdit = async () => {
+        if (!selectedAsset || (selectedAsset.id == null && selectedAsset.id !== 0)) {
+            setSubmitError("ID imovine nije dostupan.");
+            return;
+        }
+        const assetId = Number(selectedAsset.id);
+        if (Number.isNaN(assetId) || assetId < 0) {
+            setSubmitError("ID imovine nije validan.");
+            return;
+        }
+        const currentUserId = formState.currentUserId === "" || formState.currentUserId == null ? null : Number(formState.currentUserId);
+        if (currentUserId !== null && Number.isNaN(currentUserId)) {
+            setSubmitError("Izaberite korisnika ili ostavite prazno.");
+            return;
+        }
+        setSaving(true);
+        setSubmitError(null);
+        try {
+            await updateMovableAsset({
+                id: assetId,
+                identifier: formState.identifier || null,
+                name: formState.name || null,
+                barcode: formState.barcode || null,
+                type: formState.type || null,
+                model: formState.model || null,
+                manufacturer: formState.manufacturer || null,
+                category: formState.category || null,
+                serialNumber: formState.serialNumber || null,
+                currentUserId,
+                movableAssetStatus: formState.movableAssetStatus || null,
+                purchaseDate: formState.purchaseDate || null,
+                insuranceDate: formState.insuranceDate || null,
+                comment: formState.comment || null,
+                unit: formState.unit || null,
+                amount: formState.amount === "" ? 0 : Number(formState.amount)
+            });
+            const list = await getMovableAssets();
+            setAssets(list);
+            handleClose();
+        } catch (err) {
+            setSubmitError(err.response?.data?.message || err.message || "Greška pri čuvanju izmena.");
+        } finally {
+            setSaving(false);
+        }
+    };
     const handleEdit = (asset) => {
         setSelectedAsset(asset);
+        setFormState({
+            identifier: asset.identifier ?? "",
+            name: asset.name ?? "",
+            barcode: asset.barcode ?? "",
+            type: asset.type ?? "",
+            model: asset.model ?? "",
+            manufacturer: asset.manufacturer ?? "",
+            category: asset.category ?? "",
+            serialNumber: asset.serialNumber ?? "",
+            currentUserId: asset.currentUserId != null ? String(asset.currentUserId) : "",
+            movableAssetStatus: asset.status ?? ASSET_STATUS.AVAILABLE,
+            purchaseDate: asset.purchaseDate ?? "",
+            insuranceDate: asset.warranty ?? "",
+            comment: asset.notes ?? asset.comment ?? "",
+            unit: asset.unit ?? "",
+            amount: asset.amount !== undefined && asset.amount !== null ? String(asset.amount) : ""
+        });
         setEditMode(true);
         setOpen(true);
+        setSubmitError(null);
     };
-    const handleDelete = (id) => {
-        setAssets(assets.filter(asset => asset.id !== id));
+    const handleDelete = async (asset) => {
+        const assetId = asset?.id != null ? Number(asset.id) : NaN;
+        if (Number.isNaN(assetId) || assetId < 1) {
+            setError("ID imovine nije dostupan.");
+            return;
+        }
+        if (!window.confirm(`Da li ste sigurni da želite da obrišete „${asset.name || "imovinu"}”?`)) return;
+        try {
+            await deleteMovableAsset(assetId);
+            const list = await getMovableAssets();
+            setAssets(list);
+            setError(null);
+        } catch (err) {
+            setError(err.response?.data?.message || err.message || "Greška pri brisanju imovine.");
+        }
     };
     const handleDetail = (asset) => {
         setDetailAsset(asset);
@@ -310,7 +399,7 @@ const MovingAssets = () => {
                 <Box display="flex" gap={2} alignItems="center">
                     <TextField
                         size="small"
-                        placeholder="Pretraga po nazivu, ID, serijskom broju..."
+                        placeholder="Pretraga"
                         value={search}
                         onChange={e => setSearch(e.target.value)}
                         InputProps={{
@@ -422,7 +511,7 @@ const MovingAssets = () => {
                                         <IconButton onClick={() => handleEdit(asset)}><EditIcon /></IconButton>
                                     </Tooltip>
                                     <Tooltip title="Obriši">
-                                        <IconButton onClick={() => handleDelete(asset.id)}><DeleteIcon /></IconButton>
+                                        <IconButton onClick={() => handleDelete(asset)}><DeleteIcon /></IconButton>
                                     </Tooltip>
                                 </TableCell>
                             </TableRow>
@@ -617,9 +706,8 @@ const MovingAssets = () => {
                             <TextField
                                 fullWidth
                                 label="Identifikator"
-                                value={editMode ? selectedAsset?.identifier : formState.identifier}
-                                onChange={e => !editMode && setFormState(s => ({ ...s, identifier: e.target.value }))}
-                                disabled={editMode}
+                                value={formState.identifier}
+                                onChange={e => setFormState(s => ({ ...s, identifier: e.target.value }))}
                                 placeholder="Opciono"
                             />
                         </Grid>
@@ -627,54 +715,49 @@ const MovingAssets = () => {
                             <TextField
                                 fullWidth
                                 label="Naziv"
-                                value={editMode ? selectedAsset?.name : formState.name}
-                                onChange={e => !editMode && setFormState(s => ({ ...s, name: e.target.value }))}
-                                disabled={editMode}
+                                value={formState.name}
+                                onChange={e => setFormState(s => ({ ...s, name: e.target.value }))}
                             />
                         </Grid>
                         <Grid item xs={12} sm={6}>
                             <TextField
                                 fullWidth
                                 label="Barcode"
-                                value={editMode ? selectedAsset?.barcode : formState.barcode}
-                                onChange={e => !editMode && setFormState(s => ({ ...s, barcode: e.target.value }))}
-                                disabled={editMode}
+                                value={formState.barcode}
+                                onChange={e => setFormState(s => ({ ...s, barcode: e.target.value }))}
                             />
                         </Grid>
                         <Grid item xs={12} sm={6}>
                             <TextField
                                 fullWidth
                                 label="Tip"
-                                value={editMode ? selectedAsset?.type : formState.type}
-                                onChange={e => !editMode && setFormState(s => ({ ...s, type: e.target.value }))}
-                                disabled={editMode}
+                                value={formState.type}
+                                onChange={e => setFormState(s => ({ ...s, type: e.target.value }))}
                             />
                         </Grid>
                         <Grid item xs={12} sm={6}>
                             <TextField
                                 fullWidth
                                 label="Model"
-                                value={editMode ? selectedAsset?.model : formState.model}
-                                onChange={e => !editMode && setFormState(s => ({ ...s, model: e.target.value }))}
-                                disabled={editMode}
+                                value={formState.model}
+                                onChange={e => setFormState(s => ({ ...s, model: e.target.value }))}
                             />
                         </Grid>
                         <Grid item xs={12} sm={6}>
                             <TextField
                                 fullWidth
                                 label="Proizvođač"
-                                value={editMode ? selectedAsset?.manufacturer : formState.manufacturer}
-                                onChange={e => !editMode && setFormState(s => ({ ...s, manufacturer: e.target.value }))}
-                                disabled={editMode}
+                                value={formState.manufacturer}
+                                onChange={e => setFormState(s => ({ ...s, manufacturer: e.target.value }))}
                             />
                         </Grid>
                         <Grid item xs={12} sm={6}>
-                            <FormControl fullWidth disabled={editMode}>
+                            <FormControl fullWidth>
                                 <InputLabel>Kategorija</InputLabel>
                                 <Select
                                     label="Kategorija"
-                                    value={editMode ? selectedAsset?.category : formState.category}
-                                    onChange={e => !editMode && setFormState(s => ({ ...s, category: e.target.value }))}
+                                    value={formState.category}
+                                    onChange={e => setFormState(s => ({ ...s, category: e.target.value }))}
                                 >
                                     {ASSET_CATEGORIES.map(cat => (
                                         <MenuItem key={cat || "empty"} value={cat}>{cat || "—"}</MenuItem>
@@ -686,18 +769,17 @@ const MovingAssets = () => {
                             <TextField
                                 fullWidth
                                 label="Serijski broj"
-                                value={editMode ? selectedAsset?.serialNumber : formState.serialNumber}
-                                onChange={e => !editMode && setFormState(s => ({ ...s, serialNumber: e.target.value }))}
-                                disabled={editMode}
+                                value={formState.serialNumber}
+                                onChange={e => setFormState(s => ({ ...s, serialNumber: e.target.value }))}
                             />
                         </Grid>
                         <Grid item xs={12} sm={6}>
-                            <FormControl fullWidth disabled={editMode}>
+                            <FormControl fullWidth>
                                 <InputLabel>Dodeljeno (korisnik)</InputLabel>
                                 <Select
                                     label="Dodeljeno (korisnik)"
-                                    value={editMode ? "" : (formState.currentUserId ?? "")}
-                                    onChange={e => !editMode && setFormState(s => ({ ...s, currentUserId: e.target.value }))}
+                                    value={formState.currentUserId ?? ""}
+                                    onChange={e => setFormState(s => ({ ...s, currentUserId: e.target.value }))}
                                 >
                                     <MenuItem value="">Niko</MenuItem>
                                     {companyUsers.map((u) => (
@@ -707,12 +789,12 @@ const MovingAssets = () => {
                             </FormControl>
                         </Grid>
                         <Grid item xs={12} sm={6}>
-                            <FormControl fullWidth disabled={editMode}>
+                            <FormControl fullWidth>
                                 <InputLabel>Status</InputLabel>
                                 <Select
                                     label="Status"
-                                    value={editMode ? selectedAsset?.status : formState.movableAssetStatus}
-                                    onChange={e => !editMode && setFormState(s => ({ ...s, movableAssetStatus: e.target.value }))}
+                                    value={formState.movableAssetStatus}
+                                    onChange={e => setFormState(s => ({ ...s, movableAssetStatus: e.target.value }))}
                                 >
                                     {assetStatuses.map(s => (
                                         <MenuItem key={s} value={s}>{translateAssetStatus(s)}</MenuItem>
@@ -725,9 +807,8 @@ const MovingAssets = () => {
                                 fullWidth
                                 label="Datum nabavke"
                                 type="date"
-                                value={editMode ? selectedAsset?.purchaseDate : formState.purchaseDate}
-                                onChange={e => !editMode && setFormState(s => ({ ...s, purchaseDate: e.target.value }))}
-                                disabled={editMode}
+                                value={formState.purchaseDate}
+                                onChange={e => setFormState(s => ({ ...s, purchaseDate: e.target.value }))}
                                 InputLabelProps={{ shrink: true }}
                             />
                         </Grid>
@@ -736,9 +817,8 @@ const MovingAssets = () => {
                                 fullWidth
                                 label="Osiguranje do"
                                 type="date"
-                                value={editMode ? selectedAsset?.warranty : formState.insuranceDate}
-                                onChange={e => !editMode && setFormState(s => ({ ...s, insuranceDate: e.target.value }))}
-                                disabled={editMode}
+                                value={formState.insuranceDate}
+                                onChange={e => setFormState(s => ({ ...s, insuranceDate: e.target.value }))}
                                 InputLabelProps={{ shrink: true }}
                             />
                         </Grid>
@@ -746,9 +826,8 @@ const MovingAssets = () => {
                             <TextField
                                 fullWidth
                                 label="Jedinica"
-                                value={editMode ? selectedAsset?.unit : formState.unit}
-                                onChange={e => !editMode && setFormState(s => ({ ...s, unit: e.target.value }))}
-                                disabled={editMode}
+                                value={formState.unit}
+                                onChange={e => setFormState(s => ({ ...s, unit: e.target.value }))}
                                 placeholder="npr. kom, kg"
                             />
                         </Grid>
@@ -758,9 +837,8 @@ const MovingAssets = () => {
                                 label="Količina"
                                 type="number"
                                 inputProps={{ min: 0 }}
-                                value={editMode ? selectedAsset?.amount : formState.amount}
-                                onChange={e => !editMode && setFormState(s => ({ ...s, amount: e.target.value }))}
-                                disabled={editMode}
+                                value={formState.amount}
+                                onChange={e => setFormState(s => ({ ...s, amount: e.target.value }))}
                             />
                         </Grid>
                         <Grid item xs={12}>
@@ -769,9 +847,8 @@ const MovingAssets = () => {
                                 label="Napomene"
                                 multiline
                                 minRows={2}
-                                value={editMode ? selectedAsset?.notes : formState.comment}
-                                onChange={e => !editMode && setFormState(s => ({ ...s, comment: e.target.value }))}
-                                disabled={editMode}
+                                value={formState.comment}
+                                onChange={e => setFormState(s => ({ ...s, comment: e.target.value }))}
                             />
                         </Grid>
                     </Grid>
@@ -779,7 +856,9 @@ const MovingAssets = () => {
                 <DialogActions>
                     <Button onClick={handleClose} disabled={saving}>Otkaži</Button>
                     {editMode ? (
-                        <Button variant="contained" onClick={handleClose}>Zatvori</Button>
+                        <Button variant="contained" onClick={handleSubmitEdit} disabled={saving}>
+                            {saving ? "Čuvanje…" : "Sačuvaj izmene"}
+                        </Button>
                     ) : (
                         <Button variant="contained" onClick={handleSubmitAdd} disabled={saving}>
                             {saving ? "Čuvanje…" : "Dodaj"}

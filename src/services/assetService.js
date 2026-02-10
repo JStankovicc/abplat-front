@@ -110,6 +110,38 @@ export const createMovableAsset = async (payload) => {
 };
 
 /**
+ * Ažurira pokretnu imovinu. Body: UpdateMovableAssetRequest (id obavezan + ostala polja).
+ */
+export const updateMovableAsset = async (payload) => {
+    const id = payload.id != null ? Number(payload.id) : NaN;
+    if (Number.isNaN(id) || id < 0) throw new Error("ID imovine nije validan.");
+    const amount = payload.amount !== undefined && payload.amount !== "" ? Number(payload.amount) : 0;
+    const currentUserId = payload.currentUserId === "" || payload.currentUserId == null ? null : Number(payload.currentUserId);
+    const body = {
+        id,
+        identifier: payload.identifier || null,
+        name: payload.name ?? null,
+        barcode: payload.barcode || null,
+        type: payload.type || null,
+        model: payload.model || null,
+        manufacturer: payload.manufacturer || null,
+        category: payload.category || null,
+        serialNumber: payload.serialNumber || null,
+        currentUserId: currentUserId ?? null,
+        movableAssetStatus: payload.movableAssetStatus || null,
+        purchaseDate: payload.purchaseDate || null,
+        insuranceDate: payload.insuranceDate || null,
+        comment: payload.comment || null,
+        unit: payload.unit || null,
+        amount: Number.isNaN(amount) ? 0 : amount
+    };
+    const response = await axios.put(`${API_BASE_URL}/asset/movableAsset`, body, {
+        headers: getAuthHeaders()
+    });
+    return mapMovableAssetFromApi(response.data);
+};
+
+/**
  * Menja status i dodeljenost pokretne imovine.
  * assetId = broj (Long id iz GET liste, polje id na svakom assetu). Query: ?assetId=...
  * Body: PostMovableAssetStatusChangeRequest { status, currentUserId }.
@@ -125,4 +157,17 @@ export const changeMovableAssetStatus = async (assetId, payload) => {
     };
     const url = `${API_BASE_URL}/asset/movableAsset/changeStatus?assetId=${id}`;
     await axios.post(url, body, { headers: getAuthHeaders() });
+};
+
+/**
+ * Briše pokretnu imovinu. Query: ?assetId=...
+ */
+export const deleteMovableAsset = async (assetId) => {
+    const id = assetId != null ? Number(assetId) : NaN;
+    if (Number.isNaN(id) || id < 1) {
+        throw new Error("ID imovine nije validan.");
+    }
+    await axios.delete(`${API_BASE_URL}/asset/movableAsset?assetId=${id}`, {
+        headers: getAuthHeaders()
+    });
 };
