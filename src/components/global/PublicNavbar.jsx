@@ -24,7 +24,6 @@ const PublicNavbar = () => {
                 overflow: 'hidden'
             }}
         >
-            {/* Logo - left */}
             <Box
                 display="flex"
                 justifyContent="space-between"
@@ -40,15 +39,12 @@ const PublicNavbar = () => {
                     alt="ABPlat"
                     style={{height: "25px", cursor: "pointer"}}
                 />
-
             </Box>
 
-            {/* Navigation - center */}
             <Box display="flex" gap={2}>
                 <Button color="inherit" href="/">Početna</Button>
             </Box>
 
-            {/* Login button - right */}
             <Box display="flex" gap={2}>
                 <Button color="inherit" href="/login" sx={{ minWidth: 'auto' }}>
                     Uloguj se

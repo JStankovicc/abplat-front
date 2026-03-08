@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { ProSidebar, Menu, MenuItem } from "react-pro-sidebar";
 import { Box, IconButton, Typography, useTheme, useMediaQuery } from "@mui/material";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "react-pro-sidebar/dist/css/styles.css";
 import { tokens } from "../../theme";
@@ -13,37 +13,15 @@ import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
 import CalendarTodayOutlinedIcon from "@mui/icons-material/CalendarTodayOutlined";
 import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
-import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
-import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
-import DashboardOutlinedIcon from '@mui/icons-material/DashboardOutlined';
-import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined';
-import TrendingUpOutlinedIcon from '@mui/icons-material/TrendingUpOutlined';
-import DirectionsCarIcon from '@mui/icons-material/DirectionsCar';
-import FolderOutlinedIcon from '@mui/icons-material/FolderOutlined';
-
-const Item = ({ title, to, icon, selected, setSelected, onClick, disabled = false }) => {
-    const theme = useTheme();
-    const colors = tokens(theme.palette.mode);
-    return (
-        <MenuItem
-            active={selected === title}
-            style={{ 
-                color: disabled ? colors.grey[500] : colors.grey[100],
-                opacity: disabled ? 0.6 : 1,
-                cursor: disabled ? 'not-allowed' : 'pointer'
-            }}
-            onClick={() => {
-                if (disabled) return;
-                setSelected(title);
-                if (onClick) onClick();
-            }}
-            icon={icon}
-        >
-            <Typography>{title}</Typography>
-            {to && !disabled && <Link to={to} />}
-        </MenuItem>
-    );
-};
+import EmailOutlinedIcon from "@mui/icons-material/EmailOutlined";
+import LogoutOutlinedIcon from "@mui/icons-material/LogoutOutlined";
+import DashboardOutlinedIcon from "@mui/icons-material/DashboardOutlined";
+import StorefrontOutlinedIcon from "@mui/icons-material/StorefrontOutlined";
+import TrendingUpOutlinedIcon from "@mui/icons-material/TrendingUpOutlined";
+import DirectionsCarIcon from "@mui/icons-material/DirectionsCar";
+import FolderOutlinedIcon from "@mui/icons-material/FolderOutlined";
+import SidebarItem from "./SidebarItem";
+import SidebarProfile from "./SidebarProfile";
 
 const Sidebar = ({ userProfile, companyInfo }) => {
     const theme = useTheme();
@@ -104,7 +82,6 @@ const Sidebar = ({ userProfile, companyInfo }) => {
                 return btoa(binary);
             }
             
-            // Uint8Array or similar typed array
             if (byteArray.constructor === Uint8Array || byteArray.buffer) {
                 const binary = String.fromCharCode.apply(null, new Uint8Array(byteArray));
                 return btoa(binary);
@@ -203,7 +180,6 @@ const Sidebar = ({ userProfile, companyInfo }) => {
                             </MenuItem>
                         )}
 
-                        {/* User profile */}
                         {(isMobile || !isCollapsed) && (
                             <Box mb="25px">
                                 <Box display="flex" justifyContent="center" alignItems="center">
@@ -240,7 +216,7 @@ const Sidebar = ({ userProfile, companyInfo }) => {
                         )}
 
                         <Box paddingLeft={isCollapsed && !isMobile ? undefined : "10%"}>
-                            <Item
+                            <SidebarItem
                                 title="Dashboard"
                                 to="/"
                                 icon={<HomeOutlinedIcon />}
@@ -249,7 +225,7 @@ const Sidebar = ({ userProfile, companyInfo }) => {
                                 onClick={() => isMobile && setIsMobileSidebarOpen(false)}
                             />
 
-                            <Item
+                            <SidebarItem
                                 title="Inbox"
                                 to="/messages"
                                 icon={<EmailOutlinedIcon />}
@@ -258,7 +234,7 @@ const Sidebar = ({ userProfile, companyInfo }) => {
                                 onClick={() => isMobile && setIsMobileSidebarOpen(false)}
                             />
 
-                            <Item
+                            <SidebarItem
                                 title="Kalendar"
                                 to="/calendar"
                                 icon={<CalendarTodayOutlinedIcon />}
@@ -270,7 +246,7 @@ const Sidebar = ({ userProfile, companyInfo }) => {
                             <Typography variant="h6" color={colors.grey[300]} sx={{ m: "15px 0 5px 20px" }}>
                                 Admin
                             </Typography>
-                            <Item
+                            <SidebarItem
                                 title="Upravljanje korisnicima"
                                 to="/team"
                                 icon={<PeopleOutlinedIcon />}
@@ -279,7 +255,7 @@ const Sidebar = ({ userProfile, companyInfo }) => {
                                 onClick={() => isMobile && setIsMobileSidebarOpen(false)}
                                 disabled={true}
                             />
-                            <Item
+                            <SidebarItem
                                 title="Podesavanja kompanije"
                                 to="/companySettings"
                                 icon={<SettingsOutlinedIcon />}
@@ -288,7 +264,7 @@ const Sidebar = ({ userProfile, companyInfo }) => {
                                 onClick={() => isMobile && setIsMobileSidebarOpen(false)}
                                 disabled={true}
                             />
-                            <Item
+                            <SidebarItem
                                 title="Pregled kompanije"
                                 to="/team"
                                 icon={<ReceiptOutlinedIcon />}
@@ -301,7 +277,7 @@ const Sidebar = ({ userProfile, companyInfo }) => {
                             <Typography variant="h6" color={colors.grey[300]} sx={{ m: "15px 0 5px 20px" }}>
                                 Prodaja
                             </Typography>
-                            <Item
+                            <SidebarItem
                                 title="Upravljanje prodajom"
                                 to="/sales-management"
                                 icon={<StorefrontOutlinedIcon />}
@@ -310,7 +286,7 @@ const Sidebar = ({ userProfile, companyInfo }) => {
                                 onClick={() => isMobile && setIsMobileSidebarOpen(false)}
                                 disabled={true}
                             />
-                            <Item
+                            <SidebarItem
                                 title="Prodaja"
                                 to="/sales"
                                 icon={<TrendingUpOutlinedIcon />}
@@ -323,7 +299,7 @@ const Sidebar = ({ userProfile, companyInfo }) => {
                             <Typography variant="h6" color={colors.grey[300]} sx={{ m: "15px 0 5px 20px" }}>
                                 Projekti
                             </Typography>
-                            <Item
+                            <SidebarItem
                                 title="Upravljanje projektima"
                                 to="/project-management"
                                 icon={<PersonOutlinedIcon />}
@@ -331,9 +307,8 @@ const Sidebar = ({ userProfile, companyInfo }) => {
                                 setSelected={setSelected}
                                 onClick={() => isMobile && setIsMobileSidebarOpen(false)}
                             />
-                            {/* Dynamic project list */}
                             {projects.map((project) => (
-                                <Item
+                                <SidebarItem
                                     key={project.id}
                                     title={project.name}
                                     icon={<FolderOutlinedIcon />}
@@ -343,11 +318,10 @@ const Sidebar = ({ userProfile, companyInfo }) => {
                                 />
                             ))}
 
-                            {/* Assets section */}
                             <Typography variant="h6" color={colors.grey[300]} sx={{ m: "15px 0 5px 20px" }}>
                                 Imovina
                             </Typography>
-                            <Item
+                            <SidebarItem
                                 title="Inventar"
                                 to="/inventory"
                                 icon={<StorefrontOutlinedIcon />}
@@ -356,7 +330,7 @@ const Sidebar = ({ userProfile, companyInfo }) => {
                                 onClick={() => isMobile && setIsMobileSidebarOpen(false)}
                                 disabled={true}
                             />
-                            <Item
+                            <SidebarItem
                                 title="Imovina"
                                 to="/assets"
                                 icon={<DashboardOutlinedIcon />}
@@ -365,7 +339,7 @@ const Sidebar = ({ userProfile, companyInfo }) => {
                                 onClick={() => isMobile && setIsMobileSidebarOpen(false)}
                                 disabled={false}
                             />
-                            <Item
+                            <SidebarItem
                                 title="Vozila"
                                 to="/fleet"
                                 icon={<DirectionsCarIcon />}
@@ -376,7 +350,7 @@ const Sidebar = ({ userProfile, companyInfo }) => {
                             />
 
                             {isMobile && (
-                                <Item
+                                <SidebarItem
                                     title="Podesavanja"
                                     to="/settings"
                                     icon={<SettingsOutlinedIcon />}
@@ -387,7 +361,7 @@ const Sidebar = ({ userProfile, companyInfo }) => {
                             )}
 
                             <Box mt="30px">
-                                <Item
+                                <SidebarItem
                                     title="Logout"
                                     icon={<LogoutOutlinedIcon />}
                                     selected={selected}

@@ -20,7 +20,7 @@ import ContactTable from "../../components/sales/ContactTable";
 import PipelineBoard from "../../components/sales/PipelineBoard";
 import SalesCalendar from "../../components/sales/SalesCalendar";
 import SalesAnalytics from "../../components/sales/SalesAnalytics";
-import MobileMenu from "../../components/sales/MobileMenu";
+import MobileMenu from "../../components/common/MobileMenu";
 
 const sections = [
     { id: 0, label: "Kontakti", icon: <ContactsIcon />, component: <ContactTable />, disabled: false },
@@ -131,7 +131,7 @@ const SalesView = () => {
                 )}
             </Box>
 
-            {/* Mobilni meni */}
+            {/* Mobile menu */}
             <MobileMenu
                 open={mobileOpen}
                 onClose={() => setMobileOpen(false)}
@@ -147,7 +147,7 @@ const SalesView = () => {
                 colors={colors}
             />
 
-            {/* Main content */}
+            {/* Main content area */}
             <Box
                 sx={(theme) => ({
                     flex: 1,

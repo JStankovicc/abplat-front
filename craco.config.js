@@ -1,8 +1,15 @@
 const webpack = require('webpack');
+const path = require('path');
 
 module.exports = {
   webpack: {
     configure: (webpackConfig) => {
+      // Path aliasi za čitljivije importe
+      webpackConfig.resolve.alias = {
+        ...webpackConfig.resolve.alias,
+        '@': path.resolve(__dirname, 'src'),
+      };
+
       // Polyfills za Node.js core moduli
       webpackConfig.resolve.fallback = {
         ...webpackConfig.resolve.fallback,

@@ -22,13 +22,7 @@ import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, DragIndicator a
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { API_BASE_URL } from "../../config/apiConfig";
 
-const getAuthHeaders = () => {
-    const token = localStorage.getItem('token');
-    return {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json"
-    };
-};
+import { getAuthHeaders } from "../../lib/api";
 
 const StrategyConfig = () => {
     const theme = useTheme();

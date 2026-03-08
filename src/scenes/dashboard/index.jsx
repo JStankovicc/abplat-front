@@ -1,828 +1,134 @@
-import React, { useState, useEffect } from "react";
-import { 
-    Box, 
-    Typography, 
-    useTheme, 
-    Avatar, 
-    Chip, 
-    List, 
-    ListItem, 
-    ListItemText, 
-    ListItemAvatar,
-    Alert,
-    Badge,
-    Paper,
-    LinearProgress
-} from "@mui/material";
-import { tokens } from "../../theme";
+import React from "react";
+import { Box, Alert } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
-import MessageIcon from "@mui/icons-material/Message";
-import TaskIcon from "@mui/icons-material/Task";
-import NotificationsIcon from "@mui/icons-material/Notifications";
-import FolderIcon from "@mui/icons-material/Folder";
-import AccessTimeIcon from "@mui/icons-material/AccessTime";
-import chatService from "../../services/chatService";
-import Shimmer from "../../components/Shimmer";
-import { Lock as LockIcon } from "@mui/icons-material";
-import { API_BASE_URL } from "../../config/apiConfig";
+import { useTheme } from "@mui/material";
+import { tokens } from "../../theme";
+import {
+  DashboardShimmer,
+  NotificationsCard,
+  MiniInboxCard,
+  ProjectCard,
+} from "../../components/dashboard";
+import { useDashboardData } from "../../hooks/useDashboardData";
 
-const getAuthHeaders = () => {
-    const token = localStorage.getItem('token');
-    return {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json"
-    };
+const getStatusColor = (statusId) => {
+  switch (statusId) {
+    case 1:
+      return "warning";
+    case 2:
+      return "primary";
+    case 3:
+      return "success";
+    default:
+      return "secondary";
+  }
 };
 
+const getStatusName = (statusId) => {
+  switch (statusId) {
+    case 1:
+      return "Čekanje";
+    case 2:
+      return "U toku";
+    case 3:
+      return "Završeno";
+    default:
+      return "Nepoznat";
+  }
+};
+
+const formatDate = (dateString) => {
+  if (!dateString) return "";
+  const date = new Date(dateString);
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  if (date.toDateString() === today.toDateString()) return "Danas";
+  if (date.toDateString() === yesterday.toDateString()) return "Juče";
+  return date.toLocaleDateString("sr-RS", { day: "2-digit", month: "2-digit" });
+};
 
 const Dashboard = () => {
-    const theme = useTheme();
-    const colors = tokens(theme.palette.mode);
-    const navigate = useNavigate();
-    
-    const [projects, setProjects] = useState([]);
-    const [projectTasks, setProjectTasks] = useState({});
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [lastMessage, setLastMessage] = useState(null);
-    const [conversations, setConversations] = useState([]);
-    const [contacts, setContacts] = useState([]);
+  const theme = useTheme();
+  const colors = tokens(theme.palette.mode);
+  const navigate = useNavigate();
+  const {
+    projects,
+    projectTasks,
+    loading,
+    error,
+    lastMessage,
+  } = useDashboardData();
 
-    const fetchProjects = async () => {
-        try {
-            const response = await axios.get(`${API_BASE_URL}/project/allByCompany`, {
-                headers: getAuthHeaders()
-            });
-            setProjects(response.data);
-            
-            const tasksPromises = response.data.map(async (project) => {
-                try {
-                    const tasksResponse = await axios.get(`${API_BASE_URL}/project/tasks/my`, {
-                        headers: getAuthHeaders(),
-                        params: { projectId: project.id }
-                    });
-                    return { projectId: project.id, tasks: tasksResponse.data };
-                } catch (error) {
-                    console.error(`Failed to fetch tasks for project ${project.id}:`, error);
-                    return { projectId: project.id, tasks: [] };
-                }
-            });
-            
-            const tasksResults = await Promise.all(tasksPromises);
-            const tasksMap = {};
-            tasksResults.forEach(result => {
-                tasksMap[result.projectId] = result.tasks;
-            });
-            setProjectTasks(tasksMap);
-            
-        } catch (error) {
-            console.error('Failed to fetch projects:', error);
-            setError('Greška pri učitavanju projekata');
-        } finally {
-            setLoading(false);
-        }
-    };
+  const handleProjectClick = (projectId) => {
+    navigate(`/project/${projectId}`);
+  };
 
-    const fetchLastMessage = async () => {
-        try {
-            console.log('🔍 Dashboard: Fetching last message...');
-            
-            let conversationsData = [];
-            let contactsData = [];
-            
-            try {
-                conversationsData = await chatService.getInbox();
-                console.log('📧 Dashboard: Conversations data:', conversationsData);
-            } catch (inboxError) {
-                console.error('❌ Dashboard: Failed to fetch inbox:', inboxError);
-                conversationsData = [];
-            }
-            
-            try {
-                contactsData = await chatService.getAllContacts();
-                console.log('👥 Dashboard: Contacts data:', contactsData);
-            } catch (contactsError) {
-                console.error('❌ Dashboard: Failed to fetch contacts:', contactsError);
-                contactsData = [];
-            }
-            
-            setConversations(conversationsData);
-            setContacts(contactsData);
-            
-            if (conversationsData && conversationsData.length > 0) {
-                console.log('✅ Dashboard: Found conversations, processing...');
-                
-                const mostRecentConversation = conversationsData.reduce((prev, current) => {
-                    const prevTime = prev.lastMessageAt ? new Date(prev.lastMessageAt) : new Date(0);
-                    const currentTime = current.lastMessageAt ? new Date(current.lastMessageAt) : new Date(0);
-                    return currentTime > prevTime ? current : prev;
-                });
-                
-                console.log('📨 Dashboard: Most recent conversation:', mostRecentConversation);
-                
-                try {
-                    const formattedConversation = await chatService.formatConversationForDisplay(mostRecentConversation, contactsData);
-                    
-                    console.log('🎨 Dashboard: Formatted conversation:', formattedConversation);
-                    
-                    // Always load the latest message directly from the API
-                    let lastMessageContent = '';
-                    let lastMessageTime = null;
-                    
-                    try {
-                        console.log('📥 Dashboard: Loading last message directly from API...');
-                        const messagesData = await chatService.getMessages(mostRecentConversation.conversationId, 0, 10);
-                        if (messagesData.content && messagesData.content.length > 0) {
-                            // Sortiraj poruke po datumu (najnovije prvo) i uzmi prvu
-                            const sortedMessages = [...messagesData.content].sort((a, b) => {
-                                const dateA = new Date(a.createdAt).getTime();
-                                const dateB = new Date(b.createdAt).getTime();
-                                return dateB - dateA; // newest first
-                            });
-                            const lastMessage = sortedMessages[0];
-                            lastMessageContent = lastMessage.content || '';
-                            lastMessageTime = lastMessage.createdAt ? new Date(lastMessage.createdAt) : null;
-                            console.log('✅ Dashboard: Loaded last message from API:', lastMessageContent);
-                        } else {
-                            // Fallback to conversation summary data if no messages
-                            lastMessageContent = formattedConversation.lastMessage || '';
-                            lastMessageTime = formattedConversation.lastMessageTime;
-                        }
-                    } catch (error) {
-                        console.error('❌ Dashboard: Error loading last message:', error);
-                        // Fallback to conversation summary data
-                        lastMessageContent = formattedConversation.lastMessage || '';
-                        lastMessageTime = formattedConversation.lastMessageTime;
-                    }
-                    
-                    setLastMessage({
-                        conversationId: formattedConversation.conversationId,
-                        sender: formattedConversation.name,
-                        content: lastMessageContent || "Nema poruka",
-                        timestamp: lastMessageTime ? 
-                            lastMessageTime.toLocaleTimeString('sr-RS', { hour: '2-digit', minute: '2-digit' }) : 
-                            '',
-                        unread: formattedConversation.unreadCount > 0,
-                        unreadCount: formattedConversation.unreadCount
-                    });
-                    
-                    console.log('💾 Dashboard: Set last message:', {
-                        sender: formattedConversation.name,
-                        content: lastMessageContent,
-                        timestamp: lastMessageTime
-                    });
-                } catch (formatError) {
-                    console.error('❌ Dashboard: Failed to format conversation:', formatError);
-                    let lastMessageContent = '';
-                    let lastMessageTime = null;
-                    
-                    try {
-                        const messagesData = await chatService.getMessages(mostRecentConversation.conversationId, 0, 10);
-                        if (messagesData.content && messagesData.content.length > 0) {
-                            const sortedMessages = [...messagesData.content].sort((a, b) => {
-                                const dateA = new Date(a.createdAt).getTime();
-                                const dateB = new Date(b.createdAt).getTime();
-                                return dateB - dateA;
-                            });
-                            const lastMessage = sortedMessages[0];
-                            lastMessageContent = lastMessage.content || '';
-                            lastMessageTime = lastMessage.createdAt ? new Date(lastMessage.createdAt) : null;
-                        }
-                    } catch (error) {
-                        console.error('❌ Dashboard: Error loading last message in fallback:', error);
-                    }
-                    
-                    setLastMessage({
-                        conversationId: mostRecentConversation.conversationId,
-                        sender: mostRecentConversation.name || 'Nepoznat korisnik',
-                        content: lastMessageContent || mostRecentConversation.lastMessagePreview || "Nema poruka",
-                        timestamp: lastMessageTime ? 
-                            lastMessageTime.toLocaleTimeString('sr-RS', { hour: '2-digit', minute: '2-digit' }) : 
-                            (mostRecentConversation.lastMessageAt ? 
-                                new Date(mostRecentConversation.lastMessageAt).toLocaleTimeString('sr-RS', { hour: '2-digit', minute: '2-digit' }) : 
-                                ''),
-                        unread: (mostRecentConversation.unreadCount || 0) > 0,
-                        unreadCount: mostRecentConversation.unreadCount || 0
-                    });
-                }
-            } else {
-                console.log('❌ Dashboard: No conversations found');
-                setLastMessage(null);
-            }
-        } catch (error) {
-            console.error('❌ Dashboard: Failed to fetch last message:', error);
-            setLastMessage(null);
-        }
-    };
+  const handleInboxClick = () => {
+    navigate("/messages");
+  };
 
-    useEffect(() => {
-        console.log('🚀 Dashboard: Component mounted, starting data fetch...');
-        fetchProjects();
-        fetchLastMessage();
-    }, []);
-
-    useEffect(() => {
-        console.log('📊 Dashboard: lastMessage state changed:', lastMessage);
-    }, [lastMessage]);
-
-    useEffect(() => {
-        console.log('💬 Dashboard: conversations state changed:', conversations);
-    }, [conversations]);
-
-    const handleProjectClick = (projectId) => {
-        navigate(`/project/${projectId}`);
-    };
-
-    const handleInboxClick = () => {
-        navigate('/messages');
-    };
-
-    const getStatusColor = (statusId) => {
-        switch(statusId) {
-            case 1: return 'warning';
-            case 2: return 'primary';
-            case 3: return 'success';
-            default: return 'secondary';
-        }
-    };
-
-    const getStatusName = (statusId) => {
-        switch(statusId) {
-            case 1: return 'Čekanje';
-            case 2: return 'U toku';
-            case 3: return 'Završeno';
-            default: return 'Nepoznat';
-        }
-    };
-
-    const formatDate = (dateString) => {
-        if (!dateString) return '';
-        const date = new Date(dateString);
-        const today = new Date();
-        const yesterday = new Date(today);
-        yesterday.setDate(yesterday.getDate() - 1);
-        
-        if (date.toDateString() === today.toDateString()) {
-            return 'Danas';
-        } else if (date.toDateString() === yesterday.toDateString()) {
-            return 'Juče';
-        } else {
-            return date.toLocaleDateString('sr-RS', { day: '2-digit', month: '2-digit' });
-        }
-    };
-
-    if (loading) {
-        return (
-            <Box 
-                m="20px" 
-                height="calc(100vh - 120px)" 
-                overflow="hidden"
-                display="flex"
-                justifyContent="center"
-            >
-                <Box
-                    display="grid"
-                    gridTemplateColumns="repeat(12, 1fr)"
-                    gridTemplateRows="repeat(5, 1fr)"
-                    gap="15px"
-                    height="100%"
-                    width="75%"
-                    overflow="hidden"
-                >
-                    {/* Notifications shimmer */}
-                    <Paper
-                        elevation={3}
-                        sx={{
-                            gridColumn: "span 8",
-                            gridRow: "span 3",
-                            backgroundColor: colors.primary[400],
-                            borderRadius: "12px",
-                            p: "12px",
-                        }}
-                    >
-                        <Box display="flex" alignItems="center" mb="10px">
-                            <Shimmer width="40px" height="40px" borderRadius="50%" sx={{ mr: 2 }} />
-                            <Shimmer width="150px" height="24px" />
-                        </Box>
-                        <Box textAlign="center" py={2}>
-                            <Shimmer width="80px" height="80px" borderRadius="50%" sx={{ mx: 'auto', mb: 2 }} />
-                            <Shimmer width="200px" height="20px" sx={{ mx: 'auto' }} />
-                        </Box>
-                    </Paper>
-
-                    {/* Inbox shimmer */}
-                    <Paper
-                        elevation={3}
-                        sx={{
-                            gridColumn: "span 4",
-                            gridRow: "span 3",
-                            backgroundColor: colors.primary[400],
-                            borderRadius: "12px",
-                            p: "12px",
-                        }}
-                    >
-                        <Box display="flex" alignItems="center" mb="10px">
-                            <Shimmer width="40px" height="40px" borderRadius="50%" sx={{ mr: 2 }} />
-                            <Shimmer width="120px" height="20px" />
-                        </Box>
-                        <Box display="flex" alignItems="center" mb="12px">
-                            <Shimmer width="36px" height="36px" borderRadius="50%" sx={{ mr: 2 }} />
-                            <Box flex={1}>
-                                <Shimmer width="100px" height="16px" sx={{ mb: 1 }} />
-                                <Shimmer width="60px" height="12px" />
-                            </Box>
-                        </Box>
-                        <Shimmer width="100%" height="40px" sx={{ mb: 2 }} />
-                        <Shimmer width="80px" height="12px" />
-                    </Paper>
-
-                    {/* Projects shimmer */}
-                    {[1, 2, 3].map((i) => (
-                        <Paper
-                            key={i}
-                            elevation={3}
-                            sx={{
-                                gridColumn: "span 4",
-                                gridRow: "span 1",
-                                backgroundColor: colors.primary[400],
-                                borderRadius: "12px",
-                                p: "12px",
-                            }}
-                        >
-                            <Box display="flex" alignItems="center" mb="8px">
-                                <Shimmer width="32px" height="32px" borderRadius="50%" sx={{ mr: 1.5 }} />
-                                <Box flex={1}>
-                                    <Shimmer width="80px" height="14px" sx={{ mb: 0.5 }} />
-                                    <Shimmer width="60px" height="10px" />
-                                </Box>
-                            </Box>
-                            <Shimmer width="100%" height="4px" sx={{ mb: 1 }} />
-                            <Box sx={{ maxHeight: '120px', overflowY: 'auto' }}>
-                                {[1, 2, 3].map((i) => (
-                                    <Box key={i} display="flex" alignItems="center" mb={0.5}>
-                                        <Shimmer width="20px" height="20px" borderRadius="50%" sx={{ mr: 1 }} />
-                                        <Box flex={1}>
-                                            <Shimmer width="100px" height="12px" sx={{ mb: 0.5 }} />
-                                            <Shimmer width="60px" height="10px" />
-                                        </Box>
-                                    </Box>
-                                ))}
-                            </Box>
-                            <Box mt={1} textAlign="center">
-                                <Shimmer width="120px" height="10px" sx={{ mx: 'auto' }} />
-                            </Box>
-                        </Paper>
-                    ))}
-                </Box>
-            </Box>
-        );
-    }
-
-    if (error) {
-        return (
-            <Box m="20px">
-                <Alert severity="error">{error}</Alert>
-            </Box>
-        );
-    }
-
+  if (loading) {
     return (
-        <Box 
-            m="20px" 
-            height="calc(100vh - 120px)" 
-            overflow="hidden"
-            display="flex"
-            justifyContent="center"
-        >
-            <Box
-                display="grid"
-                gridTemplateColumns="repeat(12, 1fr)"
-                gridTemplateRows="repeat(5, 1fr)"
-                gap="15px"
-                height="100%"
-                width="75%"
-                overflow="hidden"
-            >
-                {/* Notifications section - locked */}
-                <Paper
-                    elevation={3}
-                    sx={{
-                        gridColumn: "span 8",
-                        gridRow: "span 3",
-                        backgroundColor: colors.primary[400],
-                        borderRadius: "12px",
-                        p: "15px",
-                        background: `linear-gradient(135deg, ${colors.primary[400]} 0%, ${colors.primary[500]} 100%)`,
-                        overflow: 'hidden',
-                        position: 'relative',
-                        height: '100%'
-                    }}
-                >
-                    <Box display="flex" alignItems="center" justifyContent="space-between" mb="15px">
-                        <Box display="flex" alignItems="center">
-                            <Box
-                                sx={{
-                                    backgroundColor: colors.grey[600],
-                                    borderRadius: '50%',
-                                    p: 1,
-                                    mr: 2,
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center'
-                                }}
-                            >
-                                <NotificationsIcon sx={{ color: colors.grey[400], fontSize: '1.2rem' }} />
-                            </Box>
-                            <Typography variant="h6" fontWeight="600" color={colors.grey[400]}>
-                                Obaveštenja
-                            </Typography>
-                        </Box>
-                        <Chip 
-                            label="Uskoro" 
-                            size="small" 
-                            sx={{ 
-                                bgcolor: colors.grey[700],
-                                color: colors.grey[300],
-                                fontSize: '0.7rem'
-                            }}
-                        />
-                    </Box>
-                    
-                    {/* Locked overlay */}
-                    <Box 
-                        sx={{ 
-                            height: 'calc(100% - 60px)',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            position: 'relative',
-                        }}
-                    >
-                        {/* Blurred background content */}
-                        <Box
-                            sx={{
-                                position: 'absolute',
-                                top: 0,
-                                left: 0,
-                                right: 0,
-                                bottom: 0,
-                                opacity: 0.15,
-                                filter: 'blur(2px)',
-                            }}
-                        >
-                            {[1, 2, 3, 4].map((item) => (
-                                <Box
-                                    key={item}
-                                    sx={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        p: 2,
-                                        mb: 1,
-                                        borderRadius: '8px',
-                                        bgcolor: colors.primary[500],
-                                    }}
-                                >
-                                    <Box
-                                        sx={{
-                                            width: 40,
-                                            height: 40,
-                                            borderRadius: '50%',
-                                            bgcolor: colors.grey[600],
-                                            mr: 2,
-                                        }}
-                                    />
-                                    <Box flex={1}>
-                                        <Box sx={{ height: 12, width: '60%', bgcolor: colors.grey[600], borderRadius: 1, mb: 1 }} />
-                                        <Box sx={{ height: 8, width: '80%', bgcolor: colors.grey[700], borderRadius: 1 }} />
-                                    </Box>
-                                </Box>
-                            ))}
-                        </Box>
-
-                        {/* Lock icon and text */}
-                        <Box
-                            sx={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                zIndex: 1,
-                                bgcolor: `${colors.primary[500]}E0`,
-                                borderRadius: 3,
-                                p: 4,
-                                backdropFilter: 'blur(4px)',
-                            }}
-                        >
-                            <Box
-                                sx={{
-                                    width: 64,
-                                    height: 64,
-                                    borderRadius: '50%',
-                                    bgcolor: colors.grey[700],
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    mb: 2,
-                                }}
-                            >
-                                <LockIcon sx={{ fontSize: 32, color: colors.grey[400] }} />
-                            </Box>
-                            <Typography variant="h6" color={colors.grey[300]} fontWeight="500" mb={1}>
-                                Funkcionalnost u izradi
-                            </Typography>
-                            <Typography variant="body2" color={colors.grey[500]} textAlign="center">
-                                Obaveštenja će biti dostupna uskoro
-                            </Typography>
-                        </Box>
-                    </Box>
-                </Paper>
-
-                {/* Mini inbox section */}
-                <Paper
-                    elevation={3}
-                    sx={{
-                        gridColumn: "span 4",
-                        gridRow: "span 3",
-                        backgroundColor: colors.primary[400],
-                        borderRadius: "12px",
-                        p: "15px",
-                        cursor: 'pointer',
-                        transition: 'all 0.3s ease',
-                        '&:hover': { 
-                            backgroundColor: colors.primary[300],
-                            transform: 'translateY(-2px)',
-                            boxShadow: 6
-                        },
-                        background: `linear-gradient(135deg, ${colors.primary[400]} 0%, ${colors.primary[500]} 100%)`
-                    }}
-                    onClick={handleInboxClick}
-                >
-                    <Box display="flex" alignItems="center" mb="10px">
-                        <Box
-                            sx={{
-                                backgroundColor: colors.greenAccent[500],
-                                borderRadius: '50%',
-                                p: 1,
-                                mr: 2,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center'
-                            }}
-                        >
-                            <MessageIcon sx={{ color: colors.grey[100], fontSize: '1.2rem' }} />
-                        </Box>
-                        <Typography variant="h6" fontWeight="600" color={colors.grey[100]}>
-                            Poslednje poruke
-                        </Typography>
-                        {lastMessage?.unreadCount > 0 && (
-                            <Badge 
-                                badgeContent={lastMessage.unreadCount} 
-                                color="error" 
-                                sx={{ ml: 'auto' }}
-                            />
-                        )}
-                    </Box>
-                    
-                    {lastMessage ? (
-                        <Box>
-                            <Box display="flex" alignItems="center" mb="8px">
-                                <Avatar 
-                                    sx={{ 
-                                        bgcolor: colors.greenAccent[500], 
-                                        width: 36, 
-                                        height: 36, 
-                                        mr: 2,
-                                        fontSize: '0.9rem',
-                                        fontWeight: 'bold'
-                                    }}
-                                >
-                                    {lastMessage.sender[0]}
-                                </Avatar>
-                                <Box flex={1}>
-                                    <Typography variant="subtitle1" color={colors.grey[100]} fontWeight="500">
-                                        {lastMessage.sender}
-                                    </Typography>
-                                    <Box display="flex" alignItems="center">
-                                        <AccessTimeIcon sx={{ fontSize: '0.8rem', mr: 0.5, color: colors.grey[300] }} />
-                                        <Typography variant="caption" color={colors.grey[300]}>
-                                            {lastMessage.timestamp}
-                                        </Typography>
-                                    </Box>
-                                </Box>
-                            </Box>
-                            <Typography 
-                                variant="body2" 
-                                color={colors.grey[200]}
-                                sx={{ 
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis',
-                                    display: '-webkit-box',
-                                    WebkitLineClamp: 3,
-                                    WebkitBoxOrient: 'vertical',
-                                    lineHeight: 1.4
-                                }}
-                            >
-                                {lastMessage.content}
-                            </Typography>
-                            <Box 
-                                mt={2} 
-                                display="flex" 
-                                alignItems="center" 
-                                justifyContent="space-between"
-                                onClick={handleInboxClick}
-                                sx={{ cursor: 'pointer' }}
-                            >
-                                <Typography variant="caption" color={colors.greenAccent[500]} fontWeight="500">
-                                    Kliknite da otvorite inbox →
-                                </Typography>
-                                {lastMessage.unread && (
-                                    <Chip 
-                                        label="Nova" 
-                                        size="small" 
-                                        color="error" 
-                                        sx={{ fontSize: '0.7rem', height: '20px' }}
-                                    />
-                                )}
-                            </Box>
-                        </Box>
-                    ) : (
-                        <Box textAlign="center" py={2}>
-                            <MessageIcon sx={{ fontSize: '3rem', color: colors.grey[400], mb: 2 }} />
-                            <Typography color={colors.grey[300]} variant="body1">
-                                Nema poruka
-                            </Typography>
-                            <Box mt={2}>
-                                <Shimmer width="120px" height="12px" sx={{ mx: 'auto', mb: 1 }} />
-                                <Shimmer width="80px" height="10px" sx={{ mx: 'auto', mb: 1 }} />
-                                <Shimmer width="100px" height="10px" sx={{ mx: 'auto' }} />
-                            </Box>
-                        </Box>
-                    )}
-                </Paper>
-
-                {/* Projects section */}
-                {projects.slice(0, 3).map((project, index) => {
-                    const projectTasksList = projectTasks[project.id] || [];
-                    const recentTasks = projectTasksList.slice(0, 2);
-                    const completedTasks = projectTasksList.filter(task => task.statusId === 3).length;
-                    const totalTasks = projectTasksList.length;
-                    const progressPercentage = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
-                    
-                    return (
-                        <Paper
-                            key={project.id}
-                            elevation={3}
-                            sx={{
-                                gridColumn: "span 4",
-                                gridRow: "span 1",
-                                backgroundColor: colors.primary[400],
-                                borderRadius: "12px",
-                                p: "12px",
-                                cursor: 'pointer',
-                                transition: 'all 0.3s ease',
-                                '&:hover': { 
-                                    backgroundColor: colors.primary[300],
-                                    transform: 'translateY(-2px)',
-                                    boxShadow: 6
-                                },
-                                background: `linear-gradient(135deg, ${colors.primary[400]} 0%, ${colors.primary[500]} 100%)`
-                            }}
-                            onClick={() => handleProjectClick(project.id)}
-                        >
-                            <Box display="flex" alignItems="center" mb="8px">
-                                <Box
-                                    sx={{
-                                        backgroundColor: colors.greenAccent[500],
-                                        borderRadius: '50%',
-                                        p: 0.8,
-                                        mr: 1.5,
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center'
-                                    }}
-                                >
-                                    <FolderIcon sx={{ color: colors.grey[100], fontSize: '1rem' }} />
-                                </Box>
-                                <Box flex={1}>
-                                    <Typography variant="subtitle1" fontWeight="600" color={colors.grey[100]} sx={{ fontSize: '0.9rem' }}>
-                                        {project.name}
-                                    </Typography>
-                                    <Typography variant="caption" color={colors.grey[300]} sx={{ fontSize: '0.7rem' }}>
-                                        {totalTasks} zadataka
-                                    </Typography>
-                                </Box>
-                            </Box>
-                            
-                            {totalTasks > 0 && (
-                                <Box mb="6px">
-                                    <LinearProgress 
-                                        variant="determinate" 
-                                        value={progressPercentage}
-                                        sx={{
-                                            height: 4,
-                                            borderRadius: 2,
-                                            backgroundColor: colors.grey[700],
-                                            '& .MuiLinearProgress-bar': {
-                                                backgroundColor: colors.greenAccent[500],
-                                                borderRadius: 2
-                                            }
-                                        }}
-                                    />
-                                </Box>
-                            )}
-                            
-                            {/* Scrollable task list */}
-                            <Box 
-                                sx={{ 
-                                    maxHeight: '120px',
-                                    overflowY: 'auto',
-                                    '&::-webkit-scrollbar': {
-                                        width: '4px',
-                                    },
-                                    '&::-webkit-scrollbar-track': {
-                                        backgroundColor: 'rgba(0,0,0,0.1)',
-                                        borderRadius: '2px',
-                                    },
-                                    '&::-webkit-scrollbar-thumb': {
-                                        backgroundColor: 'rgba(0,0,0,0.3)',
-                                        borderRadius: '2px',
-                                        '&:hover': {
-                                            backgroundColor: 'rgba(0,0,0,0.5)',
-                                        },
-                                    },
-                                }}
-                            >
-                                {projectTasksList.length > 0 ? (
-                                    <List dense sx={{ p: 0 }}>
-                                        {projectTasksList.map((task) => (
-                                            <ListItem key={task.id} sx={{ p: 0, mb: 0.5 }}>
-                                                <ListItemAvatar>
-                                                    <Avatar sx={{ 
-                                                        bgcolor: colors.greenAccent[500], 
-                                                        width: 20, 
-                                                        height: 20,
-                                                        fontSize: '0.6rem'
-                                                    }}>
-                                                        <TaskIcon sx={{ fontSize: '0.6rem' }} />
-                                                    </Avatar>
-                                                </ListItemAvatar>
-                                                <ListItemText
-                                                    primary={
-                                                        <Typography 
-                                                            variant="body2" 
-                                                            color={colors.grey[100]}
-                                                            sx={{ 
-                                                                overflow: 'hidden',
-                                                                textOverflow: 'ellipsis',
-                                                                whiteSpace: 'nowrap',
-                                                                fontWeight: 500,
-                                                                fontSize: '0.7rem'
-                                                            }}
-                                                        >
-                                                            {task.name}
-                                                        </Typography>
-                                                    }
-                                                    secondary={
-                                                        <Box display="flex" alignItems="center" gap={0.5}>
-                                                            <Chip
-                                                                label={getStatusName(task.statusId)}
-                                                                size="small"
-                                                                color={getStatusColor(task.statusId)}
-                                                                sx={{ fontSize: '0.6rem', height: '14px' }}
-                                                            />
-                                                            {task.dateDue && (
-                                                                <Typography variant="caption" color={colors.grey[400]} sx={{ fontSize: '0.6rem' }}>
-                                                                    {formatDate(task.dateDue)}
-                                                                </Typography>
-                                                            )}
-                                                        </Box>
-                                                    }
-                                                />
-                                            </ListItem>
-                                        ))}
-                                    </List>
-                                ) : (
-                                    <Box textAlign="center" py={1}>
-                                        <Typography color={colors.grey[400]} variant="body2" sx={{ fontSize: '0.7rem' }}>
-                                            Nema zadataka
-                                        </Typography>
-                                    </Box>
-                                )}
-                            </Box>
-                            
-                            <Box mt={1} textAlign="center">
-                                <Typography variant="caption" color={colors.greenAccent[500]} fontWeight="500" sx={{ fontSize: '0.7rem' }}>
-                                    Kliknite da otvorite projekat →
-                                </Typography>
-                            </Box>
-                        </Paper>
-                    );
-                })}
-            </Box>
-        </Box>
+      <Box
+        m="20px"
+        height="calc(100vh - 120px)"
+        overflow="hidden"
+        display="flex"
+        justifyContent="center"
+      >
+        <DashboardShimmer colors={colors} />
+      </Box>
     );
+  }
+
+  if (error) {
+    return (
+      <Box m="20px">
+        <Alert severity="error">{error}</Alert>
+      </Box>
+    );
+  }
+
+  return (
+    <Box
+      m="20px"
+      height="calc(100vh - 120px)"
+      overflow="hidden"
+      display="flex"
+      justifyContent="center"
+    >
+      <Box
+        display="grid"
+        gridTemplateColumns="repeat(12, 1fr)"
+        gridTemplateRows="repeat(5, 1fr)"
+        gap="15px"
+        height="100%"
+        width="75%"
+        overflow="hidden"
+      >
+        <NotificationsCard colors={colors} />
+        <MiniInboxCard
+          colors={colors}
+          lastMessage={lastMessage}
+          onInboxClick={handleInboxClick}
+        />
+        {projects.slice(0, 3).map((project) => (
+          <ProjectCard
+            key={project.id}
+            project={project}
+            tasks={projectTasks[project.id] || []}
+            colors={colors}
+            onProjectClick={handleProjectClick}
+            getStatusColor={getStatusColor}
+            getStatusName={getStatusName}
+            formatDate={formatDate}
+          />
+        ))}
+      </Box>
+    </Box>
+  );
 };
 
 export default Dashboard;

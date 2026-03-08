@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import {
     Box,
     IconButton,
@@ -18,6 +18,7 @@ import {
     Warning as IncidentIcon,
     LocationOn as TrackingIcon
 } from "@mui/icons-material";
+import MobileMenu from "../../components/common/MobileMenu";
 import VehicleList from "../../components/fleet/VehicleList";
 import DriverList from "../../components/fleet/DriverList";
 import FuelTracking from "../../components/fleet/FuelTracking";
@@ -56,7 +57,7 @@ const FleetView = () => {
                 p: "10px"
             }}
         >
-            {/* Header sa navigacijom */}
+            {/* Header with navigation */}
             <Box 
                 sx={{
                     backgroundColor: colors.primary[400],
@@ -128,7 +129,17 @@ const FleetView = () => {
                 )}
             </Box>
 
-            {/* Main content */}
+            {/* Mobilni meni */}
+            <MobileMenu
+                open={mobileOpen}
+                onClose={() => setMobileOpen(false)}
+                sections={sections}
+                activeSection={activeSection}
+                onChangeSection={(sectionId) => setActiveSection(sectionId)}
+                colors={colors}
+            />
+
+            {/* Main content area */}
             <Box
                 sx={(theme) => ({
                     flex: 1,

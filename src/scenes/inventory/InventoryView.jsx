@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import {
     Box,
     IconButton,
@@ -18,7 +18,7 @@ import {
     AssignmentReturn as ReturnsIcon,
     BarChart as AnalyticsIcon
 } from "@mui/icons-material";
-import MobileMenu from "../../components/inventory/MobileMenu";
+import MobileMenu from "../../components/common/MobileMenu";
 
 import DashboardSection from "../../components/inventory/DashboardSection";
 import StockTrackingSection from "../../components/inventory/StockTrackingSection";
@@ -61,7 +61,7 @@ const InventoryView = () => {
                 p: "10px"
             }}
         >
-            {/* Header sa navigacijom */}
+            {/* Header with navigation */}
             <Box 
                 sx={{
                     backgroundColor: colors.primary[400],
@@ -133,7 +133,7 @@ const InventoryView = () => {
                 )}
             </Box>
 
-            {/* Main content */}
+            {/* Main content area */}
             <Box
                 sx={(theme) => ({
                     flex: 1,
@@ -171,8 +171,9 @@ const InventoryView = () => {
                 onClose={handleMobileMenuToggle}
                 sections={sections}
                 activeSection={activeSection}
-                onSectionChange={handleSectionChange}
+                onChangeSection={(id) => setActiveSection(id)}
                 colors={colors}
+                showCloseButton
             />
         </Box>
     );

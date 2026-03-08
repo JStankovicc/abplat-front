@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
     Box,
     Button,
@@ -33,13 +33,7 @@ import { tokens } from "../../theme";
 import AddLeadModal from "./modals/AddLeadModal";
 import { API_BASE_URL } from "../../config/apiConfig";
 
-const getAuthHeaders = () => {
-    const token = localStorage.getItem('token');
-    return {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json"
-    };
-};
+import { getAuthHeaders } from "../../lib/api";
 
 const ContactTable = () => {
     const theme = useTheme();

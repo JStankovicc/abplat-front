@@ -1,10 +1,6 @@
 import axios from "axios";
 import { API_BASE_URL } from "../config/apiConfig";
-
-const getAuthHeaders = () => {
-    const token = localStorage.getItem("token");
-    return token ? { Authorization: `Bearer ${token}` } : {};
-};
+import { getAuthHeadersMinimal } from "../lib/api";
 
 /**
  * Fetches all company users (UserResponse: id, displayName, profilePic).
@@ -12,7 +8,7 @@ const getAuthHeaders = () => {
  */
 export const getAllCompanyUsers = async () => {
     const response = await axios.get(`${API_BASE_URL}/company/getAllCompanyUsers`, {
-        headers: getAuthHeaders()
+        headers: getAuthHeadersMinimal()
     });
     const list = Array.isArray(response.data) ? response.data : [];
     return list.map((u) => ({

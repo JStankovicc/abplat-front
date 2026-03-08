@@ -1,4 +1,3 @@
-﻿// src/scenes/project/ProjectView.jsx
 import React, { useState, useEffect } from "react";
 import {
     Box,
@@ -25,17 +24,9 @@ import DataSection from "../../components/project/DataSection";
 import TimelineSection from "../../components/project/TimelineSection";
 import KanbanBoard from "../../components/project/KanbanBoard";
 import ProjectCalendar from "../../components/project/ProjectCalendar";
-import MobileMenu from "../../components/project/MobileMenu";
+import MobileMenu from "../../components/common/MobileMenu";
 import { API_BASE_URL } from "../../config/apiConfig";
-
-// Helper funkcija za auth headers
-const getAuthHeaders = () => {
-    const token = localStorage.getItem('token');
-    return {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json"
-    };
-};
+import { getAuthHeaders } from "../../lib/api";
 
 const ProjectView = () => {
     const theme = useTheme();
@@ -131,7 +122,7 @@ const ProjectView = () => {
                 p: "10px"
             }}
         >
-            {/* Header with Navigation */}
+            {/* Header with navigation */}
             <Box 
                 sx={{
                     backgroundColor: colors.primary[400],
@@ -216,9 +207,10 @@ const ProjectView = () => {
                 activeSection={activeSection}
                 onChangeSection={(sectionId) => setActiveSection(sectionId)}
                 colors={colors}
+                anchor="left"
             />
 
-            {/* Main content */}
+            {/* Main content area */}
             <Box
                 sx={(theme) => ({
                 flex: 1,

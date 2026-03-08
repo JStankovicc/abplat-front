@@ -25,7 +25,6 @@ const Topbar = ({ companyInfo }) => {
         return btoa(binary);
       }
       
-      // Uint8Array or similar typed array
       if (byteArray.constructor === Uint8Array || byteArray.buffer) {
         const binary = String.fromCharCode.apply(null, new Uint8Array(byteArray));
         return btoa(binary);
@@ -43,14 +42,13 @@ const Topbar = ({ companyInfo }) => {
       const base64String = byteArrayToBase64(companyInfo.logoPic);
       return `data:image/jpeg;base64,${base64String}`;
     }
-    return "/assets/logoipsum-378.svg"; // fallback
+    return "/assets/logoipsum-378.svg";
   };
 
   if (isMobile) return null;
 
   return (
       <Box display="flex" justifyContent="space-between" p={2}>
-        {/* Logo Section */}
         <Box display="flex" alignItems="center">
           <img
               src={getCompanyLogoUrl()}
@@ -59,7 +57,6 @@ const Topbar = ({ companyInfo }) => {
           />
         </Box>
 
-        {/* ICONS Section */}
         <Box display="flex">
           <IconButton onClick={colorMode.toggleColorMode} disabled>
             {theme.palette.mode === "dark" ? (

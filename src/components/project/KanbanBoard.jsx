@@ -1,10 +1,11 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import { Box, TextField, IconButton, useTheme, Typography, Button, Dialog, DialogTitle, DialogContent, DialogActions, Grid, Divider, Avatar, Checkbox, FormControlLabel, List, ListItem, ListItemText, ListItemIcon, ListItemSecondaryAction, Paper, Chip, CircularProgress, Alert } from '@mui/material';
 import axios from 'axios';
 import { useParams } from 'react-router-dom';
 import { tokens } from '../../theme';
 import { API_BASE_URL } from '../../config/apiConfig';
+import { getAuthHeaders } from '../../lib/api';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
@@ -17,14 +18,6 @@ import PendingIcon from '@mui/icons-material/Pending';
 
 const PROJECT_API_BASE_URL = `${API_BASE_URL}/project`;
 const COMPANY_API_BASE_URL = `${API_BASE_URL}/company`;
-
-const getAuthHeaders = () => {
-    const token = localStorage.getItem('token');
-    return {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json"
-    };
-};
 
 const KanbanBoard = () => {
     const theme = useTheme();

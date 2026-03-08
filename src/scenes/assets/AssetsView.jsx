@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import {
     Box,
     Tabs,
@@ -7,7 +7,7 @@ import {
     useTheme
 } from "@mui/material";
 import { tokens } from "../../theme";
-import MovingAssets from "../../components/assets/MovingAssets";
+import MovingAssets from "../../components/assets/moving";
 import NonMovingAssets from "../../components/assets/NonMovingAssets";
 import AssetDashboard from "../../components/assets/AssetDashboard";
 
@@ -37,7 +37,7 @@ const AssetsView = () => {
                 p: "10px"
             }}
         >
-            {/* Header sa navigacijom */}
+            {/* Header with navigation */}
             <Box 
                 sx={{
                     backgroundColor: colors.primary[400],
@@ -92,7 +92,7 @@ const AssetsView = () => {
                 </Tabs>
             </Box>
 
-            {/* Main content */}
+            {/* Main content area */}
             <Box
                 sx={{
                     flex: 1,

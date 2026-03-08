@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import {
     Box,
     IconButton,
@@ -23,7 +23,7 @@ import StrategyConfig from "../../components/sales-management/StrategyConfig";
 import PricingEngine from "../../components/sales-management/PricingEngine";
 import UnifiedLeadsTable from "../../components/sales-management/UnifiedLeadsTable";
 import PerformanceDashboard from "../../components/sales-management/PerformanceDashboard";
-import MobileMenu from "../../components/sales-management/MobileMenu";
+import MobileMenu from "../../components/common/MobileMenu";
 
 const sections = [
     { id: 0, label: "Tim", icon: <TeamIcon />, component: <TeamManagement />, disabled: false },
@@ -62,7 +62,7 @@ const SalesManagement = () => {
                 p: "10px"
             }}
         >
-            {/* Header sa navigacijom */}
+            {/* Header with navigation */}
             <Box 
                 sx={{
                     backgroundColor: colors.primary[400],
@@ -145,9 +145,11 @@ const SalesManagement = () => {
                 activeSection={activeSection}
                 onChangeSection={(sectionId) => setActiveSection(sectionId)}
                 colors={colors}
+                anchor="left"
+                showCloseButton
             />
 
-            {/* Main content */}
+            {/* Main content area */}
             <Box
                 sx={(theme) => ({
                     flex: 1,

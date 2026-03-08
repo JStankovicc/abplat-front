@@ -1,10 +1,6 @@
 import axios from "axios";
 import { API_BASE_URL } from "../config/apiConfig";
-
-const getAuthHeaders = () => {
-    const token = localStorage.getItem("token");
-    return token ? { Authorization: `Bearer ${token}` } : {};
-};
+import { getAuthHeadersMinimal } from "../lib/api";
 
 /** Formats date from API (ISO string or Date) to YYYY-MM-DD. */
 const formatDate = (value) => {
@@ -65,7 +61,7 @@ export const mapMovableAssetFromApi = (raw) => {
  */
 export const getMovableAssets = async () => {
     const response = await axios.get(`${API_BASE_URL}/asset/movableAsset/all`, {
-        headers: getAuthHeaders()
+        headers: getAuthHeadersMinimal()
     });
     const data = response.data;
     const list = Array.isArray(data)
@@ -102,7 +98,7 @@ export const createMovableAsset = async (payload) => {
         amount: Number.isNaN(amount) ? 0 : amount
     };
     const response = await axios.post(`${API_BASE_URL}/asset/movableAsset`, body, {
-        headers: getAuthHeaders()
+        headers: getAuthHeadersMinimal()
     });
     return mapMovableAssetFromApi(response.data);
 };
@@ -134,7 +130,7 @@ export const updateMovableAsset = async (payload) => {
         amount: Number.isNaN(amount) ? 0 : amount
     };
     const response = await axios.put(`${API_BASE_URL}/asset/movableAsset`, body, {
-        headers: getAuthHeaders()
+        headers: getAuthHeadersMinimal()
     });
     return mapMovableAssetFromApi(response.data);
 };
@@ -154,7 +150,7 @@ export const changeMovableAssetStatus = async (assetId, payload) => {
         currentUserId: payload.currentUserId ?? null
     };
     const url = `${API_BASE_URL}/asset/movableAsset/changeStatus?assetId=${id}`;
-    await axios.post(url, body, { headers: getAuthHeaders() });
+    await axios.post(url, body, { headers: getAuthHeadersMinimal() });
 };
 
 /**
@@ -166,6 +162,6 @@ export const deleteMovableAsset = async (assetId) => {
         throw new Error("Asset ID is not valid.");
     }
     await axios.delete(`${API_BASE_URL}/asset/movableAsset?assetId=${id}`, {
-        headers: getAuthHeaders()
+        headers: getAuthHeadersMinimal()
     });
 };

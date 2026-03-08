@@ -1,15 +1,8 @@
 import axios from 'axios';
 import { API_BASE_URL } from '../config/apiConfig';
+import { getAuthHeaders } from '../lib/api';
 
 const INBOX_API_URL = `${API_BASE_URL}/inbox`;
-
-const getAuthHeaders = () => {
-    const token = localStorage.getItem('token');
-    return {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json"
-    };
-};
 
 class ChatService {
     async getCurrentUserIdFromApi() {

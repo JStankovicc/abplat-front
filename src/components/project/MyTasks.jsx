@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, Typography, List, ListItem, ListItemText, Chip, CircularProgress, Alert, Button, Box, Paper, useTheme, IconButton, Tooltip } from "@mui/material";
 import { Task as TaskIcon } from "@mui/icons-material";
 import axios from "axios";
@@ -6,13 +6,7 @@ import { useParams } from "react-router-dom";
 import { tokens } from "../../theme";
 import { API_BASE_URL } from "../../config/apiConfig";
 
-const getAuthHeaders = () => {
-    const token = localStorage.getItem('token');
-    return {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json"
-    };
-};
+import { getAuthHeaders } from "../../lib/api";
 
 const MyTasks = () => {
     const [tasks, setTasks] = useState([]);

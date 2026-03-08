@@ -51,13 +51,7 @@ import {
 } from "@mui/icons-material";
 import { API_BASE_URL } from "../../config/apiConfig";
 
-const getAuthHeaders = () => {
-    const token = localStorage.getItem('token');
-    return {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json"
-    };
-};
+import { getAuthHeaders } from "../../lib/api";
 
 const TeamManagement = () => {
     const theme = useTheme();
