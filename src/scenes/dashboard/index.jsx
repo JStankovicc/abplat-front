@@ -3,16 +3,12 @@ import {
     Box, 
     Typography, 
     useTheme, 
-    Card, 
-    CardContent, 
     Avatar, 
     Chip, 
     List, 
     ListItem, 
     ListItemText, 
     ListItemAvatar,
-    Divider,
-    CircularProgress,
     Alert,
     Badge,
     Paper,
@@ -28,22 +24,9 @@ import FolderIcon from "@mui/icons-material/Folder";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import chatService from "../../services/chatService";
 import Shimmer from "../../components/Shimmer";
-import Header from "../../components/Header";
-import StatBox from "../../components/StatBox";
-import LineChart from "../../components/LineChart";
-import BarChart from "../../components/BarChart";
-import PieChart from "../../components/PieChart";
-import GeographyChart from "../../components/GeographyChart";
-import {
-    Person as PersonIcon,
-    TrendingUp as TrendingUpIcon,
-    TrendingDown as TrendingDownIcon,
-    Construction as ConstructionIcon,
-    Lock as LockIcon
-} from "@mui/icons-material";
+import { Lock as LockIcon } from "@mui/icons-material";
 import { API_BASE_URL } from "../../config/apiConfig";
 
-// Helper funkcija za auth headers
 const getAuthHeaders = () => {
     const token = localStorage.getItem('token');
     return {
@@ -66,7 +49,6 @@ const Dashboard = () => {
     const [conversations, setConversations] = useState([]);
     const [contacts, setContacts] = useState([]);
 
-    // Dohvati sve projekte korisnika
     const fetchProjects = async () => {
         try {
             const response = await axios.get(`${API_BASE_URL}/project/allByCompany`, {
@@ -74,7 +56,6 @@ const Dashboard = () => {
             });
             setProjects(response.data);
             
-            // Dohvati taskove za svaki projekat
             const tasksPromises = response.data.map(async (project) => {
                 try {
                     const tasksResponse = await axios.get(`${API_BASE_URL}/project/tasks/my`, {
@@ -103,12 +84,10 @@ const Dashboard = () => {
         }
     };
 
-    // Dohvati poslednju poruku iz chat-a
     const fetchLastMessage = async () => {
         try {
             console.log('🔍 Dashboard: Fetching last message...');
             
-            // Pokušaj da dohvatiš podatke
             let conversationsData = [];
             let contactsData = [];
             
@@ -134,7 +113,6 @@ const Dashboard = () => {
             if (conversationsData && conversationsData.length > 0) {
                 console.log('✅ Dashboard: Found conversations, processing...');
                 
-                // Pronađi konverzaciju sa najnovijom porukom
                 const mostRecentConversation = conversationsData.reduce((prev, current) => {
                     const prevTime = prev.lastMessageAt ? new Date(prev.lastMessageAt) : new Date(0);
                     const currentTime = current.lastMessageAt ? new Date(current.lastMessageAt) : new Date(0);
@@ -143,13 +121,12 @@ const Dashboard = () => {
                 
                 console.log('📨 Dashboard: Most recent conversation:', mostRecentConversation);
                 
-                // Formatiraj za prikaz
                 try {
                     const formattedConversation = await chatService.formatConversationForDisplay(mostRecentConversation, contactsData);
                     
                     console.log('🎨 Dashboard: Formatted conversation:', formattedConversation);
                     
-                    // Uvek učitaj najnoviju poruku direktno iz API-ja da osiguramo da je stvarna
+                    // Always load the latest message directly from the API
                     let lastMessageContent = '';
                     let lastMessageTime = null;
                     
@@ -161,20 +138,20 @@ const Dashboard = () => {
                             const sortedMessages = [...messagesData.content].sort((a, b) => {
                                 const dateA = new Date(a.createdAt).getTime();
                                 const dateB = new Date(b.createdAt).getTime();
-                                return dateB - dateA; // Najnovije prvo
+                                return dateB - dateA; // newest first
                             });
                             const lastMessage = sortedMessages[0];
                             lastMessageContent = lastMessage.content || '';
                             lastMessageTime = lastMessage.createdAt ? new Date(lastMessage.createdAt) : null;
                             console.log('✅ Dashboard: Loaded last message from API:', lastMessageContent);
                         } else {
-                            // Ako nema poruka, koristi podatke iz formatConversationForDisplay
+                            // Fallback to conversation summary data if no messages
                             lastMessageContent = formattedConversation.lastMessage || '';
                             lastMessageTime = formattedConversation.lastMessageTime;
                         }
                     } catch (error) {
                         console.error('❌ Dashboard: Error loading last message:', error);
-                        // Fallback na podatke iz formatConversationForDisplay
+                        // Fallback to conversation summary data
                         lastMessageContent = formattedConversation.lastMessage || '';
                         lastMessageTime = formattedConversation.lastMessageTime;
                     }
@@ -197,7 +174,6 @@ const Dashboard = () => {
                     });
                 } catch (formatError) {
                     console.error('❌ Dashboard: Failed to format conversation:', formatError);
-                    // Pokušaj da učitam najnoviju poruku direktno
                     let lastMessageContent = '';
                     let lastMessageTime = null;
                     
@@ -217,7 +193,6 @@ const Dashboard = () => {
                         console.error('❌ Dashboard: Error loading last message in fallback:', error);
                     }
                     
-                    // Fallback - koristi raw podatke ili učitane podatke
                     setLastMessage({
                         conversationId: mostRecentConversation.conversationId,
                         sender: mostRecentConversation.name || 'Nepoznat korisnik',
@@ -247,12 +222,10 @@ const Dashboard = () => {
         fetchLastMessage();
     }, []);
 
-    // Debug log za lastMessage promene
     useEffect(() => {
         console.log('📊 Dashboard: lastMessage state changed:', lastMessage);
     }, [lastMessage]);
 
-    // Debug log za conversations promene
     useEffect(() => {
         console.log('💬 Dashboard: conversations state changed:', conversations);
     }, [conversations]);
@@ -317,7 +290,7 @@ const Dashboard = () => {
                     width="75%"
                     overflow="hidden"
                 >
-                    {/* Shimmer za obaveštenja */}
+                    {/* Notifications shimmer */}
                     <Paper
                         elevation={3}
                         sx={{
@@ -338,7 +311,7 @@ const Dashboard = () => {
                         </Box>
                     </Paper>
 
-                    {/* Shimmer za inbox */}
+                    {/* Inbox shimmer */}
                     <Paper
                         elevation={3}
                         sx={{
@@ -364,7 +337,7 @@ const Dashboard = () => {
                         <Shimmer width="80px" height="12px" />
                     </Paper>
 
-                    {/* Shimmer za projekte */}
+                    {/* Projects shimmer */}
                     {[1, 2, 3].map((i) => (
                         <Paper
                             key={i}
@@ -422,7 +395,6 @@ const Dashboard = () => {
             display="flex"
             justifyContent="center"
         >
-            {/* GRID LAYOUT */}
             <Box
                 display="grid"
                 gridTemplateColumns="repeat(12, 1fr)"
@@ -432,7 +404,7 @@ const Dashboard = () => {
                 width="75%"
                 overflow="hidden"
             >
-                {/* OBAVEŠTENJA SEKCIJA - ZAKLJUČANA */}
+                {/* Notifications section - locked */}
                 <Paper
                     elevation={3}
                     sx={{
@@ -447,7 +419,6 @@ const Dashboard = () => {
                         height: '100%'
                     }}
                 >
-                    {/* Header */}
                     <Box display="flex" alignItems="center" justifyContent="space-between" mb="15px">
                         <Box display="flex" alignItems="center">
                             <Box
@@ -568,7 +539,7 @@ const Dashboard = () => {
                     </Box>
                 </Paper>
 
-                {/* MINI INBOX SEKCIJA */}
+                {/* Mini inbox section */}
                 <Paper
                     elevation={3}
                     sx={{
@@ -691,7 +662,7 @@ const Dashboard = () => {
                     )}
                 </Paper>
 
-                {/* PROJEKTI SEKCIJE - MALE */}
+                {/* Projects section */}
                 {projects.slice(0, 3).map((project, index) => {
                     const projectTasksList = projectTasks[project.id] || [];
                     const recentTasks = projectTasksList.slice(0, 2);
@@ -744,7 +715,6 @@ const Dashboard = () => {
                                 </Box>
                             </Box>
                             
-                            {/* Progress bar */}
                             {totalTasks > 0 && (
                                 <Box mb="6px">
                                     <LinearProgress 
@@ -763,7 +733,7 @@ const Dashboard = () => {
                                 </Box>
                             )}
                             
-                            {/* Taskovi sa skrolom */}
+                            {/* Scrollable task list */}
                             <Box 
                                 sx={{ 
                                     maxHeight: '120px',
@@ -842,7 +812,6 @@ const Dashboard = () => {
                                 )}
                             </Box>
                             
-                            {/* Dugme za otvaranje projekta */}
                             <Box mt={1} textAlign="center">
                                 <Typography variant="caption" color={colors.greenAccent[500]} fontWeight="500" sx={{ fontSize: '0.7rem' }}>
                                     Kliknite da otvorite projekat →

@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import {
     Box,
     Paper,
@@ -115,7 +115,7 @@ const OrdersSection = () => {
         notes: ""
     });
 
-    // Primer podataka
+    // Sample data
     const [orders, setOrders] = useState([
         {
             id: 1,
@@ -246,7 +246,7 @@ const OrdersSection = () => {
 
     return (
         <Box>
-            {/* Upozorenje za porudžbine na čekanju */}
+            {/* Pending orders warning */}
             {pendingOrders.length > 0 && (
                 <Alert 
                     severity="warning" 
@@ -307,7 +307,7 @@ const OrdersSection = () => {
             </Box>
 
             <Grid container spacing={2}>
-                {/* Tabela porudžbina */}
+                {/* Orders table */}
                 <Grid item xs={12} md={selectedOrder ? 8 : 12}>
                     <TableContainer component={Paper} sx={{ backgroundColor: safeColors.primary[600] }}>
                         <Table>
@@ -400,7 +400,7 @@ const OrdersSection = () => {
                     </TableContainer>
                 </Grid>
 
-                {/* Detalji porudžbine */}
+                {/* Order details */}
                 {selectedOrder && (
                     <Grid item xs={12} md={4}>
                         <Card sx={{ backgroundColor: safeColors.primary[600] }}>
@@ -513,7 +513,7 @@ const OrdersSection = () => {
                 )}
             </Grid>
 
-            {/* Dijalog za novu porudžbinu */}
+            {/* New order dialog */}
             <Dialog 
                 open={openNewOrder} 
                 onClose={() => setOpenNewOrder(false)}
@@ -623,7 +623,7 @@ const OrdersSection = () => {
                 </DialogActions>
             </Dialog>
 
-            {/* Dijalog za izmenu porudžbine */}
+            {/* Edit order dialog */}
             <Dialog 
                 open={openEditOrder} 
                 onClose={() => setOpenEditOrder(false)}

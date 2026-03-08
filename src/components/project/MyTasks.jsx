@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { Card, CardContent, Typography, List, ListItem, ListItemText, Chip, CircularProgress, Alert, Button, Box, Paper, useTheme, IconButton, Tooltip } from "@mui/material";
 import { Task as TaskIcon } from "@mui/icons-material";
 import axios from "axios";
@@ -6,7 +6,6 @@ import { useParams } from "react-router-dom";
 import { tokens } from "../../theme";
 import { API_BASE_URL } from "../../config/apiConfig";
 
-// Helper funkcija za auth headers
 const getAuthHeaders = () => {
     const token = localStorage.getItem('token');
     return {
@@ -21,7 +20,6 @@ const MyTasks = () => {
     const [error, setError] = useState(null);
     const { projectId } = useParams();
 
-    // API funkcije
     const fetchMyTasks = async () => {
         try {
             setLoading(true);
@@ -40,7 +38,6 @@ const MyTasks = () => {
                 }
             });
             
-            // Mapiranje ProjectTask objekata u jednostavan format
             const mappedTasks = response.data.map((task) => ({
                 id: task.id,
                 name: task.name,
@@ -60,20 +57,17 @@ const MyTasks = () => {
         }
     };
 
-    // useEffect za inicijalno učitavanje
     useEffect(() => {
         fetchMyTasks();
     }, [projectId]);
 
     const getStatusColor = (statusId) => {
-        // Mapiranje statusId na boje (pretpostavljamo da su statusId brojevi)
-        // Možda će trebati da se prilagodi na osnovu stvarnih statusId vrednosti sa backend-a
         switch(statusId) {
-            case 1: // To Do / Čekanje
+            case 1: // To Do
                 return 'warning';
             case 2: // In Progress / U toku
                 return 'primary';
-            case 3: // Done / Završeno
+            case 3: // Done
                 return 'success';
             default:
                 return 'secondary';
@@ -81,7 +75,6 @@ const MyTasks = () => {
     };
 
     const getStatusName = (statusId) => {
-        // Mapiranje statusId na čitljiv naziv
         switch(statusId) {
             case 1:
                 return 'Čekanje';

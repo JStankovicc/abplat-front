@@ -117,7 +117,7 @@ const StockTrackingSection = () => {
         supplier: ""
     });
 
-    // Primer podataka
+    // Sample data
     const [products, setProducts] = useState([
         {
             id: 1,
@@ -244,7 +244,7 @@ const StockTrackingSection = () => {
 
     return (
         <Box>
-            {/* Upozorenje za niske zalihe */}
+            {/* Low stock warning */}
             {lowStockProducts.length > 0 && (
                 <Alert 
                     severity="warning" 
@@ -321,7 +321,7 @@ const StockTrackingSection = () => {
             </Box>
 
             <Grid container spacing={2}>
-                {/* Tabela proizvoda */}
+                {/* Products table */}
                 <Grid item xs={12} md={selectedProduct ? 8 : 12}>
                     <TableContainer component={Paper} sx={{ backgroundColor: safeColors.primary[600] }}>
                         <Table>
@@ -400,7 +400,7 @@ const StockTrackingSection = () => {
                     </TableContainer>
                 </Grid>
 
-                {/* Detalji proizvoda */}
+                {/* Product details */}
                 {selectedProduct && (
                     <Grid item xs={12} md={4}>
                         <Card sx={{ backgroundColor: safeColors.primary[600] }}>
@@ -476,7 +476,7 @@ const StockTrackingSection = () => {
                 )}
             </Grid>
 
-            {/* Dijalog za novi proizvod */}
+            {/* New product dialog */}
             <Dialog 
                 open={openNewProduct} 
                 onClose={() => setOpenNewProduct(false)}
@@ -595,7 +595,7 @@ const StockTrackingSection = () => {
                 </DialogActions>
             </Dialog>
 
-            {/* Dijalog za izmenu proizvoda */}
+            {/* Edit product dialog */}
             <Dialog 
                 open={openEditProduct} 
                 onClose={() => setOpenEditProduct(false)}
@@ -700,7 +700,7 @@ const StockTrackingSection = () => {
                 </DialogActions>
             </Dialog>
 
-            {/* Dijalog za novu kategoriju */}
+            {/* New category dialog */}
             <Dialog
                 open={openNewCategory}
                 onClose={() => setOpenNewCategory(false)}
@@ -728,7 +728,7 @@ const StockTrackingSection = () => {
                 </DialogActions>
             </Dialog>
 
-            {/* Dijalog za novi tip */}
+            {/* New type dialog */}
             <Dialog
                 open={openNewType}
                 onClose={() => setOpenNewType(false)}

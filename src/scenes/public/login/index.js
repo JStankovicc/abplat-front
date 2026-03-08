@@ -29,7 +29,7 @@ const LoginPage = ({ onLogin }) => {
         try {
             const response = await axios.post(`${API_BASE_URL}/auth/signin`, { email, password });
             const token = response.data.token;
-            onLogin(token); // Pass the token to the parent component
+            onLogin(token);
         } catch (error) {
             notify("Prijavljivanje nije uspelo. Molimo Vas da proverite svoje kredencijale i pokušate ponovno.");
         }
@@ -47,7 +47,6 @@ const LoginPage = ({ onLogin }) => {
                 color: "text.primary",
             }}
         >
-            {/* Forma za prijavu */}
             <form onSubmit={handleSubmit} style={{ width: "100%", maxWidth: 400, zIndex: 2 }}>
                 <Box textAlign="center" marginBottom={3}>
                     <img

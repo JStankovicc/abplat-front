@@ -12,23 +12,20 @@ const Topbar = ({ companyInfo }) => {
   const colorMode = useContext(ColorModeContext);
   const isMobile = useMediaQuery("(max-width:600px)");
 
-  // Funkcija za konverziju byte array u base64 string
   const byteArrayToBase64 = (byteArray) => {
     if (!byteArray) return null;
     
     try {
-      // Ako je već string, vrati ga direktno
       if (typeof byteArray === 'string') {
         return byteArray;
       }
       
-      // Ako je array brojeva
       if (Array.isArray(byteArray)) {
         const binary = String.fromCharCode.apply(null, byteArray);
         return btoa(binary);
       }
       
-      // Ako je Uint8Array ili slična struktura
+      // Uint8Array or similar typed array
       if (byteArray.constructor === Uint8Array || byteArray.buffer) {
         const binary = String.fromCharCode.apply(null, new Uint8Array(byteArray));
         return btoa(binary);
@@ -41,7 +38,6 @@ const Topbar = ({ companyInfo }) => {
     }
   };
 
-  // Kreiranje URL-a za company logo
   const getCompanyLogoUrl = () => {
     if (companyInfo?.logoPic) {
       const base64String = byteArrayToBase64(companyInfo.logoPic);

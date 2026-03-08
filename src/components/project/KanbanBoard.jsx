@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import { Box, TextField, IconButton, useTheme, Typography, Button, Dialog, DialogTitle, DialogContent, DialogActions, Grid, Divider, Avatar, Checkbox, FormControlLabel, List, ListItem, ListItemText, ListItemIcon, ListItemSecondaryAction, Paper, Chip, CircularProgress, Alert } from '@mui/material';
 import axios from 'axios';
@@ -15,11 +15,9 @@ import BlockIcon from '@mui/icons-material/Block';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import PendingIcon from '@mui/icons-material/Pending';
 
-// API konstante
 const PROJECT_API_BASE_URL = `${API_BASE_URL}/project`;
 const COMPANY_API_BASE_URL = `${API_BASE_URL}/company`;
 
-// Helper funkcija za auth headers
 const getAuthHeaders = () => {
     const token = localStorage.getItem('token');
     return {
@@ -44,7 +42,7 @@ const KanbanBoard = () => {
         assignedUsers: [],
         dueDate: '',
         priority: 'medium',
-        statusId: 1, // Početni statusId (pretpostavljamo da je 1 = To Do)
+        statusId: 1, // Initial statusId (1 = To Do)
         waitingFor: null,
         files: [],
         notes: []
@@ -56,7 +54,6 @@ const KanbanBoard = () => {
     const [availableUsers, setAvailableUsers] = useState([]);
     const [taskUsers, setTaskUsers] = useState([]);
 
-    // API funkcije za korisnike
     const fetchAllProjectUsers = async () => {
         try {
             const response = await axios.get(`${PROJECT_API_BASE_URL}/getAllProjectUsers`, {
@@ -92,13 +89,9 @@ const KanbanBoard = () => {
 
     const fetchAvailableUsers = async (taskId) => {
         try {
-            // Dohvati sve korisnike na projektu
             const allProjectUsers = await fetchAllProjectUsers();
-            
-            // Dohvati korisnike koji su na tasku
             const usersOnTask = await fetchTaskUsers(taskId);
             
-            // Filtriraj korisnike koji NISU na tasku
             const availableUsers = allProjectUsers.filter(projectUser => 
                 !usersOnTask.some(taskUser => taskUser.id === projectUser.id)
             );
@@ -126,7 +119,6 @@ const KanbanBoard = () => {
         }
     };
 
-    // API funkcije
     const updateProjectTask = async (task, newStatusId, taskDetails = null) => {
         try {
             const taskToUpdate = {
@@ -162,7 +154,6 @@ const KanbanBoard = () => {
                 return;
             }
 
-            // Paralelno dohvatamo task statuse i taskove
             const [statusResponse, tasksResponse] = await Promise.all([
                 axios.get(`${PROJECT_API_BASE_URL}/taskStatus/getAll`, {
                     headers: getAuthHeaders(),
@@ -180,17 +171,14 @@ const KanbanBoard = () => {
 
 
 
-            // Kreiramo kolone na osnovu task statusa
             const kanbanColumns = statusResponse.data.map(status => ({
                 id: status.name.toLowerCase().replace(/\s+/g, '_'),
                 title: status.name,
-                statusId: status.id, // Dodajemo statusId za mapiranje
+                statusId: status.id,
                 tasks: []
             }));
 
-            // Distribuiramo taskove po kolonama na osnovu njihovog statusId
             tasksResponse.data.forEach((task, index) => {
-                // Pronađemo odgovarajuću kolonu po statusId
                 const targetColumn = kanbanColumns.find(col => 
                     col.statusId === task.statusId
                 );
@@ -205,13 +193,13 @@ const KanbanBoard = () => {
                     statusId: task.statusId,
                     files: [],
                     notes: task.notes || [],
-                    originalTask: task // Čuvamo originalnu referencu
+                    originalTask: task // original task reference
                 };
                 
                 if (targetColumn) {
                     targetColumn.tasks.push(taskItem);
                 }
-                // Uklonili smo fallback - taskovi se dodaju samo u odgovarajuće kolone
+                // No fallback - tasks are only added to their matching column
             });
 
             setColumns(kanbanColumns);
@@ -225,12 +213,11 @@ const KanbanBoard = () => {
         }
     };
 
-    // useEffect za inicijalno učitavanje
     useEffect(() => {
         fetchKanbanData();
     }, [projectId]);
 
-    // useEffect za ažuriranje assignedUsers kada se učitaju korisnici
+    // Sync assignedUsers when task users are loaded
     useEffect(() => {
         if (taskUsers.length > 0 && editingTask) {
             setTaskDetails(prev => ({
@@ -246,7 +233,6 @@ const KanbanBoard = () => {
         const { source, destination } = result;
         
         if (source.droppableId === destination.droppableId) {
-            // Samo promena pozicije u istoj koloni
             const newColumns = [...columns];
             const sourceCol = newColumns.find(col => col.id === source.droppableId);
             const copiedTasks = [...sourceCol.tasks];
@@ -256,31 +242,26 @@ const KanbanBoard = () => {
             sourceCol.tasks = copiedTasks;
             setColumns(newColumns);
         } else {
-            // Premestanje između različitih kolona - treba da ažuriramo status
+            // Moving between columns requires a status update
             const newColumns = [...columns];
             const sourceCol = newColumns.find(col => col.id === source.droppableId);
             const destCol = newColumns.find(col => col.id === destination.droppableId);
             const task = sourceCol.tasks[source.index];
 
-            // Uklanjamo task iz izvorne kolone
             sourceCol.tasks.splice(source.index, 1);
-            
-            // Dodajemo task u odredišnu kolonu
             destCol.tasks.splice(destination.index, 0, task);
 
-            // Ažuriraj UI odmah
             setColumns(newColumns);
 
-            // Pošalji API poziv za ažuriranje statusa
             try {
-                const newStatusId = destCol.statusId; // Koristimo statusId kolone
+                const newStatusId = destCol.statusId;
                 await updateProjectTask(task, newStatusId);
                 console.log(`Task ${task.content} premešten u statusId ${newStatusId}`);
             } catch (error) {
                 console.error('Greška pri ažuriranju task statusa:', error);
                 setError('Greška pri ažuriranju task statusa');
                 
-                // Vrati na prethodnu poziciju ako je API poziv neuspešan
+                // Revert to original position on API failure
                 const rollbackColumns = [...columns];
                 const rollbackSourceCol = rollbackColumns.find(col => col.id === source.droppableId);
                 const rollbackDestCol = rollbackColumns.find(col => col.id === destination.droppableId);
@@ -301,7 +282,6 @@ const KanbanBoard = () => {
         }
 
         try {
-            // Pronađi statusId za kolonu
             const column = columns.find(col => col.id === columnId);
             if (!column) {
                 console.log('Kolumna nije pronađena za columnId:', columnId);
@@ -320,7 +300,6 @@ const KanbanBoard = () => {
                 }
             });
 
-            // Pošalji API poziv za kreiranje novog task-a
             const response = await axios.post(`${PROJECT_API_BASE_URL}/addTask`, {
                 projectTaskName: taskContent,
                 projectId: projectId,
@@ -333,7 +312,7 @@ const KanbanBoard = () => {
             });
 
             if (response.status === 200) {
-                // Refreshuj stranicu da se učita novi task
+                // Reload to fetch the newly created task
                 window.location.reload();
             }
         } catch (error) {
@@ -347,7 +326,6 @@ const KanbanBoard = () => {
         if (!newColumnName || !newColumnName.trim()) return;
         
         try {
-            // Pošalji API poziv za dodavanje novog task statusa
             const response = await axios.post(`${PROJECT_API_BASE_URL}/addTaskStatus`, {
                 name: newColumnName.trim(),
                 projectId: projectId
@@ -355,7 +333,6 @@ const KanbanBoard = () => {
                 headers: getAuthHeaders()
             });
             
-            // Osveži podatke sa backend-a nakon uspešnog dodavanja
             await fetchKanbanData();
             
             console.log(`Task status ${newColumnName} uspešno dodat`);
@@ -366,13 +343,12 @@ const KanbanBoard = () => {
     };
 
     const deleteColumn = async (columnId) => {
-        if (columns.length <= 1) return; // Sprečavamo brisanje poslednje kolone
+        if (columns.length <= 1) return; // Prevent deleting the last column
         
         const columnToDelete = columns.find(col => col.id === columnId);
         if (!columnToDelete) return;
         
         try {
-            // Pošalji API poziv za brisanje task statusa
             await axios.delete(`${PROJECT_API_BASE_URL}/deleteTaskStatus`, {
                 headers: getAuthHeaders(),
                 params: {
@@ -380,7 +356,6 @@ const KanbanBoard = () => {
                 }
             });
             
-            // Ažuriraj UI nakon uspešnog brisanja
             setColumns(columns.filter(col => col.id !== columnId));
             
             console.log(`Task status ${columnToDelete.title} uspešno obrisan`);
@@ -397,20 +372,18 @@ const KanbanBoard = () => {
     const handleEditTask = async (task) => {
         setEditingTask(task);
         
-        // Učitaj korisnike za ovaj task PRVO
         await Promise.all([
             fetchAvailableUsers(task.originalTask.id),
             fetchTaskUsers(task.originalTask.id)
         ]);
         
-        // Zatim postavi taskDetails sa trenutnim korisnicima
         setTaskDetails({
             content: task.content,
             description: task.description || '',
-            assignedUsers: [], // Počinjemo sa praznom listom - korisnici će biti dodati nakon učitavanja
+            assignedUsers: [], // Start empty - users are populated after loading
             dueDate: task.dueDate || '',
             priority: task.priority || 'medium',
-            statusId: task.statusId || 1, // Koristimo statusId umesto status
+            statusId: task.statusId || 1, // Use statusId, not status string
             waitingFor: task.waitingFor || null,
             files: task.files || [],
             notes: task.notes || []
@@ -423,7 +396,6 @@ const KanbanBoard = () => {
         if (!taskDetails.content.trim()) return;
 
         try {
-            // Prvo ažuriraj UI
             setColumns(columns.map(col => ({
                 ...col,
                 tasks: col.tasks.map(task =>
@@ -433,10 +405,8 @@ const KanbanBoard = () => {
                 )
             })));
 
-            // Pošalji API poziv za ažuriranje - proslijedi i taskDetails
             await updateProjectTask(editingTask, taskDetails.statusId, taskDetails);
             
-            // Dodaj nove korisnike na task
             const currentTaskUsers = taskUsers.map(user => user.id);
             const selectedUsers = taskDetails.assignedUsers.filter(userId => !currentTaskUsers.includes(userId));
             
@@ -454,7 +424,7 @@ const KanbanBoard = () => {
                 assignedUsers: [],
                 dueDate: '',
                 priority: 'medium',
-                statusId: 1, // Resetujemo na početni statusId
+                statusId: 1, // Reset to initial statusId
                 waitingFor: null,
                 files: [],
                 notes: []
@@ -463,8 +433,8 @@ const KanbanBoard = () => {
             console.error('Greška pri ažuriranju taska:', error);
             setError('Greška pri ažuriranju taska');
             
-            // Vrati na prethodno stanje ako API poziv ne uspe
-            fetchKanbanData(); // Reload data from server
+            // Revert state on API failure
+            fetchKanbanData();
         }
     };
 
@@ -480,7 +450,6 @@ const KanbanBoard = () => {
     };
 
     const handleDeleteTask = async (columnId, taskId) => {
-        // Pronađi task da bi dobili originalTask.id
         const column = columns.find(col => col.id === columnId);
         if (!column) return;
         
@@ -493,7 +462,6 @@ const KanbanBoard = () => {
         const realTaskId = task.originalTask.id;
 
         try {
-            // Pošalji API poziv za brisanje taska
             await axios.delete(`${PROJECT_API_BASE_URL}/tasks/delete`, {
                 headers: getAuthHeaders(),
                 params: {
@@ -501,7 +469,6 @@ const KanbanBoard = () => {
                 }
             });
 
-            // Ažuriraj UI nakon uspešnog brisanja
             setColumns(columns.map(col =>
                 col.id === columnId
                     ? {
@@ -545,7 +512,7 @@ const KanbanBoard = () => {
             id: Date.now(),
             content: newNote,
             createdAt: new Date().toISOString(),
-            createdBy: 1 // Ovde bi trebalo da bude ID trenutnog korisnika
+            createdBy: 1 // TODO: replace with actual current user ID
         };
         setTaskDetails({
             ...taskDetails,
@@ -565,13 +532,13 @@ const KanbanBoard = () => {
         return columns.flatMap(col => 
             col.tasks.filter(task => 
                 task.id !== editingTask?.id && 
-                task.statusId !== 3 // Pretpostavljamo da je 3 = Done/Završeno
+                task.statusId !== 3 // 3 = Done
             )
         );
     };
 
     const handleStatusChange = (newStatusId) => {
-        if (newStatusId === 2) { // Pretpostavljamo da je 2 = In Progress/U toku
+        if (newStatusId === 2) { // 2 = In Progress
             setWaitingForDialogOpen(true);
         } else {
             setTaskDetails({
@@ -585,7 +552,7 @@ const KanbanBoard = () => {
     const handleWaitingForSelect = (task) => {
         setTaskDetails({
             ...taskDetails,
-            statusId: 2, // Pretpostavljamo da je 2 = In Progress/U toku
+            statusId: 2, // 2 = In Progress
             waitingFor: task
         });
         setWaitingForDialogOpen(false);
@@ -601,7 +568,6 @@ const KanbanBoard = () => {
         if (!column) return;
         
         try {
-            // Pošalji API poziv za ažuriranje task statusa
             await axios.post(`${PROJECT_API_BASE_URL}/updateTaskStatus`, {
                 id: column.statusId,
                 name: newTitle.trim(),
@@ -610,7 +576,6 @@ const KanbanBoard = () => {
                 headers: getAuthHeaders()
             });
             
-            // Ažuriraj UI nakon uspešnog ažuriranja
             setColumns(columns.map(col =>
                 col.id === columnId ? { ...col, title: newTitle.trim() } : col
             ));
@@ -624,7 +589,6 @@ const KanbanBoard = () => {
         }
     };
 
-    // Helper funkcije za mapiranje statusId
     const getStatusName = (statusId) => {
         switch(statusId) {
             case 1: return 'Čekanje';
@@ -737,7 +701,7 @@ const KanbanBoard = () => {
                                         size="small"
                                         value={column.title}
                                         onChange={(e) => {
-                                            // Ažuriraj naziv kolone u stanju
+                                            // Update column title in state
                                             setColumns(columns.map(col =>
                                                 col.id === column.id ? { ...col, title: e.target.value } : col
                                             ));
@@ -957,7 +921,7 @@ const KanbanBoard = () => {
                     gap: '20px'
                 }}>
                     <Grid container spacing={3} sx={{ mt: 0.02 }}>
-                        {/* Leva strana - osnovne informacije */}
+                        {/* Left panel - basic info */}
                         <Grid item xs={12} md={8}>
                             <Box display="flex" flexDirection="column" gap={2}>
                                 <TextField
@@ -1111,7 +1075,7 @@ const KanbanBoard = () => {
                                             },
                                         }}
                                     >
-                                        {/* Trenutni korisnici na tasku */}
+                                        {/* Current users on task */}
                                         {taskUsers
                                             .filter(user => 
                                                 user.displayName
@@ -1151,7 +1115,7 @@ const KanbanBoard = () => {
                                             ))
                                         }
                                         
-                                        {/* Dostupni korisnici za dodavanje */}
+                                        {/* Available users to add */}
                                         {availableUsers
                                             .filter(user => 
                                                 user.displayName
@@ -1195,10 +1159,10 @@ const KanbanBoard = () => {
                             </Box>
                         </Grid>
 
-                        {/* Desna strana - fajlovi i napomene */}
+                        {/* Right panel - files and notes */}
                         <Grid item xs={12} md={4}>
                             <Box display="flex" flexDirection="column" gap={3}>
-                                {/* Fajlovi */}
+                                {/* Files */}
                                 <Box>
                                     <Typography variant="h6" sx={{ color: colors.grey[100], mb: 2 }}>
                                         Fajlovi:
@@ -1272,7 +1236,7 @@ const KanbanBoard = () => {
                                     </Paper>
                                 </Box>
 
-                                {/* Napomene */}
+                                {/* Notes */}
                                 <Box>
                                     <Typography variant="h6" sx={{ color: colors.grey[100], mb: 2 }}>
                                         Napomene:
@@ -1376,7 +1340,7 @@ const KanbanBoard = () => {
                 </DialogActions>
             </Dialog>
 
-            {/* Dialog za izbor taska koji se čeka */}
+            {/* Waiting-for task selection dialog */}
             <Dialog
                 open={waitingForDialogOpen}
                 onClose={() => setWaitingForDialogOpen(false)}

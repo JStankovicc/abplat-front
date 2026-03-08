@@ -1,11 +1,9 @@
-// src/components/project/OverviewSection.jsx
+﻿// src/components/project/OverviewSection.jsx
 import { Grid, Card, CardContent, Typography, Box } from "@mui/material";
 import { useTheme } from "@mui/material";
 import { tokens } from "../../theme";
 import MyTasks from "./MyTasks";
-import ProjectTimeline from "./ProjectTimeline";
 import Notes from "./Notes";
-import Notifications from "./Notifications";
 import TimelineIcon from "@mui/icons-material/Timeline";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 
@@ -47,7 +45,7 @@ const OverviewSection = ({ noteValue, onNoteChange, noteLoading }) => {
                 />
             </Grid>
             <Grid item xs={12} md={6}>
-                {/* Obaveštenja - zamrznuta */}
+                {/* Notifications - frozen placeholder */}
                 <Card sx={{ 
                     height: '100%',
                     backgroundColor: colors.primary[500],

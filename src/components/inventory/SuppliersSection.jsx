@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import {
     Box,
     Paper,
@@ -115,7 +115,7 @@ const SuppliersSection = () => {
         description: ""
     });
 
-    // Primer podataka
+    // Sample data
     const [suppliers, setSuppliers] = useState([
         {
             id: 1,
@@ -292,7 +292,7 @@ const SuppliersSection = () => {
             </Box>
 
             <Grid container spacing={2}>
-                {/* Tabela dobavljača */}
+                {/* Suppliers table */}
                 <Grid item xs={12} md={selectedSupplier ? 8 : 12}>
                     <TableContainer component={Paper} sx={{ backgroundColor: safeColors.primary[600] }}>
                         <Table>
@@ -373,7 +373,7 @@ const SuppliersSection = () => {
                     </TableContainer>
                 </Grid>
 
-                {/* Detalji dobavljača */}
+                {/* Supplier details */}
                 {selectedSupplier && (
                     <Grid item xs={12} md={4}>
                         <Card sx={{ backgroundColor: safeColors.primary[600] }}>
@@ -457,7 +457,7 @@ const SuppliersSection = () => {
                 )}
             </Grid>
 
-            {/* Dijalog za novog dobavljača */}
+            {/* New supplier dialog */}
             <Dialog 
                 open={openNewSupplier} 
                 onClose={() => setOpenNewSupplier(false)}
@@ -520,7 +520,7 @@ const SuppliersSection = () => {
                 </DialogActions>
             </Dialog>
 
-            {/* Dijalog za izmenu dobavljača */}
+            {/* Edit supplier dialog */}
             <Dialog 
                 open={openEditSupplier} 
                 onClose={() => setOpenEditSupplier(false)}
@@ -583,7 +583,7 @@ const SuppliersSection = () => {
                 </DialogActions>
             </Dialog>
 
-            {/* Dijalog za dodavanje proizvoda */}
+            {/* Add product dialog */}
             <Dialog 
                 open={openAddProduct} 
                 onClose={() => setOpenAddProduct(false)}

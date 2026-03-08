@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import {
     Box,
     IconButton,
@@ -128,7 +128,7 @@ const FleetView = () => {
                 )}
             </Box>
 
-            {/* Glavni sadržaj */}
+            {/* Main content */}
             <Box
                 sx={(theme) => ({
                     flex: 1,

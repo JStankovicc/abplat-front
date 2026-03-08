@@ -1,27 +1,60 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
-# dependencies
+# === DEPENDENCIES ===
 /node_modules
 /.pnp
 .pnp.js
+.yarn/
 
-# testing
-/coverage
-
-# production
+# === BUILD OUTPUT ===
 /build
+/dist
 
-# misc
-.DS_Store
+# === ENVIRONMENT & SECRETS ===
+.env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+.env.*.local
 
+# === TESTING & COVERAGE ===
+/coverage
+*.lcov
+
+# === LOGS ===
+logs/
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
-# IDE
+# === OS FILES ===
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+# === IDE & EDITOR ===
 .idea/
+.vscode/
 .cursor/
+*.swp
+*.swo
+*~
+
+# === TYPESCRIPT ===
+*.tsbuildinfo
+
+# === CACHE ===
+.eslintcache
+.stylelintcache
+.cache/
+.parcel-cache/
+
+# === MISC ===
+Idea.md

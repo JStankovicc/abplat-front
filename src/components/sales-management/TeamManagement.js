@@ -51,7 +51,6 @@ import {
 } from "@mui/icons-material";
 import { API_BASE_URL } from "../../config/apiConfig";
 
-// Helper funkcija za auth headers
 const getAuthHeaders = () => {
     const token = localStorage.getItem('token');
     return {
@@ -85,11 +84,9 @@ const TeamManagement = () => {
     const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
     const [teamToDelete, setTeamToDelete] = useState(null);
     
-    // Loading i error states
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    // API funkcije
     const fetchTeams = async () => {
         try {
             setLoading(true);
@@ -101,7 +98,6 @@ const TeamManagement = () => {
 
             console.log('Teams response:', response.data);
             
-            // Transformišemo response u format koji komponenta očekuje
             const transformedTeams = response.data.map((team, index) => ({
                 id: index + 1,
                 name: team.name,
@@ -112,12 +108,12 @@ const TeamManagement = () => {
                     name: user.displayName || user.name,
                     displayName: user.displayName,
                     profilePic: user.profilePic,
-                    role: "Član tima", // Default uloga jer nije u response-u
-                    email: "", // Nema u response-u
-                    phone: "", // Nema u response-u
+                    role: "Član tima", // Default - not in API response
+                    email: "", // Not in API response
+                    phone: "", // Not in API response
                     status: "Aktivan" // Default status
                 })),
-                sharedLists: [] // Dodajemo prazan niz za kompatibilnost
+                sharedLists: [] // Empty placeholder for UI compatibility
             }));
             
             setTeamsData(transformedTeams);
@@ -131,7 +127,6 @@ const TeamManagement = () => {
         }
     };
 
-    // useEffect za inicijalno učitavanje
     useEffect(() => {
         fetchTeams();
     }, []);
@@ -462,7 +457,7 @@ const TeamManagement = () => {
                 ))}
             </Grid>
 
-            {/* Dialog za tim */}
+            {/* Team dialog */}
             <Dialog open={openTeamDialog} onClose={handleCloseTeamDialog}>
                 <DialogTitle>
                     {selectedTeam ? "Izmeni tim" : "Dodaj novi tim"}
@@ -492,7 +487,7 @@ const TeamManagement = () => {
                 </DialogActions>
             </Dialog>
 
-            {/* Dialog za člana tima */}
+            {/* Team member dialog */}
             <Dialog open={openMemberDialog} onClose={handleCloseMemberDialog}>
                 <DialogTitle>
                     {selectedMember ? "Izmeni člana tima" : "Dodaj novog člana"}
@@ -550,7 +545,7 @@ const TeamManagement = () => {
 
 
 
-            {/* Dialog za potvrdu brisanja tima */}
+            {/* Delete team confirmation dialog */}
             <Dialog
                 open={openDeleteDialog}
                 onClose={handleCancelDelete}

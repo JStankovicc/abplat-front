@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import {
     Box,
     Tabs,
@@ -92,7 +92,7 @@ const AssetsView = () => {
                 </Tabs>
             </Box>
 
-            {/* Glavni sadržaj */}
+            {/* Main content */}
             <Box
                 sx={{
                     flex: 1,

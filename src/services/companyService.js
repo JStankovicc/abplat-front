@@ -7,7 +7,7 @@ const getAuthHeaders = () => {
 };
 
 /**
- * Dohvata sve korisnike kompanije (UserResponse: id, displayName, profilePic).
+ * Fetches all company users (UserResponse: id, displayName, profilePic).
  * @returns {Promise<Array<{ id: number, displayName: string, profilePic?: any }>>}
  */
 export const getAllCompanyUsers = async () => {

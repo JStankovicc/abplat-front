@@ -53,7 +53,7 @@ const MaintenanceTracking = () => {
     const [filterStatus, setFilterStatus] = useState("all");
     const [sortBy, setSortBy] = useState("date");
 
-    // TODO: Zameniti sa pravim podacima iz API-ja
+    // TODO: Replace with real API data
     const maintenanceEntries = [
         {
             id: 1,
@@ -122,7 +122,7 @@ const MaintenanceTracking = () => {
 
     return (
         <Box>
-            {/* Gornji toolbar */}
+            {/* Toolbar */}
             <Box sx={{ mb: 2, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 2 }}>
                 <Box sx={{ display: "flex", gap: 2, flex: 1 }}>
                     <TextField
@@ -198,7 +198,7 @@ const MaintenanceTracking = () => {
                 </Box>
             </Box>
 
-            {/* Statistika */}
+            {/* Statistics */}
             <Grid container spacing={2} sx={{ mb: 3 }}>
                 <Grid item xs={12} sm={6} md={3}>
                     <Card>
@@ -262,7 +262,7 @@ const MaintenanceTracking = () => {
                 </Grid>
             </Grid>
 
-            {/* Tabela servisa */}
+            {/* Maintenance table */}
             <TableContainer component={Paper}>
                 <Table>
                     <TableHead>
@@ -332,7 +332,7 @@ const MaintenanceTracking = () => {
                 </Table>
             </TableContainer>
 
-            {/* Dialog za dodavanje/izmenu servisa */}
+            {/* Add/edit service dialog */}
             <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md" fullWidth>
                 <DialogTitle>
                     {selectedEntry ? "Izmeni servis" : "Dodaj novi servis"}

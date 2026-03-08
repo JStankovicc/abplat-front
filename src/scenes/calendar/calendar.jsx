@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
@@ -517,7 +517,7 @@ const Calendar = () => {
 
             <Divider sx={{ borderColor: colors.grey[700] }} />
 
-            {/* Napomena o učesnicima */}
+            {/* Participants note */}
             <Typography variant="body2" sx={{ color: colors.grey[300], fontStyle: 'italic', mt: 2 }}>
               Napomena: Učesnici se dodaju kroz backend logiku na osnovu team-a i ostalih parametara.
               Trenutno možete kreirati događaj samo sa osnovnim podacima.
@@ -676,7 +676,7 @@ const Calendar = () => {
                           </Typography>
                       )}
                       
-                      {/* Prikaz učesnika */}
+                      {/* Participants view */}
                       <Box display="flex" flexDirection="column" gap={1} mt={1} width="100%">
                         {event.extendedProps.participants?.length > 0 && (
                           <Box display="flex" flexWrap="wrap" gap={1}>
@@ -765,7 +765,7 @@ const Calendar = () => {
                   // Optionally refresh only when month/year changes significantly
                   // Remove auto-refresh to prevent spam
                 }}
-                // Uklanjamo loading callback koji može uzrokovati loop
+                // Remove loading callback to prevent infinite re-render loop
             />
           </Box>
         </Box>

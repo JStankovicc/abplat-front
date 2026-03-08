@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import {
     Box,
     Button,
@@ -72,7 +72,7 @@ const initialAssets = [
         ],
         notes: "Poslovni prostor u centru grada."
     },
-    // Dodajte još primera po potrebi
+    // Add more examples as needed
 ];
 
 const assetStatuses = ["Aktivan", "U rekonstrukciji", "Na prodaju", "Rashodovan", "Izgubljen", "Rezervisan"];
@@ -332,7 +332,7 @@ const NonMovingAssets = () => {
                 </DialogActions>
             </Dialog>
 
-            {/* Dialog za dodavanje/izmenu (osnovni podaci, može se proširiti po potrebi) */}
+            {/* Add/edit dialog (basic fields, can be extended) */}
             <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth PaperProps={{ sx: { backgroundColor: colors.primary[400], color: colors.grey[100], boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)' } }}>
                 <DialogTitle>
                     {editMode ? "Izmeni imovinu" : "Dodaj novu imovinu"}

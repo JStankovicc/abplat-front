@@ -1,4 +1,3 @@
-// API konfiguracija za različita okruženja
 const API_CONFIG = {
   development: {
     baseURL: "http://localhost:8080",
@@ -13,32 +12,29 @@ const API_CONFIG = {
     wsPath: "/ws-chat"
   },
   docker: {
-    baseURL: "",  // Relativni URL za Docker
+    baseURL: "",  // Relative URL for Docker
     apiPath: "/api/v1",
     wsPath: "/ws-chat"
   },
   production: {
-    baseURL: "",  // Relativni URL za production
+    baseURL: "",  // Relative URL for production
     apiPath: "/api/v1",
     wsPath: "/ws-chat"
   }
 };
 
-// Detektujemo okruženje
 const getEnvironment = () => {
-  // PRIVREMENO: Za testiranje uvek koristi serveo backend
+  // TODO: Hardcoded to 'serveo' - update before production deploy
   return 'serveo';
 };
 
 const environment = getEnvironment();
 const config = API_CONFIG[environment];
 
-// Globalne promenljive
 export const BASE_URL = config.baseURL;
 export const API_BASE_URL = `${config.baseURL}${config.apiPath}`;
 export const WS_BASE_URL = `${config.baseURL}${config.wsPath}`;
 
-// Helper funkcija za kreiranje punih URL-ova
 export const createApiUrl = (endpoint) => {
   return `${API_BASE_URL}${endpoint}`;
 };

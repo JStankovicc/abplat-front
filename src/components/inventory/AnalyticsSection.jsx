@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import {
     Box,
     Grid,
@@ -55,7 +55,7 @@ const AnalyticsSection = () => {
     const mode = theme?.palette?.mode || "dark";
     const colors = tokens(mode);
 
-    // Definišemo sve boje koje nam trebaju
+
     const defaultColors = {
         primary: {
             400: "#141b2d",
@@ -80,7 +80,7 @@ const AnalyticsSection = () => {
         }
     };
 
-    // Sigurno čitanje boja sa fallback vrednostima
+    // Safe color reading with fallbacks
     const safeColors = {
         primary: {
             400: colors?.primary?.[400] || defaultColors.primary[400],
@@ -107,7 +107,7 @@ const AnalyticsSection = () => {
 
     const [timeRange, setTimeRange] = useState("month");
 
-    // Podaci za dijagrame
+    // Chart data
     const inventoryTrendData = [
         { name: "Jan", value: 180000 },
         { name: "Feb", value: 200000 },
@@ -142,7 +142,7 @@ const AnalyticsSection = () => {
         { name: "Logitech MX Master", value: 4999 }
     ];
 
-    // Definišemo boje za pie chart
+
     const COLORS = [
         safeColors.blueAccent[500],
         safeColors.greenAccent[500],
@@ -174,7 +174,7 @@ const AnalyticsSection = () => {
         }
     };
 
-    // Primer podataka
+    // Sample data
     const metrics = {
         inventory: {
             value: "€234,567",
@@ -235,7 +235,7 @@ const AnalyticsSection = () => {
             </Box>
 
             <Grid container spacing={3}>
-                {/* Vrednost inventara */}
+                {/* Inventory value */}
                 <Grid item xs={12} md={6}>
                     <Card 
                         sx={{ 
@@ -293,7 +293,7 @@ const AnalyticsSection = () => {
                     </Card>
                 </Grid>
 
-                {/* Aktivne porudžbine */}
+                {/* Active orders */}
                 <Grid item xs={12} md={6}>
                     <Card 
                         sx={{ 
@@ -361,7 +361,7 @@ const AnalyticsSection = () => {
                     </Card>
                 </Grid>
 
-                {/* Povrati */}
+                {/* Returns */}
                 <Grid item xs={12} md={6}>
                     <Card 
                         sx={{ 
@@ -424,7 +424,7 @@ const AnalyticsSection = () => {
                     </Card>
                 </Grid>
 
-                {/* Nizak nivo zaliha */}
+                {/* Low stock */}
                 <Grid item xs={12} md={6}>
                     <Card 
                         sx={{ 
@@ -489,7 +489,7 @@ const AnalyticsSection = () => {
                     </Card>
                 </Grid>
 
-                {/* Trend inventara */}
+                {/* Inventory trend */}
                 <Grid item xs={12} md={8}>
                     <Card 
                         sx={{ 
@@ -534,7 +534,7 @@ const AnalyticsSection = () => {
                     </Card>
                 </Grid>
 
-                {/* Distribucija po kategorijama */}
+                {/* Category distribution */}
                 <Grid item xs={12} md={4}>
                     <Card 
                         sx={{ 
@@ -580,7 +580,7 @@ const AnalyticsSection = () => {
                     </Card>
                 </Grid>
 
-                {/* Trend porudžbina i povrata */}
+                {/* Orders and returns trend */}
                 <Grid item xs={12} md={8}>
                     <Card 
                         sx={{ 
@@ -626,7 +626,7 @@ const AnalyticsSection = () => {
                     </Card>
                 </Grid>
 
-                {/* Top proizvodi po vrednosti */}
+                {/* Top products by value */}
                 <Grid item xs={12} md={4}>
                     <Card 
                         sx={{ 

@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import {
     Box,
     Grid,
@@ -73,7 +73,7 @@ const DashboardSection = () => {
         }
     };
 
-    // Primer podataka za neobavljene stvari
+    // Sample data za neobavljene stvari
     const [pendingItems, setPendingItems] = useState({
         orders: [
             {
@@ -160,7 +160,7 @@ const DashboardSection = () => {
     return (
         <Box sx={{ p: 2 }}>
             <Grid container spacing={3}>
-                {/* Neobavljene porudžbine */}
+                {/* Pending orders */}
                 <Grid item xs={12} md={6}>
                     <Card 
                         sx={{ 
@@ -257,7 +257,7 @@ const DashboardSection = () => {
                     </Card>
                 </Grid>
 
-                {/* Povrati */}
+                {/* Returns */}
                 <Grid item xs={12} md={6}>
                     <Card 
                         sx={{ 
@@ -357,7 +357,7 @@ const DashboardSection = () => {
                     </Card>
                 </Grid>
 
-                {/* Nizak nivo zaliha */}
+                {/* Low stock */}
                 <Grid item xs={12}>
                     <Card 
                         sx={{ 

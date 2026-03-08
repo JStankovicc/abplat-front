@@ -15,7 +15,6 @@ import { tokens } from "../../theme";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { API_BASE_URL } from "../../config/apiConfig";
 
-// Helper funkcija za auth headers
 const getAuthHeaders = () => {
     const token = localStorage.getItem('token');
     return {
@@ -32,7 +31,6 @@ const PipelineBoard = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    // API funkcije
     const updateContactStatus = async (email, newStatus) => {
         try {
             const response = await axios.post(`${API_BASE_URL}/contact/updateStatus`, {
@@ -55,7 +53,6 @@ const PipelineBoard = () => {
             setLoading(true);
             setError(null);
 
-            // Paralelno dohvatamo status-e i kontakte
             const [statusResponse, contactsResponse] = await Promise.all([
                 axios.get(`${API_BASE_URL}/contactStatus/all`, {
                     headers: getAuthHeaders()
@@ -68,7 +65,7 @@ const PipelineBoard = () => {
             console.log('Statuses response:', statusResponse.data);
             console.log('Contacts response:', contactsResponse.data);
 
-            // Mapiranje između srpskih naziva (iz backend-a) i enum vrednosti
+            // Maps Serbian backend status names to enum values
             const statusMapping = {
                 "Novi": "NEW",
                 "Kontaktiran": "CONTACTED", 
@@ -78,29 +75,25 @@ const PipelineBoard = () => {
                 "Zastao": "STALLED"
             };
 
-            // Kreiramo pipeline strukture na osnovu status-a
             const pipelineStages = {};
             statusResponse.data.forEach(serbianStatus => {
-                // Backend vraća srpske nazive, koristimo ih kao ključeve
+                // Backend returns Serbian status names - use them as keys
                 const enumValue = statusMapping[serbianStatus] || "NEW";
                 pipelineStages[serbianStatus] = {
-                    title: serbianStatus, // Koristimo srpski naziv kao naslov
+                    title: serbianStatus,
                     items: [],
-                    enumValue: enumValue // Čuvamo enum vrednost za API pozive
+                    enumValue: enumValue // stored for API calls
                 };
             });
 
-            // Distribuiramo kontakte po status-ima na osnovu njihovog stvarnog statusa
             contactsResponse.data.forEach((contact, index) => {
-                // Koristimo status iz ContactResponse-a ili default 'NEW' ako nije definisan
                 const contactEnumStatus = contact.status || 'NEW';
                 
-                // Pronađemo srpski ključ na osnovu enum vrednosti
+                // Find Serbian key by enum value
                 const serbianKey = Object.keys(statusMapping).find(key => 
                     statusMapping[key] === contactEnumStatus
                 ) || "Novi"; // Default fallback
 
-                // Proveravamo da li postoji odgovarajuća kolona za ovaj status
                 if (pipelineStages[serbianKey]) {
                     pipelineStages[serbianKey].items.push({
                         id: `contact-${index + 1}`,
@@ -109,10 +102,10 @@ const PipelineBoard = () => {
                         email: contact.email,
                         phone: contact.phoneNumber || 'N/A',
                         assigned: "Trenutni korisnik", // Placeholder
-                        status: contactEnumStatus // Čuvamo originalnu enum vrednost
+                        status: contactEnumStatus
                     });
                 } else {
-                    // Ako status nije prepoznat, stavi u Novi kolonu kao fallback
+                    // Unknown status - fall back to "Novi"
                     console.warn(`Nepoznat status ${contactEnumStatus} za kontakt ${contact.name}, stavljam u Novi`);
                     if (pipelineStages['Novi']) {
                         pipelineStages['Novi'].items.push({
@@ -139,7 +132,6 @@ const PipelineBoard = () => {
         }
     };
 
-    // useEffect za inicijalno učitavanje
     useEffect(() => {
         fetchPipelineData();
     }, []);
@@ -150,7 +142,6 @@ const PipelineBoard = () => {
         const { source, destination } = result;
         
         if (source.droppableId === destination.droppableId) {
-            // Samo promena pozicije u istoj koloni
             const stage = stages[source.droppableId];
             const copiedItems = [...stage.items];
             const [removed] = copiedItems.splice(source.index, 1);
@@ -164,7 +155,7 @@ const PipelineBoard = () => {
                 }
             });
         } else {
-            // Premestanje između različitih kolona - treba da ažuriramo status
+            // Moving between columns requires a status update
             const sourceStage = stages[source.droppableId];
             const destStage = stages[destination.droppableId];
             const sourceItems = [...sourceStage.items];
@@ -172,7 +163,6 @@ const PipelineBoard = () => {
             const [removed] = sourceItems.splice(source.index, 1);
             destItems.splice(destination.index, 0, removed);
             
-            // Ažuriraj UI odmah
             setStages({
                 ...stages,
                 [source.droppableId]: {
@@ -185,9 +175,8 @@ const PipelineBoard = () => {
                 }
             });
 
-            // Pošalji API poziv za ažuriranje statusa
             try {
-                // Mapiranje naziva kolona na srpske nazive koje backend očekuje
+                // Maps column names to Serbian status strings expected by the backend
                 const statusMapping = {
                     "Novi": "NOVI",
                     "Kontaktiran": "KONTAKTIRAN", 
@@ -204,7 +193,7 @@ const PipelineBoard = () => {
                 console.error('Greška pri ažuriranju statusa kontakta:', error);
                 setError('Greška pri ažuriranju statusa kontakta');
                 
-                // Vrati na prethodnu poziciju ako je API poziv neuspešan
+                // Revert to original position on API failure
                 setStages({
                     ...stages,
                     [source.droppableId]: {

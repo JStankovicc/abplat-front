@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import {
     Box,
     Card,
@@ -53,7 +53,7 @@ const VehicleTracking = () => {
     const [filterVehicle, setFilterVehicle] = useState("all");
     const [sortBy, setSortBy] = useState("date");
 
-    // TODO: Zameniti sa pravim podacima iz API-ja
+    // TODO: Replace with real API data
     const trackingEntries = [
         {
             id: 1,
@@ -119,7 +119,7 @@ const VehicleTracking = () => {
 
     return (
         <Box>
-            {/* Gornji toolbar */}
+            {/* Toolbar */}
             <Box sx={{ mb: 2, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 2 }}>
                 <Box sx={{ display: "flex", gap: 2, flex: 1 }}>
                     <TextField
@@ -194,7 +194,7 @@ const VehicleTracking = () => {
                 </Box>
             </Box>
 
-            {/* Statistika */}
+            {/* Statistics */}
             <Grid container spacing={2} sx={{ mb: 3 }}>
                 <Grid item xs={12} sm={6} md={3}>
                     <Card>
@@ -258,7 +258,7 @@ const VehicleTracking = () => {
                 </Grid>
             </Grid>
 
-            {/* Tabela vožnji */}
+            {/* Trips table */}
             <TableContainer component={Paper}>
                 <Table>
                     <TableHead>
@@ -325,7 +325,7 @@ const VehicleTracking = () => {
                 </Table>
             </TableContainer>
 
-            {/* Dialog za dodavanje/izmenu vožnje */}
+            {/* Add/edit trip dialog */}
             <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md" fullWidth>
                 <DialogTitle>
                     {selectedEntry ? "Izmeni vožnju" : "Dodaj novu vožnju"}

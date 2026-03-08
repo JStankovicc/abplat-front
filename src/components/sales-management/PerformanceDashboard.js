@@ -28,7 +28,7 @@ import {
     ResponsiveContainer
 } from "recharts";
 
-// Mock podaci za analitiku
+// Mock analytics data
 const mockAnalyticsData = {
     salesByMonth: [
         { month: "Jan", sales: 4000 },
@@ -88,7 +88,7 @@ const PerformanceDashboard = () => {
             </Box>
 
             <Grid container spacing={2}>
-                {/* Metrike performansi */}
+                {/* Performance metrics */}
                 <Grid item xs={12}>
                     <Grid container spacing={2}>
                         {mockAnalyticsData.performanceMetrics.map((metric, index) => (
@@ -119,7 +119,7 @@ const PerformanceDashboard = () => {
                     </Grid>
                 </Grid>
 
-                {/* Grafikon prodaje po mesecima */}
+                {/* Monthly sales chart */}
                 <Grid item xs={12} md={8}>
                     <Paper
                         sx={{
@@ -155,7 +155,7 @@ const PerformanceDashboard = () => {
                     </Paper>
                 </Grid>
 
-                {/* Grafikon stopa konverzije */}
+                {/* Conversion rate chart */}
                 <Grid item xs={12} md={4}>
                     <Paper
                         sx={{
@@ -200,7 +200,7 @@ const PerformanceDashboard = () => {
                     </Paper>
                 </Grid>
 
-                {/* Trend performansi */}
+                {/* Performance trend */}
                 <Grid item xs={12}>
                     <Paper
                         sx={{

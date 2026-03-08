@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+﻿import React, { useState, useEffect, useRef } from "react";
 import {
     Box,
     CssBaseline,
@@ -109,10 +109,10 @@ const ChatInterface = () => {
     // Load initial data
     useEffect(() => {
         loadChatsAndContacts();
-        // Onemogućujem WebSocket za sada
+        // WebSocket disabled for now
         // initializeWebSocket();
         
-        // Pokreni polling na svake 2 sekunde
+        // Poll every 2 seconds
         const pollInterval = setInterval(() => {
             loadChatsAndContacts();
         }, 2000);
@@ -120,7 +120,7 @@ const ChatInterface = () => {
         return () => clearInterval(pollInterval);
     }, []);
 
-    // Load messages when chat is selected i pokreni polling za poruke
+    // Load messages when chat is selected and start message polling
     useEffect(() => {
         console.log('Selected chat ID changed:', selectedChatId);
         let messagesPollInterval;
@@ -129,7 +129,7 @@ const ChatInterface = () => {
             console.log('Loading messages for chat ID:', selectedChatId);
             loadMessages(selectedChatId);
             
-            // Pokreni polling za poruke na svake 2 sekunde
+            // Poll messages every 2 seconds
             messagesPollInterval = setInterval(() => {
                 loadMessages(selectedChatId);
             }, 2000);
@@ -170,26 +170,25 @@ const ChatInterface = () => {
                 threadsData.map(async (conversation) => {
                     const formatted = await chatService.formatConversationForDisplay(conversation, contactsData);
                     
-                    // Uvek učitaj najnoviju poruku direktno iz API-ja da osiguramo da je stvarna
+                    // Always load the latest message directly from the API
                     try {
                         const messagesData = await chatService.getMessages(conversation.conversationId, 0, 10);
                         if (messagesData.content && messagesData.content.length > 0) {
-                            // Sortiraj poruke po datumu (najnovije prvo) i uzmi prvu
+
                             const sortedMessages = [...messagesData.content].sort((a, b) => {
                                 const dateA = new Date(a.createdAt).getTime();
                                 const dateB = new Date(b.createdAt).getTime();
-                                return dateB - dateA; // Najnovije prvo
+                                return dateB - dateA; // newest first
                             });
                             const lastMessage = sortedMessages[0];
                             formatted.lastMessage = lastMessage.content || '';
                             formatted.lastMessageTime = lastMessage.createdAt ? new Date(lastMessage.createdAt) : formatted.lastMessageTime;
                         } else {
-                            // Ako nema poruka, koristi podatke iz formatConversationForDisplay
                             formatted.lastMessage = formatted.lastMessage || '';
                         }
                     } catch (error) {
                         console.error(`Error loading last message for conversation ${conversation.conversationId}:`, error);
-                        // Fallback na podatke iz formatConversationForDisplay
+                        // Fallback to conversation summary data
                         formatted.lastMessage = formatted.lastMessage || '';
                     }
                     
@@ -222,12 +221,12 @@ const ChatInterface = () => {
 
             setMessages(transformedMessages);
 
-            // Ažuriraj listu prepiski sa najnovijom porukom iz učitane liste
+            // Update chat list with the latest loaded message
             if (transformedMessages.length > 0) {
                 const lastMessage = transformedMessages[transformedMessages.length - 1];
                 setChats(prevChats => prevChats.map(chat => {
                     if (chat.conversationId === threadId) {
-                        // Ažuriraj samo ako je nova poruka novija od trenutne
+                        // Only update if new message is more recent
                         const currentLastTime = chat.lastMessageTime ? new Date(chat.lastMessageTime).getTime() : 0;
                         const newLastTime = new Date(lastMessage.timestamp).getTime();
                         if (newLastTime > currentLastTime) {
@@ -272,7 +271,6 @@ const ChatInterface = () => {
     const handleWebSocketMessage = (messageData) => {
         console.log('Received WebSocket message:', messageData);
         
-        // messageData je MessageResponse iz tvog sistema
         // If message is for current conversation, add it to messages
         if (messageData.conversationId === selectedChatId) {
             const newMessage = chatService.formatMessageForDisplay(messageData);
@@ -294,13 +292,13 @@ const ChatInterface = () => {
     };
 
     const getCurrentUserId = () => {
-        // Pokušaj da dobiješ iz localStorage
+
         const userProfile = JSON.parse(localStorage.getItem('userProfile') || '{}');
         if (userProfile.id) {
             return userProfile.id;
         }
         
-        // Pokušaj da dobiješ iz JWT tokena
+        // Fallback: try to get ID from JWT token
         const token = localStorage.getItem('token');
         if (token) {
             try {
@@ -315,7 +313,6 @@ const ChatInterface = () => {
         return 1; // Fallback
     };
 
-    // Ova funkcija je sada u chatService.js
 
     useEffect(() => {
         // Select first chat if none selected and no chat is currently selected
@@ -342,10 +339,10 @@ const ChatInterface = () => {
                 
                 const messageText = message.trim();
                 
-                // Šalje preko REST API-ja
+
                 await chatService.sendMessage(selectedChatId, messageText);
                 
-                // Ažuriraj lokalno stanje liste prepiski sa novom porukom
+                // Optimistic update: reflect sent message in chat list
                 setChats(prevChats => prevChats.map(chat => {
                     if (chat.conversationId === selectedChatId) {
                         return {
@@ -357,10 +354,10 @@ const ChatInterface = () => {
                     return chat;
                 }));
                 
-                // Odmah učitaj poruke da vidiš novu poruku
+                // Reload messages to show the sent message
                 await loadMessages(selectedChatId);
                 
-                // Takođe osveži listu prepiski da dobiješ najnovije podatke sa backend-a
+                // Also refresh chat list to get latest data from backend
                 await loadChatsAndContacts();
 
             setMessage("");
@@ -389,7 +386,7 @@ const ChatInterface = () => {
                 return;
             }
 
-            // Create new direct conversation - tvoj API vraća conversationId
+            // Create new direct conversation - API returns conversationId
             const conversationId = await chatService.createOrGetDirectConversation(contact.id);
             console.log('Created/found conversation ID:', conversationId);
 
@@ -420,7 +417,7 @@ const ChatInterface = () => {
         return date?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) || '';
     };
 
-    // Helper funkcija za grupiranje poruka po pošaljaocu
+
     const groupMessagesBySender = (messages) => {
         const grouped = [];
         let currentGroup = null;
@@ -428,7 +425,7 @@ const ChatInterface = () => {
         messages.forEach((message, index) => {
             const shouldStartNewGroup = !currentGroup || 
                 currentGroup.senderId !== message.senderId ||
-                (message.timestamp - currentGroup.lastTimestamp) > 5 * 60 * 1000; // 5 minuta
+                (message.timestamp - currentGroup.lastTimestamp) > 5 * 60 * 1000; // 5 minute gap
 
             if (shouldStartNewGroup) {
                 currentGroup = {
@@ -658,7 +655,7 @@ const ChatInterface = () => {
                                     )}
                                     {groupMessagesBySender(messages).map((group, groupIndex) => (
                                         <Box key={groupIndex} mb={2}>
-                                            {/* Avatar i ime pošaljaoca za grupu */}
+                                            {/* Group sender avatar and name */}
                                             {group.sender === "received" && (
                                                 <Box display="flex" alignItems="center" mb={1} ml={1}>
                                                     <Avatar src={group.senderAvatar} sx={{ width: 24, height: 24, mr: 1 }} />
@@ -688,7 +685,7 @@ const ChatInterface = () => {
                                                     }}
                                                 >
                                                     {msg.text}
-                                                            {/* Prikaži vreme samo na poslednjoj poruci u grupi */}
+                                                            {/* Show timestamp only on last message in group */}
                                                             {msgIndex === group.messages.length - 1 && (
                                                     <Typography
                                                         variant="caption"
@@ -875,7 +872,7 @@ const ChatInterface = () => {
                                     )}
                                     {groupMessagesBySender(messages).map((group, groupIndex) => (
                                         <Box key={groupIndex} mb={3}>
-                                            {/* Avatar i ime pošaljaoca za grupu */}
+                                            {/* Group sender avatar and name */}
                                             {group.sender === "received" && (
                                                 <Box display="flex" alignItems="center" mb={1} ml={1}>
                                                     <Avatar src={group.senderAvatar} sx={{ width: 28, height: 28, mr: 1 }} />
@@ -905,7 +902,7 @@ const ChatInterface = () => {
                                                     }}
                                                 >
                                                     {msg.text}
-                                                            {/* Prikaži vreme samo na poslednjoj poruci u grupi */}
+                                                            {/* Show timestamp only on last message in group */}
                                                             {msgIndex === group.messages.length - 1 && (
                                                     <Typography
                                                         variant="caption"

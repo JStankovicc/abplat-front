@@ -46,7 +46,7 @@ const VehicleList = () => {
     const [filterStatus, setFilterStatus] = useState("all");
     const [sortBy, setSortBy] = useState("name");
 
-    // TODO: Zameniti sa pravim podacima iz API-ja
+    // TODO: Replace with real API data
     const vehicles = [
         {
             id: 1,
@@ -154,7 +154,7 @@ const VehicleList = () => {
 
     return (
         <Box>
-            {/* Gornji toolbar */}
+            {/* Toolbar */}
             <Box sx={{ mb: 2, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 2 }}>
                 <Box sx={{ display: "flex", gap: 2, flex: 1 }}>
                     <TextField
@@ -229,7 +229,7 @@ const VehicleList = () => {
                 </Box>
             </Box>
 
-            {/* Lista vozila */}
+            {/* Vehicle list */}
             <Grid container spacing={2}>
                 {vehicles.map((vehicle) => (
                     <Grid item xs={12} key={vehicle.id}>
@@ -356,7 +356,7 @@ const VehicleList = () => {
                 ))}
             </Grid>
 
-            {/* Dialog za dodavanje/izmenu vozila */}
+            {/* Add/edit vehicle dialog */}
             <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md" fullWidth>
                 <DialogTitle>
                     {selectedVehicle ? "Izmeni vozilo" : "Dodaj novo vozilo"}

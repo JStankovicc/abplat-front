@@ -60,7 +60,6 @@ const Sidebar = ({ userProfile, companyInfo }) => {
         window.location.href = "/login";
     };
 
-    // Funkcija za učitavanje liste projekata
     const fetchProjects = async () => {
         try {
             const token = localStorage.getItem('token');
@@ -85,7 +84,6 @@ const Sidebar = ({ userProfile, companyInfo }) => {
         }
     };
 
-    // Funkcija za navigaciju na projekat
     const handleProjectClick = (projectId) => {
         navigate(`/project/${projectId}`);
         if (isMobile) {
@@ -93,23 +91,20 @@ const Sidebar = ({ userProfile, companyInfo }) => {
         }
     };
 
-    // Funkcija za konverziju byte array u base64 string
     const byteArrayToBase64 = (byteArray) => {
         if (!byteArray) return null;
         
         try {
-            // Ako je već string, vrati ga direktno
             if (typeof byteArray === 'string') {
                 return byteArray;
             }
             
-            // Ako je array brojeva
             if (Array.isArray(byteArray)) {
                 const binary = String.fromCharCode.apply(null, byteArray);
                 return btoa(binary);
             }
             
-            // Ako je Uint8Array ili slična struktura
+            // Uint8Array or similar typed array
             if (byteArray.constructor === Uint8Array || byteArray.buffer) {
                 const binary = String.fromCharCode.apply(null, new Uint8Array(byteArray));
                 return btoa(binary);
@@ -122,7 +117,6 @@ const Sidebar = ({ userProfile, companyInfo }) => {
         }
     };
 
-    // Kreiranje URL-a za slike
     const getProfileImageUrl = () => {
         if (userProfile?.profilePic) {
             const base64String = byteArrayToBase64(userProfile.profilePic);
@@ -131,7 +125,6 @@ const Sidebar = ({ userProfile, companyInfo }) => {
         return process.env.PUBLIC_URL + "/assets/default_profile_picture.png";
     };
 
-    // ABPlat logo uvek u sidebar-u
     const getABPlatLogoUrl = () => {
         return theme.palette.mode === "dark"
             ? "../../assets/ABPlatLogoInline.png"
@@ -144,7 +137,6 @@ const Sidebar = ({ userProfile, companyInfo }) => {
         }
     }, [isMobile]);
 
-    // Učitaj projekte pri prvom renderovanju
     useEffect(() => {
         fetchProjects();
     }, []);
@@ -211,7 +203,7 @@ const Sidebar = ({ userProfile, companyInfo }) => {
                             </MenuItem>
                         )}
 
-                        {/* PROFILE SEKCIJA */}
+                        {/* User profile */}
                         {(isMobile || !isCollapsed) && (
                             <Box mb="25px">
                                 <Box display="flex" justifyContent="center" alignItems="center">
@@ -328,7 +320,6 @@ const Sidebar = ({ userProfile, companyInfo }) => {
                                 disabled={true}
                             />
 
-                            {/* Project sekcija */}
                             <Typography variant="h6" color={colors.grey[300]} sx={{ m: "15px 0 5px 20px" }}>
                                 Projekti
                             </Typography>
@@ -340,7 +331,7 @@ const Sidebar = ({ userProfile, companyInfo }) => {
                                 setSelected={setSelected}
                                 onClick={() => isMobile && setIsMobileSidebarOpen(false)}
                             />
-                            {/* Dinamička lista projekata */}
+                            {/* Dynamic project list */}
                             {projects.map((project) => (
                                 <Item
                                     key={project.id}
@@ -352,7 +343,7 @@ const Sidebar = ({ userProfile, companyInfo }) => {
                                 />
                             ))}
 
-                            {/* Imovina sekcija */}
+                            {/* Assets section */}
                             <Typography variant="h6" color={colors.grey[300]} sx={{ m: "15px 0 5px 20px" }}>
                                 Imovina
                             </Typography>

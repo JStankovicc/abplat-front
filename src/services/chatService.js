@@ -3,7 +3,6 @@ import { API_BASE_URL } from '../config/apiConfig';
 
 const INBOX_API_URL = `${API_BASE_URL}/inbox`;
 
-// Helper funkcija za auth headers
 const getAuthHeaders = () => {
     const token = localStorage.getItem('token');
     return {
@@ -13,7 +12,6 @@ const getAuthHeaders = () => {
 };
 
 class ChatService {
-    // Dohvata ID trenutnog korisnika
     async getCurrentUserIdFromApi() {
         try {
             console.log('Pozivam /me API za user ID');
@@ -28,7 +26,6 @@ class ChatService {
         }
     }
 
-    // Dohvata sve kontakte u firmi (UserResponse[])
     async getAllContacts() {
         try {
             console.log('Pozivam kontakte API:', `${INBOX_API_URL}/contacts/all`);
@@ -38,7 +35,7 @@ class ChatService {
             
             console.log('Kontakte API odgovor:', response.data);
             
-            // Tvoj API vraća List<UserResponse>
+            // API returns List<UserResponse>
             const contacts = response.data || [];
             // Filter out null contacts
             const validContacts = contacts.filter(contact => contact && contact.id);
@@ -47,7 +44,7 @@ class ChatService {
         } catch (error) {
             console.error('Greška pri dohvatanju kontakata:', error);
             
-            // Ako je 403 ili 500, vrati prazan niz umesto da baca grešku
+            // Return empty array on 403/500 instead of throwing
             if (error.response?.status === 403 || error.response?.status === 500) {
                 console.warn('Backend greška pri dohvatanju kontakata, vraćam prazan niz');
                 return [];
@@ -57,7 +54,7 @@ class ChatService {
         }
     }
 
-    // Dohvata inbox - sve konverzacije korisnika (ConversationSummaryResponse[])
+    // Fetches all conversations for the current user (ConversationSummaryResponse[])
     async getInbox() {
         try {
             console.log('Pozivam inbox API:', `${INBOX_API_URL}/threads`);
@@ -67,14 +64,13 @@ class ChatService {
             
             console.log('Inbox API odgovor:', response.data);
             
-            // Tvoj API vraća List<ConversationSummaryResponse>
             const conversations = response.data || [];
             console.log('Validne konverzacije:', conversations);
             return conversations;
         } catch (error) {
             console.error('Greška pri dohvatanju inbox-a:', error);
             
-            // Ako je backend greška, vrati prazan niz
+            // Return empty array on backend errors
             if (error.response?.status >= 400) {
                 console.warn('Backend greška pri dohvatanju inbox-a, vraćam prazan niz');
                 return [];
@@ -84,7 +80,7 @@ class ChatService {
         }
     }
 
-    // Kreira ili dohvata direktnu konverzaciju (vraća conversationId)
+    // Creates or retrieves a direct conversation, returns conversationId
     async createOrGetDirectConversation(otherUserId) {
         try {
             const response = await axios.post(`${INBOX_API_URL}/threads/direct`, {
@@ -99,7 +95,7 @@ class ChatService {
         }
     }
 
-    // Kreira grupu (vraća conversationId)
+    // Creates a group conversation, returns conversationId
     async createGroup(name, participantIds) {
         try {
             const response = await axios.post(`${INBOX_API_URL}/threads/group`, {
@@ -115,7 +111,7 @@ class ChatService {
         }
     }
 
-    // Dohvata poruke iz konverzacije sa paginacijom (Page<MessageResponse>)
+    // Fetches messages from a conversation with pagination (Page<MessageResponse>)
     async getMessages(conversationId, page = 0, size = 50) {
         try {
             const response = await axios.get(`${INBOX_API_URL}/threads/${conversationId}/messages`, {
@@ -132,7 +128,7 @@ class ChatService {
         }
     }
 
-    // Šalje poruku preko REST API-ja (MessageResponse)
+    // Sends a message via REST API, returns MessageResponse
     async sendMessage(conversationId, content) {
         try {
             const response = await axios.post(`${INBOX_API_URL}/threads/${conversationId}/messages`, {
@@ -148,7 +144,7 @@ class ChatService {
         }
     }
 
-    // Označava poruke kao pročitane (do određene poruke)
+    // Marks messages as read up to a specific message
     async markAsRead(conversationId, upToMessageId) {
         try {
             await axios.post(`${INBOX_API_URL}/threads/${conversationId}/read`, {}, {
@@ -161,7 +157,6 @@ class ChatService {
         }
     }
 
-    // Helper funkcije za formatiranje podataka
     async formatConversationForDisplay(conversation, allContacts = []) {
         console.log('=== formatConversationForDisplay START ===');
         console.log('Input conversation ID:', conversation.conversationId);
@@ -169,7 +164,6 @@ class ChatService {
         console.log('Input conversation participantIds:', conversation.participantIds);
         console.log('Input allContacts count:', allContacts.length);
         
-        // Osiguraj se da imamo kontakte
         if (!allContacts || allContacts.length === 0) {
             console.warn('⚠️ No contacts provided, trying to fetch...');
             try {
@@ -204,7 +198,7 @@ class ChatService {
             return conversation.name || 'Group Chat';
         }
         
-        // Za 1-1 konverzaciju, pronađi ime druge osobe
+        // For 1-1 conversations, find the other participant's name
         const currentUserId = await this.getCurrentUserId();
         console.log('=== DEBUG getConversationDisplayName ===');
         console.log('Current user ID:', currentUserId, 'type:', typeof currentUserId);
@@ -215,27 +209,27 @@ class ChatService {
         console.log('All contacts:', allContacts);
         console.log('Sample contact:', allContacts[0]);
         
-        // participantIds može biti array ili Set
+        // participantIds can be array or Set
         let participantIds = [];
         if (Array.isArray(conversation.participantIds)) {
             participantIds = conversation.participantIds;
         } else if (conversation.participantIds && typeof conversation.participantIds === 'object') {
-            // Može biti Set ili objekat - konvertuj u array
+            // May be Set or plain object - convert to array
             try {
                 participantIds = Array.from(conversation.participantIds);
             } catch (error) {
                 console.error('Error converting participantIds to array:', error);
-                // Možda je objekat sa keys
+                // May be an object with keys
                 participantIds = Object.keys(conversation.participantIds).map(key => parseInt(key));
             }
         } else if (conversation.participantIds) {
-            // Možda je string ili broj
+            // May be a string or number
             participantIds = [parseInt(conversation.participantIds)];
         }
             
         console.log('Processed participant IDs:', participantIds);
         
-        // Osiguraj se da poredimo brojeve sa brojevima
+        // Ensure numeric comparison
         const currentUserIdNum = parseInt(currentUserId);
         const participantIdsNum = participantIds.map(id => parseInt(id));
         const otherParticipantId = participantIdsNum.find(id => id !== currentUserIdNum);
@@ -250,7 +244,7 @@ class ChatService {
                 console.log('✅ Returning displayName:', otherUser.displayName);
                 return otherUser.displayName;
             } else {
-                // Fallback - pokušaj da pronađeš bilo koji kontakt sa tim ID-om
+                // Fallback - try any contact with that ID
                 console.warn('Could not find displayName, searching all contacts...');
                 const anyContact = allContacts.find(c => c && (c.id === otherParticipantId || parseInt(c.id) === otherParticipantId));
                 console.log('Any contact found:', anyContact);
@@ -273,7 +267,6 @@ class ChatService {
         console.log('Current user ID:', currentUserId, 'type:', typeof currentUserId);
         console.log('Message sender ID:', message.senderId, 'type:', typeof message.senderId);
         
-        // Standardno poređenje brojeva
         const currentUserIdNum = parseInt(currentUserId);
         const messageSenderIdNum = parseInt(message.senderId);
         const isSentByCurrentUser = messageSenderIdNum === currentUserIdNum;
@@ -292,30 +285,27 @@ class ChatService {
     }
 
     async getCurrentUserId() {
-        // Pokušaj da dobiješ iz localStorage
         const userProfile = JSON.parse(localStorage.getItem('userProfile') || '{}');
         if (userProfile.id) {
             console.log('Current user ID from userProfile:', userProfile.id, 'type:', typeof userProfile.id);
             return parseInt(userProfile.id);
         }
         
-        // Pokušaj da dohvatiš iz API-ja
         const userIdFromApi = await this.getCurrentUserIdFromApi();
         if (userIdFromApi) {
-            // Sacuvaj u localStorage za sledeći put
+            // Cache in localStorage for next time
             const updatedProfile = { ...userProfile, id: userIdFromApi };
             localStorage.setItem('userProfile', JSON.stringify(updatedProfile));
             return userIdFromApi;
         }
         
-        // Ako API ne radi, pokušaj da dobiješ iz JWT tokena
+        // API fallback: try to get ID from JWT token
         const token = localStorage.getItem('token');
         if (token) {
             try {
                 const payload = JSON.parse(atob(token.split('.')[1]));
                 console.log('JWT payload:', payload);
                 
-                // Pokušaj da pronađeš userId u različitim poljima
                 const userId = payload.userId || payload.id;
                 if (userId && !isNaN(parseInt(userId))) {
                     console.log('Current user ID from JWT:', userId, 'type:', typeof userId);

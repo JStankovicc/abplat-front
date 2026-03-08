@@ -22,7 +22,6 @@ import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, DragIndicator a
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { API_BASE_URL } from "../../config/apiConfig";
 
-// Helper funkcija za auth headers
 const getAuthHeaders = () => {
     const token = localStorage.getItem('token');
     return {
@@ -48,7 +47,7 @@ const StrategyConfig = () => {
         nextStage: ""
     });
 
-    // Mapiranje između srpskih naziva (iz backend-a) i enum vrednosti
+    // Maps Serbian backend status names to enum values
     const statusMapping = {
         "Novi": "NEW",
         "Kontaktiran": "CONTACTED", 
@@ -58,7 +57,6 @@ const StrategyConfig = () => {
         "Zastao": "STALLED"
     };
 
-    // Default opisi za svaki status
     const statusDescriptions = {
         "Novi": "Novi kontakt koji čeka obradu",
         "Kontaktiran": "Kontakt je uspostavljen sa klijentom",
@@ -68,7 +66,6 @@ const StrategyConfig = () => {
         "Zastao": "Proces je zastao i zahteva pažnju"
     };
 
-    // Default vrednosti za success rate i average time
     const statusDefaults = {
         "Novi": { successRate: 100, averageTime: "0 dana" },
         "Kontaktiran": { successRate: 75, averageTime: "2 dana" },
@@ -89,13 +86,12 @@ const StrategyConfig = () => {
 
             console.log('Statuses response:', statusResponse.data);
 
-            // Transformišemo status-e u strategije
             const statuses = statusResponse.data;
             const strategies = statuses.map((status, index) => {
                 const enumValue = statusMapping[status] || "NEW";
                 const defaults = statusDefaults[status] || { successRate: 50, averageTime: "N/A" };
                 
-                // Određujemo sledeću fazu na osnovu redosleda
+                // Determine the next stage by position in the list
                 const nextStage = index < statuses.length - 1 ? statuses[index + 1] : null;
 
                 return {
@@ -120,7 +116,6 @@ const StrategyConfig = () => {
         }
     };
 
-    // useEffect za inicijalno učitavanje
     useEffect(() => {
         fetchStrategiesData();
     }, []);

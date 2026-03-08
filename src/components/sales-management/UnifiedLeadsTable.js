@@ -57,7 +57,6 @@ import {
 } from "@mui/icons-material";
 import { API_BASE_URL } from "../../config/apiConfig";
 
-// Helper funkcija za auth headers
 const getAuthHeaders = () => {
     const token = localStorage.getItem('token');
     return {
@@ -66,7 +65,7 @@ const getAuthHeaders = () => {
     };
 };
 
-// Mock podaci za timove (zadržano za kompatibilnost)
+// Mock team data (kept for UI compatibility)
 const mockTeams = [
     { id: 1, name: "Tim A" },
     { id: 2, name: "Tim B" },
@@ -100,17 +99,14 @@ const UnifiedLeadsTable = () => {
     const [openListDetails, setOpenListDetails] = useState(false);
     const [selectedListDetails, setSelectedListDetails] = useState(null);
     
-    // Loading i error states
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    // API funkcije
     const fetchContactsLists = async (status = null) => {
         try {
             setLoading(true);
             setError(null);
             
-            // Kreiramo request body prema backend specifikaciji
             const requestData = {
                 status: status  // ContactsListStatus enum: LEAD ili CLIENT
             };
@@ -122,19 +118,18 @@ const UnifiedLeadsTable = () => {
 
             console.log('Contacts lists response:', response.data);
             
-            // Transformišemo response u format koji komponenta očekuje
             const transformedLists = response.data.map((list, index) => ({
                 id: index + 1,
                 name: list.name,
                 description: list.description,
-                type: status === "CLIENT" ? "contacts" : "leads", // Mapiramo tip na osnovu status-a
+                type: status === "CLIENT" ? "contacts" : "leads",
                 count: list.contacts.length,
                 region: list.region,
                 city: list.city,
                 country: list.country,
                 team: list.team,
                 lastUpdated: new Date().toISOString().split('T')[0],
-                // Dodajemo mock podatke za kompatibilnost sa postojećim UI
+                // Mock fields for UI compatibility
         settings: {
             autoAssign: true,
             notificationEnabled: true,
@@ -160,7 +155,6 @@ const UnifiedLeadsTable = () => {
             
             setClientLists(transformedLists);
             
-            // Transformišemo kontakte
             const allContacts = response.data.flatMap(list => 
                 list.contacts.map(contact => ({
                     id: Math.random(),
@@ -186,7 +180,6 @@ const UnifiedLeadsTable = () => {
         } catch (error) {
             console.error('Failed to fetch contacts lists:', error);
             setError('Greška pri učitavanju listi kontakata');
-            // Postavi prazne liste u slučaju greške
             setClientLists([]);
             setClients([]);
         } finally {
@@ -194,23 +187,19 @@ const UnifiedLeadsTable = () => {
         }
     };
 
-    // State za čuvanje svih podataka
     const [allClientLists, setAllClientLists] = useState([]);
     const [allClients, setAllClients] = useState([]);
 
-    // Funkcija za učitavanje svih tipova
     const fetchAllContactsData = async () => {
         try {
             setLoading(true);
             setError(null);
 
-            // Dohvati token za autorizaciju
             const token = localStorage.getItem('token');
             
-            // Paralelno dohvatamo i CLIENT i LEAD liste sa query parametrima
             const [clientResponse, leadResponse] = await Promise.all([
                 axios.post(`${API_BASE_URL}/contact/lists/all?type=CLIENT`, 
-                    null,  // Nema body
+                    null,
                     { 
                         headers: {
                             "Authorization": `Bearer ${token}`
@@ -218,7 +207,7 @@ const UnifiedLeadsTable = () => {
                     }
                 ),
                 axios.post(`${API_BASE_URL}/contact/lists/all?type=LEAD`, 
-                    null,  // Nema body
+                    null,
                     { 
                         headers: {
                             "Authorization": `Bearer ${token}`
@@ -230,7 +219,6 @@ const UnifiedLeadsTable = () => {
             console.log('Client lists response:', clientResponse.data);
             console.log('Lead lists response:', leadResponse.data);
 
-            // Transformišemo CLIENT liste
             const clientLists = clientResponse.data.map((list, index) => ({
                 id: `client-${index + 1}`,
                 name: list.name,
@@ -265,7 +253,6 @@ const UnifiedLeadsTable = () => {
         }
             }));
 
-            // Transformišemo LEAD liste
             const leadLists = leadResponse.data.map((list, index) => ({
                 id: `lead-${index + 1}`,
                 name: list.name,
@@ -300,12 +287,10 @@ const UnifiedLeadsTable = () => {
                 }
             }));
 
-            // Kombinujemo sve liste
             const combinedLists = [...clientLists, ...leadLists];
             setAllClientLists(combinedLists);
             setClientLists(combinedLists);
 
-            // Transformišemo sve kontakte
             const clientContacts = clientResponse.data.flatMap(list => 
                 list.contacts.map(contact => ({
                     id: `client-${Math.random()}`,
@@ -362,7 +347,6 @@ const UnifiedLeadsTable = () => {
         }
     };
 
-    // useEffect za inicijalno učitavanje
     useEffect(() => {
         fetchAllContactsData();
     }, []);
@@ -448,12 +432,12 @@ const UnifiedLeadsTable = () => {
     };
 
     const handleExportCSV = (list) => {
-        // Implementacija eksporta u CSV
+        // TODO: implement CSV export
         console.log(`Exporting list ${list.id} to CSV`);
     };
 
     const handleImportCSV = (list) => {
-        // Implementacija uvoza iz CSV
+        // TODO: implement CSV import
         console.log(`Importing CSV to list ${list.id}`);
     };
 
@@ -911,13 +895,13 @@ const UnifiedLeadsTable = () => {
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {/* Implementacija prikaza pojedinačnih klijenata */}
+                            {/* TODO: implement individual client view */}
                         </TableBody>
                     </Table>
                 </TableContainer>
             )}
 
-            {/* Dialog za kreiranje/izmenu liste */}
+            {/* Create/edit list dialog */}
             <Dialog open={openDialog} onClose={handleCloseDialog}>
                 <DialogTitle>
                     {selectedList ? "Izmeni listu" : "Nova lista"}
@@ -968,7 +952,7 @@ const UnifiedLeadsTable = () => {
                 </DialogActions>
             </Dialog>
 
-            {/* Dialog za promenu tima */}
+            {/* Change team dialog */}
             <Dialog open={openTeamDialog} onClose={handleCloseTeamDialog}>
                 <DialogTitle>Promena tima</DialogTitle>
                 <DialogContent>
@@ -998,7 +982,7 @@ const UnifiedLeadsTable = () => {
                 </DialogActions>
             </Dialog>
 
-            {/* Menu za dodatne opcije */}
+            {/* Additional options menu */}
             <Menu
                 anchorEl={anchorEl}
                 open={Boolean(anchorEl)}
@@ -1018,7 +1002,7 @@ const UnifiedLeadsTable = () => {
                 </MenuItem>
             </Menu>
 
-            {/* Dialog za detalje tima */}
+            {/* Team details dialog */}
             <Dialog 
                 open={openTeamDetails} 
                 onClose={handleCloseTeamDetails}
@@ -1089,7 +1073,7 @@ const UnifiedLeadsTable = () => {
                 </DialogActions>
             </Dialog>
 
-            {/* Dialog za detalje liste */}
+            {/* List details dialog */}
             <Dialog 
                 open={openListDetails} 
                 onClose={handleCloseListDetails}
@@ -1154,7 +1138,7 @@ const UnifiedLeadsTable = () => {
                 <DialogContent sx={{ mt: 2 }}>
                     <Box sx={{ pt: 2 }}>
                         <Grid container spacing={3}>
-                            {/* Osnovne informacije */}
+                            {/* Basic info */}
                             <Grid item xs={12}>
                                 <Paper sx={{ 
                                     p: 3, 
@@ -1238,7 +1222,7 @@ const UnifiedLeadsTable = () => {
                                 </Paper>
                             </Grid>
 
-                            {/* Ciljevi i metrike */}
+                            {/* Goals and metrics */}
                             <Grid item xs={12} md={6}>
                                 <Paper sx={{ 
                                     p: 3, 
@@ -1362,7 +1346,7 @@ const UnifiedLeadsTable = () => {
                                 </Paper>
                             </Grid>
 
-                            {/* Podešavanja */}
+                            {/* Settings */}
                             <Grid item xs={12} md={6}>
                                 <Paper sx={{ 
                                     p: 3, 
@@ -1481,7 +1465,7 @@ const UnifiedLeadsTable = () => {
                                 </Paper>
                             </Grid>
 
-                            {/* Napomene */}
+                            {/* Notes */}
                             <Grid item xs={12}>
                                 <Paper sx={{ 
                                     p: 3, 
@@ -1520,7 +1504,7 @@ const UnifiedLeadsTable = () => {
                                 </Paper>
                             </Grid>
 
-                            {/* Lista klijenata */}
+                            {/* Client list */}
                             <Grid item xs={12}>
                                 <Paper sx={{ 
                                     p: 3, 

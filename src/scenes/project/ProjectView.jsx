@@ -1,4 +1,4 @@
-// src/scenes/project/ProjectView.jsx
+﻿// src/scenes/project/ProjectView.jsx
 import React, { useState, useEffect } from "react";
 import {
     Box,
@@ -7,9 +7,7 @@ import {
     useMediaQuery,
     Tabs,
     Tab,
-    Typography,
-    CircularProgress,
-    Alert
+    Typography
 } from "@mui/material";
 import axios from "axios";
 import { useParams } from "react-router-dom";
@@ -22,17 +20,11 @@ import {
     TableChart as DataIcon,
     CalendarMonth as CalendarIcon
 } from "@mui/icons-material";
-import Header from "../../components/Header";
 import OverviewSection from "../../components/project/OverviewSection";
-import GeneralInfoSection from "../../components/project/GeneralInfoSection";
 import DataSection from "../../components/project/DataSection";
 import TimelineSection from "../../components/project/TimelineSection";
 import KanbanBoard from "../../components/project/KanbanBoard";
-import MyTasks from "../../components/project/MyTasks";
-import Notes from "../../components/project/Notes";
-import Notifications from "../../components/project/Notifications";
 import ProjectCalendar from "../../components/project/ProjectCalendar";
-import ProjectTimeline from "../../components/project/ProjectTimeline";
 import MobileMenu from "../../components/project/MobileMenu";
 import { API_BASE_URL } from "../../config/apiConfig";
 
@@ -72,7 +64,7 @@ const ProjectView = () => {
             setNoteValue(response.data.note || "");
         } catch (error) {
             console.error('Failed to fetch project info:', error);
-            // Zadržavamo default naziv ako API poziv ne uspe
+            // Keep default name if API call fails
         }
     };
 
@@ -106,12 +98,12 @@ const ProjectView = () => {
         }, 1000); // 1 sekunda delay
     };
 
-    // useEffect za inicijalno učitavanje
+
     useEffect(() => {
         fetchProjectInfo();
     }, [projectId]);
 
-    // Definiši sections unutar komponente da može da koristi state
+
     const sections = [
         { id: 0, label: "Pregled", icon: <DashboardIcon />, component: <OverviewSection noteValue={noteValue} onNoteChange={handleNoteChange} noteLoading={noteLoading} />, disabled: false },
         { id: 1, label: "Kanban", icon: <KanbanIcon />, component: <KanbanBoard />, disabled: false },
@@ -123,7 +115,7 @@ const ProjectView = () => {
     const handleSectionChange = (event, newValue) => {
         const selectedSection = sections.find(section => section.id === newValue);
         if (selectedSection && selectedSection.disabled) {
-            return; // Sprečava prebacivanje na onemogućenu sekciju
+            return; // Prevent switching to a disabled section
         }
         setActiveSection(newValue);
         setMobileOpen(false);
@@ -226,7 +218,7 @@ const ProjectView = () => {
                 colors={colors}
             />
 
-            {/* Glavni sadržaj */}
+            {/* Main content */}
             <Box
                 sx={(theme) => ({
                 flex: 1,

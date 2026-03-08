@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+﻿import React, { useState } from "react";
 import {
     Box,
     Typography,
@@ -296,7 +296,7 @@ const CompanySettings = () => {
                     </Grid>
                 </Box>
 
-                {/* Podešavanja Pretplate */}
+                {/* Subscription settings */}
                 <Box
                     p="20px"
                     borderRadius="4px"
@@ -355,7 +355,7 @@ const CompanySettings = () => {
                     </Grid>
                 </Box>
 
-                {/* Načini Plaćanja */}
+                {/* Payment methods */}
                 <Box
                     p="20px"
                     borderRadius="4px"

@@ -39,7 +39,6 @@ function App() {
     const [userProfile, setUserProfile] = useState(null);
     const [companyInfo, setCompanyInfo] = useState(null);
 
-    // API pozivi za korisničke podatke
     const fetchUserProfile = async (token) => {
         try {
             const response = await axios.get(`${API_BASE_URL}/userProfile/getUserProfile`, {
@@ -73,7 +72,6 @@ function App() {
             setToken(jwt);
             localStorage.setItem("token", jwt);
             
-            // Pozovi API-je za korisničke podatke i company podatke
             await Promise.all([
                 fetchUserProfile(jwt),
                 fetchCompanyInfo(jwt)
@@ -97,7 +95,6 @@ function App() {
                 if (decoded.exp * 1000 < Date.now()) {
                     handleLogout();
                 } else {
-                    // Ako token postoji i valjan je, učitaj podatke
                     fetchUserProfile(token);
                     fetchCompanyInfo(token);
                 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import {
     Box,
     Paper,
@@ -41,7 +41,7 @@ const ReturnsSection = () => {
     const mode = theme?.palette?.mode || "dark";
     const colors = tokens(mode);
 
-    // Definišemo sve boje koje nam trebaju
+
     const defaultColors = {
         primary: {
             400: "#141b2d",
@@ -62,7 +62,7 @@ const ReturnsSection = () => {
         }
     };
 
-    // Sigurno čitanje boja sa fallback vrednostima
+    // Safe color reading with fallbacks
     const safeColors = {
         primary: {
             400: colors?.primary?.[400] || defaultColors.primary[400],
@@ -238,7 +238,7 @@ const ReturnsSection = () => {
             </Box>
 
             <Grid container spacing={2}>
-                {/* Lista povrata */}
+                {/* Returns list */}
                 <Grid item xs={12} md={selectedReturn ? 8 : 12}>
                     <TableContainer component={Paper} sx={{ backgroundColor: safeColors.primary[600] }}>
                         <Table>
@@ -300,7 +300,7 @@ const ReturnsSection = () => {
                     </TableContainer>
                 </Grid>
 
-                {/* Detalji povrata */}
+                {/* Return details */}
                 {selectedReturn && (
                     <Grid item xs={12} md={4}>
                         <Card sx={{ backgroundColor: safeColors.primary[600] }}>
@@ -370,7 +370,7 @@ const ReturnsSection = () => {
                 )}
             </Grid>
 
-            {/* Dialog za novi povrat */}
+            {/* New return dialog */}
             <Dialog open={isNewReturnDialogOpen} onClose={handleCloseNewReturnDialog}>
                 <DialogTitle>Novi povrat</DialogTitle>
                 <DialogContent>

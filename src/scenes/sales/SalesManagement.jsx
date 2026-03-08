@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import {
     Box,
     IconButton,
@@ -23,7 +23,6 @@ import StrategyConfig from "../../components/sales-management/StrategyConfig";
 import PricingEngine from "../../components/sales-management/PricingEngine";
 import UnifiedLeadsTable from "../../components/sales-management/UnifiedLeadsTable";
 import PerformanceDashboard from "../../components/sales-management/PerformanceDashboard";
-import PredictiveAnalytics from "../../components/sales-management/PredictiveAnalytics";
 import MobileMenu from "../../components/sales-management/MobileMenu";
 
 const sections = [
@@ -43,10 +42,10 @@ const SalesManagement = () => {
     const [mobileOpen, setMobileOpen] = useState(false);
 
     const handleSectionChange = (event, newValue) => {
-        // Proveri da li je sekcija onemogućena
+
         const selectedSection = sections.find(section => section.id === newValue);
         if (selectedSection && selectedSection.disabled) {
-            return; // Ne menjaj aktivnu sekciju ako je onemogućena
+            return; // Prevent switching to a disabled section
         }
         
         setActiveSection(newValue);
@@ -148,7 +147,7 @@ const SalesManagement = () => {
                 colors={colors}
             />
 
-            {/* Glavni sadržaj */}
+            {/* Main content */}
             <Box
                 sx={(theme) => ({
                     flex: 1,

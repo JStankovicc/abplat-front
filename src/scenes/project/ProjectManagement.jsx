@@ -43,11 +43,9 @@ const ProjectManagement = () => {
     const colors = tokens(theme.palette.mode);
     const navigate = useNavigate();
 
-    // State za projekte
     const [projects, setProjects] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    // State za dijaloge
     const [openNewProject, setOpenNewProject] = useState(false);
     const [openEditProject, setOpenEditProject] = useState(false);
     const [openDeleteProject, setOpenDeleteProject] = useState(false);
@@ -55,19 +53,16 @@ const ProjectManagement = () => {
     const [selectedProject, setSelectedProject] = useState(null);
     const [anchorEl, setAnchorEl] = useState(null);
     
-    // State za listu dostupnih radnika
     const [availableWorkers, setAvailableWorkers] = useState([]);
 
-    // State za novi projekat
     const [newProject, setNewProject] = useState({
         name: "",
         description: "",
-        startDate: new Date().toISOString().split('T')[0], // Današnji datum kao default
+        startDate: new Date().toISOString().split('T')[0], // Default to today's date
         endDate: "",
         team: []
     });
 
-    // Handlers za dijaloge
     const handleOpenNewProject = () => setOpenNewProject(true);
     const handleCloseNewProject = () => setOpenNewProject(false);
     const handleOpenEditProject = (project) => {
@@ -83,17 +78,15 @@ const ProjectManagement = () => {
     const handleOpenTeamManagement = (project) => {
         setSelectedProject(project);
         setOpenTeamManagement(true);
-        fetchAvailableWorkers(project.id); // Učitaj dostupne radnike kada se otvori dialog
+        fetchAvailableWorkers(project.id);
     };
     const handleCloseTeamManagement = () => setOpenTeamManagement(false);
 
-    // Učitavanje projekata pri prvom renderovanju
     useEffect(() => {
         fetchProjects();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // Funkcija za učitavanje svih projekata
     const fetchProjects = async () => {
         try {
             setLoading(true);
@@ -117,7 +110,6 @@ const ProjectManagement = () => {
                 }
             );
 
-            // Mapiranje projekata sa backend-a u format koji koristi frontend
             const mappedProjects = response.data.map(project => ({
                 id: project.id,
                 name: project.name,
@@ -150,9 +142,7 @@ const ProjectManagement = () => {
         }
     };
 
-    // Helper funkcija za određivanje statusa projekta
     const determineProjectStatus = (project) => {
-        // Možete prilagoditi logiku određivanja statusa prema vašim potrebama
         if (project.startDate) {
             const startDate = new Date(project.startDate);
             const today = new Date();
@@ -166,7 +156,6 @@ const ProjectManagement = () => {
         return "Aktivan";
     };
 
-    // Helper funkcija za formatiranje datuma u dd/mm/yyyy format
     const formatDate = (dateString) => {
         if (!dateString) return 'N/A';
         const date = new Date(dateString);
@@ -176,14 +165,12 @@ const ProjectManagement = () => {
         return `${day}/${month}/${year}`;
     };
 
-    // Helper funkcija za konverziju byte array-a u Base64 string
     const convertProfilePicToBase64 = (profilePic) => {
         if (!profilePic || profilePic.length === 0) return null;
         
-        // Ako je već string (Base64), vrati ga
+        // Already a Base64 string, return as-is
         if (typeof profilePic === 'string') return profilePic;
         
-        // Ako je array of bytes, konvertuj u Base64
         if (Array.isArray(profilePic)) {
             const binary = profilePic.reduce((acc, byte) => acc + String.fromCharCode(byte), '');
             return btoa(binary);
@@ -192,7 +179,6 @@ const ProjectManagement = () => {
         return null;
     };
 
-    // Funkcija za učitavanje dostupnih radnika
     const fetchAvailableWorkers = async (projectId) => {
         try {
             const token = localStorage.getItem('token');
@@ -205,7 +191,7 @@ const ProjectManagement = () => {
                 return;
             }
 
-            // Ako postoji projectId, dodaj ga kao query parametar
+            // Add projectId as query param if present
             const url = projectId 
                 ? `${API_BASE_URL}/company/getAllCompanyProjectWorkersNotOnProject?projectId=${projectId}`
                 : `${API_BASE_URL}/company/getAllCompanyProjectWorkersNotOnProject`;
@@ -223,7 +209,6 @@ const ProjectManagement = () => {
         } catch (error) {
             console.error("Greška pri učitavanju radnika:", error);
             
-            // Detaljnije logovanje greške
             if (error.response) {
                 console.error("Status:", error.response.status);
                 console.error("Data:", error.response.data);
@@ -239,7 +224,6 @@ const ProjectManagement = () => {
         }
     };
 
-    // Handler za menu
     const handleMenuClick = (event, project) => {
         setAnchorEl(event.currentTarget);
         setSelectedProject(project);
@@ -249,10 +233,8 @@ const ProjectManagement = () => {
         setSelectedProject(null);
     };
 
-    // Handlers za akcije
     const handleCreateProject = async () => {
         try {
-            // Validacija polja
             if (!newProject.name || !newProject.name.trim()) {
                 toast.error("Naziv projekta je obavezan!", {
                     position: "bottom-right",
@@ -261,7 +243,6 @@ const ProjectManagement = () => {
                 return;
             }
 
-            // Preuzimanje JWT tokena iz localStorage
             const token = localStorage.getItem('token');
             
             if (!token) {
@@ -272,14 +253,12 @@ const ProjectManagement = () => {
                 return;
             }
 
-            // Formatiranje datuma za backend (ako postoji)
             const projectData = {
                 name: newProject.name,
                 description: newProject.description,
                 startDate: newProject.startDate ? new Date(newProject.startDate) : null
             };
 
-            // Slanje POST zahteva
             const response = await axios.post(
                 `${API_BASE_URL}/project/add`,
                 projectData,
@@ -296,14 +275,13 @@ const ProjectManagement = () => {
                 autoClose: 3000,
             });
 
-            // Osveži listu projekata sa backend-a
             await fetchProjects();
 
             handleCloseNewProject();
             setNewProject({
                 name: "",
                 description: "",
-                startDate: new Date().toISOString().split('T')[0], // Reset na današnji datum
+                startDate: new Date().toISOString().split('T')[0], // Reset to today's date
                 endDate: "",
                 team: []
             });
@@ -463,7 +441,7 @@ const ProjectManagement = () => {
                 </Table>
             </TableContainer>
 
-            {/* Menu za akcije */}
+            {/* Context menu */}
             <Menu
                 anchorEl={anchorEl}
                 open={Boolean(anchorEl)}
@@ -504,7 +482,7 @@ const ProjectManagement = () => {
                 </MenuItem>
             </Menu>
 
-            {/* Dialog za novi projekat */}
+            {/* New project dialog */}
             <Dialog 
                 open={openNewProject} 
                 onClose={handleCloseNewProject}
@@ -608,7 +586,7 @@ const ProjectManagement = () => {
                 </DialogActions>
             </Dialog>
 
-            {/* Dialog za brisanje projekta */}
+            {/* Delete project dialog */}
             <Dialog
                 open={openDeleteProject}
                 onClose={handleCloseDeleteProject}
@@ -644,7 +622,7 @@ const ProjectManagement = () => {
                 </DialogActions>
             </Dialog>
 
-            {/* Dialog za izmenu projekta */}
+            {/* Edit project dialog */}
             <Dialog
                 open={openEditProject}
                 onClose={handleCloseEditProject}
@@ -770,7 +748,7 @@ const ProjectManagement = () => {
                 </DialogActions>
             </Dialog>
 
-            {/* Dialog za upravljanje timom */}
+            {/* Team management dialog */}
             <Dialog
                 open={openTeamManagement}
                 onClose={handleCloseTeamManagement}
@@ -831,7 +809,7 @@ const ProjectManagement = () => {
                                     const worker = availableWorkers.find(w => w.id.toString() === selectedWorkerId);
                                     if (!worker) return;
                                     
-                                    // Provera da radnik već nije u timu
+                                    // Guard: worker already on team
                                     const alreadyInTeam = selectedProject.team.some(m => m.id === worker.id);
                                     if (alreadyInTeam) {
                                         toast.warning("Ovaj radnik je već u timu!", {
@@ -852,7 +830,6 @@ const ProjectManagement = () => {
                                             return;
                                         }
 
-                                        // Slanje POST zahteva za dodavanje korisnika na projekat
                                         await axios.post(
                                             `${API_BASE_URL}/project/addUserToProject`,
                                             null,
@@ -867,7 +844,7 @@ const ProjectManagement = () => {
                                             }
                                         );
 
-                                        // Dodavanje u lokalnu listu nakon uspešnog poziva
+                                        // Update local state after successful API call
                                         const base64Pic = convertProfilePicToBase64(worker.profilePic);
                                         const newMember = {
                                             id: worker.id,
@@ -885,7 +862,6 @@ const ProjectManagement = () => {
                                             autoClose: 3000,
                                         });
 
-                                        // Osveži listu dostupnih radnika
                                         await fetchAvailableWorkers(selectedProject.id);
 
                                     } catch (error) {

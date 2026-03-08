@@ -39,7 +39,7 @@ const SalesView = () => {
     const handleSectionChange = (event, newValue) => {
         const selectedSection = sections.find(section => section.id === newValue);
         if (selectedSection && selectedSection.disabled) {
-            return; // Sprečava prebacivanje na onemogućenu sekciju
+            return; // Prevent switching to a disabled section
         }
         setActiveSection(newValue);
         setMobileOpen(false);
@@ -140,14 +140,14 @@ const SalesView = () => {
                 onChangeSection={(sectionId) => {
                     const selectedSection = sections.find(section => section.id === sectionId);
                     if (selectedSection && selectedSection.disabled) {
-                        return; // Sprečava prebacivanje na onemogućenu sekciju u mobilnom meniju
+                        return; // Prevent switching to a disabled section u mobilnom meniju
                     }
                     setActiveSection(sectionId);
                 }}
                 colors={colors}
             />
 
-            {/* Glavni sadržaj */}
+            {/* Main content */}
             <Box
                 sx={(theme) => ({
                     flex: 1,

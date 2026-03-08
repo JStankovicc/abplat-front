@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import {
     Box,
     Paper,
@@ -120,7 +120,7 @@ const SalesAnalytics = () => {
     return (
         <Box sx={{ height: "100%", overflow: "auto" }}>
             <Grid container spacing={2}>
-                {/* Mesečna konverzija */}
+                {/* Monthly conversion */}
                 <Grid item xs={12} md={8}>
                     <Paper
                         sx={{

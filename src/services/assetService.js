@@ -6,9 +6,7 @@ const getAuthHeaders = () => {
     return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
-/**
- * Formatira datum iz API-ja (ISO string ili Date) u YYYY-MM-DD za prikaz.
- */
+/** Formats date from API (ISO string or Date) to YYYY-MM-DD. */
 const formatDate = (value) => {
     if (value == null) return "";
     if (typeof value === "string") return value.slice(0, 10);
@@ -16,7 +14,7 @@ const formatDate = (value) => {
     return String(value);
 };
 
-/** UserResponse: { id, displayName, profilePic }. Koristi displayName za prikaz. */
+/** UserResponse shape: { id, displayName, profilePic }. Uses displayName for display. */
 const formatUserDisplay = (user) => {
     if (!user) return "";
     if (user.displayName != null && String(user.displayName).trim() !== "") return user.displayName.trim();
@@ -24,11 +22,11 @@ const formatUserDisplay = (user) => {
 };
 
 /**
- * Mapira MovableAssetResponse na oblik koji koristi UI (lista + detalji).
- * currentUser i issuedBy su UserResponse { id, displayName, profilePic }.
+ * Maps MovableAssetResponse to the UI shape used in list and detail views.
+ * currentUser and issuedBy are UserResponse { id, displayName, profilePic }.
  */
 export const mapMovableAssetFromApi = (raw) => {
-    // id (Long) – koristi se za changeStatus?assetId=...; uzmi iz bilo kog uobičajenog mesta
+    // id (Long) - used for changeStatus?assetId=...; try all common field names
     const rawId = raw.id ?? raw.movableAssetId ?? raw.movableAsset?.id ?? raw.movableAssetResponse?.id;
     const id = rawId !== undefined && rawId !== null ? Number(rawId) : null;
     return {
@@ -61,9 +59,9 @@ export const mapMovableAssetFromApi = (raw) => {
 };
 
 /**
- * Dohvata sve pokretne imovine kompanije (korisnik iz JWT).
- * Podržava i običan niz i Spring Page (response.data.content).
- * @returns {Promise<Array>} Lista mapiranih stavki za UI
+ * Fetches all movable assets for the company (user resolved from JWT).
+ * Supports both plain arrays and Spring Page responses (response.data.content).
+ * @returns {Promise<Array>} List of mapped assets for the UI
  */
 export const getMovableAssets = async () => {
     const response = await axios.get(`${API_BASE_URL}/asset/movableAsset/all`, {
@@ -73,7 +71,7 @@ export const getMovableAssets = async () => {
     const list = Array.isArray(data)
         ? data
         : (Array.isArray(data?.content) ? data.content : []);
-    // Ako je svaki element u listi ugnježden (npr. { movableAsset: { id, ... } }), izvuci ga
+    // Some items may be nested (e.g. { movableAsset: { id, ... } }) - unwrap them
     const items = list.map((item) =>
         item?.movableAsset ?? item?.movableAssetResponse ?? item?.asset ?? item
     );
@@ -81,8 +79,8 @@ export const getMovableAssets = async () => {
 };
 
 /**
- * Body za kreiranje pokretne imovine (PostMovableAssetRequest).
- * Datumi kao "YYYY-MM-DD" ili null.
+ * Creates a movable asset. Body maps to PostMovableAssetRequest.
+ * Dates must be "YYYY-MM-DD" strings or null.
  */
 export const createMovableAsset = async (payload) => {
     const amount = payload.amount !== undefined && payload.amount !== "" ? Number(payload.amount) : 0;
@@ -110,11 +108,11 @@ export const createMovableAsset = async (payload) => {
 };
 
 /**
- * Ažurira pokretnu imovinu. Body: UpdateMovableAssetRequest (id obavezan + ostala polja).
+ * Updates a movable asset. Body maps to UpdateMovableAssetRequest (id required).
  */
 export const updateMovableAsset = async (payload) => {
     const id = payload.id != null ? Number(payload.id) : NaN;
-    if (Number.isNaN(id) || id < 0) throw new Error("ID imovine nije validan.");
+    if (Number.isNaN(id) || id < 0) throw new Error("Asset ID is not valid.");
     const amount = payload.amount !== undefined && payload.amount !== "" ? Number(payload.amount) : 0;
     const currentUserId = payload.currentUserId === "" || payload.currentUserId == null ? null : Number(payload.currentUserId);
     const body = {
@@ -142,14 +140,14 @@ export const updateMovableAsset = async (payload) => {
 };
 
 /**
- * Menja status i dodeljenost pokretne imovine.
- * assetId = broj (Long id iz GET liste, polje id na svakom assetu). Query: ?assetId=...
- * Body: PostMovableAssetStatusChangeRequest { status, currentUserId }.
+ * Changes the status and assignment of a movable asset.
+ * assetId is the Long id from the GET list. Query param: ?assetId=...
+ * Body maps to PostMovableAssetStatusChangeRequest { status, currentUserId }.
  */
 export const changeMovableAssetStatus = async (assetId, payload) => {
     const id = assetId != null ? Number(assetId) : NaN;
     if (Number.isNaN(id) || id < 1) {
-        throw new Error("ID imovine nije validan. Osvežite listu.");
+        throw new Error("Asset ID is not valid. Please refresh the list.");
     }
     const body = {
         status: payload.status ?? null,
@@ -160,12 +158,12 @@ export const changeMovableAssetStatus = async (assetId, payload) => {
 };
 
 /**
- * Briše pokretnu imovinu. Query: ?assetId=...
+ * Deletes a movable asset. Query param: ?assetId=...
  */
 export const deleteMovableAsset = async (assetId) => {
     const id = assetId != null ? Number(assetId) : NaN;
     if (Number.isNaN(id) || id < 1) {
-        throw new Error("ID imovine nije validan.");
+        throw new Error("Asset ID is not valid.");
     }
     await axios.delete(`${API_BASE_URL}/asset/movableAsset?assetId=${id}`, {
         headers: getAuthHeaders()

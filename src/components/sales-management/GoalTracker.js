@@ -17,7 +17,7 @@ import {
 import { tokens } from "../../theme";
 import { Add as AddIcon } from "@mui/icons-material";
 
-// Mock podaci za ciljeve
+// Mock goal data
 const mockGoalsData = {
     annualTarget: 1200000,
     currentProgress: 540000,
@@ -125,7 +125,7 @@ const GoalTracker = () => {
                 </Button>
             </Box>
 
-            {/* Godišnji cilj */}
+            {/* Annual goal */}
             <Paper
                 sx={{
                     p: 2,
@@ -154,7 +154,7 @@ const GoalTracker = () => {
                 />
             </Paper>
 
-            {/* Kvartalni ciljevi */}
+            {/* Quarterly goals */}
             <Grid container spacing={2}>
                 {goalsData.quarterlyGoals.map((goal) => (
                     <Grid item xs={12} md={6} key={goal.id}>

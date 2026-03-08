@@ -10,9 +10,9 @@ class WebSocketService {
         this.connectionHandlers = [];
         this.errorHandlers = [];
         this.currentUserId = null;
-        this.disabled = false; // Flag za potpuno onemogućavanje
+        this.disabled = false; // Flag to fully disable the service
         this.failedAttempts = 0;
-        this.maxFailedAttempts = 1; // Samo jedan pokušaj
+        this.maxFailedAttempts = 1; // Only one connection attempt allowed
     }
 
     connect(userId) {
@@ -22,7 +22,7 @@ class WebSocketService {
 
         if (this.disabled) {
             console.warn('WebSocket je onemogućen, pokušavam ponovo...');
-            this.disabled = false; // Reset disabled status
+            this.disabled = false;
         }
 
         if (!userId) {
@@ -37,17 +37,15 @@ class WebSocketService {
         }
 
         return new Promise((resolve, reject) => {
-            // Pokušaj prvo čisti WebSocket, pa onda SockJS fallback
+            // Try native WebSocket first, then SockJS fallback
             const wsUrl = WS_BASE_URL.replace('/ws-chat', '/ws-chat');
             
             this.client = new Client({
                 webSocketFactory: () => {
-                    // Pokušaj čisti WebSocket
                     try {
                         return new WebSocket(wsUrl.replace('http://', 'ws://'));
                     } catch (error) {
                         console.warn('WebSocket failed, falling back to SockJS:', error);
-                        // Fallback na SockJS
                         return new SockJS(WS_BASE_URL.replace('/ws-chat', '/ws-chat-sockjs'), null, {
                             transports: ['websocket', 'xhr-streaming', 'xhr-polling']
                         });
@@ -57,10 +55,10 @@ class WebSocketService {
                     'Authorization': `Bearer ${token}`,
                     'user-id': userId.toString()
                 },
-                reconnectDelay: 0, // Onemogući automatski reconnect
-                maxWebSocketChainRetries: 0, // Nema retry-ja
+                reconnectDelay: 0, // Disable automatic reconnect
+                maxWebSocketChainRetries: 0, // No retries
                 debug: (str) => {
-                    // Umanji debug spam
+                    // Reduce debug spam
                     if (!str.includes('scheduling reconnection')) {
                         console.log('STOMP Debug:', str);
                     }
@@ -68,10 +66,10 @@ class WebSocketService {
                 onConnect: (frame) => {
                     console.log('✅ WebSocket uspešno povezan:', frame);
                     this.isConnected = true;
-                    this.failedAttempts = 0; // Reset failed attempts na uspešnu konekciju
-                    this.disabled = false; // Reset disabled status
+                    this.failedAttempts = 0; // Reset on successful connection
+                    this.disabled = false;
                     
-                    // Pretplati se na personalne poruke (tvoj sistem)
+                    // Subscribe to personal message queue
                     console.log('🔔 Subscribing to /user/queue/messages');
                     this.client.subscribe('/user/queue/messages', (message) => {
                         console.log('📨 Received message:', message.body);
@@ -79,12 +77,11 @@ class WebSocketService {
                         this.notifyMessageHandlers(messageData);
                     });
 
-                    // Pretplati se na ACK poruke (tvoj sistem)
+                    // Subscribe to ACK queue
                     console.log('🔔 Subscribing to /user/queue/ack');
                     this.client.subscribe('/user/queue/ack', (message) => {
                         const ackData = JSON.parse(message.body);
                         console.log('✅ Message ACK received:', ackData);
-                        // Možeš dodati handler za ACK poruke
                     });
 
                     this.notifyConnectionHandlers(true);
@@ -112,7 +109,7 @@ class WebSocketService {
                     this.failedAttempts++;
                     this.notifyConnectionHandlers(false);
                     
-                    // Ako je CORS problem (code 1006), odmah onemogući WebSocket
+                    // CORS error (code 1006) - disable WebSocket
                     if (event.code === 1006) {
                         console.warn('Detektovan CORS problem - onemogućavam WebSocket');
                         this.disabled = true;
@@ -125,7 +122,7 @@ class WebSocketService {
                 }
             });
 
-            // Timeout za konekciju - ako se ne konektuje u 3 sekunde, prekini
+            // 3-second connection timeout
             const connectionTimeout = setTimeout(() => {
                 if (!this.isConnected) {
                     console.warn('WebSocket konekcija timeout - prekidam pokušaj');
@@ -135,7 +132,7 @@ class WebSocketService {
                 }
             }, 3000);
 
-            // Očisti timeout kad se konektuje
+            // Clear timeout on connect
             const originalResolve = resolve;
             resolve = () => {
                 clearTimeout(connectionTimeout);
@@ -160,7 +157,6 @@ class WebSocketService {
         }
     }
 
-    // Resetuj WebSocket servis (omogućava ponovni pokušaj)
     reset() {
         this.disconnect();
         this.disabled = false;
@@ -180,7 +176,6 @@ class WebSocketService {
             userId: this.currentUserId
         });
 
-        // Šalje preko tvog WebSocket endpointa
         this.client.publish({
             destination: '/app/chat.send',
             body: JSON.stringify({
@@ -200,18 +195,16 @@ class WebSocketService {
 
         console.log(`🔔 Subscribing to conversation topic: /topic/conversation/${threadId}`);
         
-        // Pretplati se na poruke za specifičnu konverzaciju
         this.client.subscribe(`/topic/conversation/${threadId}`, (message) => {
             console.log(`📨 Received message for conversation ${threadId}:`, message.body);
             const messageData = JSON.parse(message.body);
             this.notifyMessageHandlers(messageData);
         });
 
-        // Pretplati se na typing indikatore za thread
+        // Subscribe to typing indicators for the thread
         this.client.subscribe(`/topic/thread/${threadId}/typing`, (message) => {
             const typingData = JSON.parse(message.body);
             console.log('Typing indicator:', typingData);
-            // Možeš dodati handler za typing indikatore
         });
     }
 
@@ -230,7 +223,6 @@ class WebSocketService {
         });
     }
 
-    // Handler management
     addMessageHandler(handler) {
         this.messageHandlers.push(handler);
     }
@@ -255,7 +247,6 @@ class WebSocketService {
         this.errorHandlers = this.errorHandlers.filter(h => h !== handler);
     }
 
-    // Notification methods
     notifyMessageHandlers(message) {
         this.messageHandlers.forEach(handler => {
             try {

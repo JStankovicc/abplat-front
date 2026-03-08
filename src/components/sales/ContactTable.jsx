@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import {
     Box,
     Button,
@@ -33,7 +33,6 @@ import { tokens } from "../../theme";
 import AddLeadModal from "./modals/AddLeadModal";
 import { API_BASE_URL } from "../../config/apiConfig";
 
-// Helper funkcija za auth headers
 const getAuthHeaders = () => {
     const token = localStorage.getItem('token');
     return {
@@ -52,11 +51,9 @@ const ContactTable = () => {
     const [searchTerm, setSearchTerm] = useState("");
     const [isModalOpen, setIsModalOpen] = useState(false);
     
-    // Loading i error states
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    // API funkcije
     const fetchContacts = async () => {
         try {
             setLoading(true);
@@ -68,14 +65,13 @@ const ContactTable = () => {
 
             console.log('Contacts response:', response.data);
             
-            // Transformišemo response u format koji komponenta očekuje
             const transformedContacts = response.data.map((contact, index) => ({
                 id: index + 1,
                 name: contact.name,
                 companyName: contact.companyName,
                 phoneNumber: contact.phoneNumber,
                 email: contact.email,
-                status: "Aktivan" // Default status jer nije u response-u
+                status: "Aktivan" // Default - not returned by the API
             }));
             
             setContacts(transformedContacts);
@@ -89,7 +85,6 @@ const ContactTable = () => {
         }
     };
 
-    // useEffect za inicijalno učitavanje
     useEffect(() => {
         fetchContacts();
     }, []);
@@ -278,7 +273,7 @@ const ContactTable = () => {
                 onClose={() => setIsModalOpen(false)}
                 onAdd={(newContact) => {
                     // TODO: Implementirati API poziv za kreiranje novog kontakta
-                    // Za sada samo osveži listu sa servera
+                    // TODO: implement create via API, for now just refresh
                     fetchContacts();
                     setIsModalOpen(false);
                 }}

@@ -37,7 +37,7 @@ const AssetDashboard = () => {
 
     return (
         <Box>
-            {/* Header sa akcijama */}
+            {/* Header with actions */}
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
                 <Typography variant="h4" color={colors.grey[100]} fontWeight="bold">
                     Pregled imovine
@@ -86,7 +86,7 @@ const AssetDashboard = () => {
                 </Box>
             </Box>
 
-            {/* Statistički podaci */}
+            {/* Statistics */}
             <Grid container spacing={3} mb={3}>
                 <Grid item xs={12} sm={6} md={3}>
                     <Paper
@@ -210,7 +210,7 @@ const AssetDashboard = () => {
                 </Grid>
             </Grid>
 
-            {/* Grafikoni i tabele */}
+            {/* Charts and tables */}
             <Grid container spacing={3}>
                 <Grid item xs={12} md={8}>
                     <Paper
@@ -276,7 +276,7 @@ const AssetDashboard = () => {
                     </Paper>
                 </Grid>
 
-                {/* Dodatne informacije */}
+                {/* Additional info */}
                 <Grid item xs={12}>
                     <Paper
                         elevation={0}
@@ -335,7 +335,7 @@ const AssetDashboard = () => {
                 </Grid>
             </Grid>
 
-            {/* Menu za izbor vremenskog perioda */}
+            {/* Time period selection menu */}
             <Menu
                 anchorEl={anchorEl}
                 open={Boolean(anchorEl)}
