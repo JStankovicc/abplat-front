@@ -50,35 +50,42 @@ const AssetsView = () => {
                 minHeight: { xs: "calc(100vh - 56px)", md: "calc(100vh - 74px)" },
                 display: "flex",
                 flexDirection: "column",
-                gap: "10px",
-                p: { xs: 1, sm: "10px" }
+                gap: { xs: 1.5, md: "10px" },
+                p: { xs: 2, sm: "10px" },
+                px: { xs: "max(16px, env(safe-area-inset-left))", sm: 2 },
+                pr: { xs: "max(16px, env(safe-area-inset-right))", sm: 2 },
             }}
         >
             {/* Header with navigation */}
             <Box 
                 sx={{
                     backgroundColor: colors.primary[400],
-                    borderRadius: "4px",
-                    p: { xs: "8px 8px", sm: "2px 10px" },
-                    boxShadow: 1,
+                    borderRadius: 2,
+                    p: { xs: 1.5, sm: "10px 12px" },
+                    boxShadow: "0 1px 4px rgba(0,0,0,0.12)",
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center",
-                    minHeight: "25px",
+                    minHeight: { xs: 48, sm: "25px" },
                     flexWrap: "wrap",
                     gap: 1,
+                    border: `1px solid ${colors.grey[700]}`,
                 }}
             >
                 <Box display="flex" alignItems="center" gap={1}>
                     {isMobile && (
-                        <IconButton size="small" onClick={() => setMobileOpen(true)} sx={{ color: colors.grey[100] }}>
+                        <IconButton
+                            onClick={() => setMobileOpen(true)}
+                            aria-label="Meni sekcija"
+                            sx={{ color: colors.grey[100], minWidth: 44, minHeight: 44 }}
+                        >
                             <MenuIcon />
                         </IconButton>
                     )}
                     <Typography
                         variant="h5"
                         color={colors.grey[100]}
-                        sx={{ fontSize: { xs: "1rem", sm: "1.1rem" }, fontWeight: "bold", lineHeight: 1 }}
+                        sx={{ fontSize: { xs: "1.1rem", sm: "1.1rem" }, fontWeight: 600, lineHeight: 1.3 }}
                     >
                         Upravljanje imovinom
                     </Typography>
@@ -128,11 +135,12 @@ const AssetsView = () => {
                 sx={{
                     flex: 1,
                     backgroundColor: colors.primary[400],
-                    borderRadius: "4px",
-                    p: { xs: 1.5, sm: 2, md: "20px" },
+                    borderRadius: 2,
+                    p: { xs: 2, sm: 2, md: "20px" },
                     overflow: "auto",
-                    boxShadow: 1,
+                    boxShadow: "0 1px 4px rgba(0,0,0,0.12)",
                     minHeight: 0,
+                    border: `1px solid ${colors.grey[700]}`,
                 }}
             >
                 {sections[activeSection].component}

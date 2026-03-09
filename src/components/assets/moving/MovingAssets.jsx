@@ -10,6 +10,7 @@ import {
   Grid,
   Typography,
   useTheme,
+  useMediaQuery,
   IconButton,
   Table,
   TableBody,
@@ -29,6 +30,12 @@ import {
   InputAdornment,
   CircularProgress,
   Alert,
+  Fab,
+  TablePagination,
+  FormGroup,
+  FormControlLabel,
+  Checkbox,
+  Popover,
 } from "@mui/material";
 import {
   Add as AddIcon,
@@ -39,6 +46,7 @@ import {
   Description as DescriptionIcon,
   History as HistoryIcon,
   Build as BuildIcon,
+  FilterList as FilterListIcon,
 } from "@mui/icons-material";
 import { tokens } from "../../../theme";
 import {
@@ -59,10 +67,36 @@ import {
   initialFormState,
 } from "./constants";
 
+const ROWS_PER_PAGE_OPTIONS = [5, 10, 25, 50];
+
+/** Polja po kojima se može pretraživati – key = property na assetu, label = prikaz. Status nije u listi jer postoji poseban filter. */
+const SEARCH_FIELDS = [
+  { key: "identifier", label: "Identifikator" },
+  { key: "id", label: "ID" },
+  { key: "name", label: "Naziv" },
+  { key: "type", label: "Tip" },
+  { key: "model", label: "Model" },
+  { key: "manufacturer", label: "Proizvođač" },
+  { key: "serialNumber", label: "Serijski broj" },
+  { key: "barcode", label: "Barkod" },
+  { key: "unit", label: "Jedinica" },
+  { key: "amount", label: "Količina" },
+  { key: "location", label: "Lokacija" },
+  { key: "assignedTo", label: "Dodeljeno" },
+  { key: "issuedBy", label: "Dodelio" },
+];
+
+const defaultSearchFields = SEARCH_FIELDS.reduce((acc, { key }) => ({ ...acc, [key]: true }), {});
+
 const MovingAssets = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [open, setOpen] = useState(false);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [searchFields, setSearchFields] = useState(defaultSearchFields);
+  const [searchFieldsAnchor, setSearchFieldsAnchor] = useState(null);
   const [editMode, setEditMode] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState(null);
   const [assets, setAssets] = useState([]);
@@ -127,25 +161,49 @@ const MovingAssets = () => {
     const searchLower = search.trim().toLowerCase();
     if (!searchLower) return !statusFilter || a.status === statusFilter;
     const text = (val) => (val != null && val !== "" ? String(val).toLowerCase() : "");
-    const statusLabel = translateAssetStatus(a.status).toLowerCase();
-    const matchSearch =
-      text(a.identifier).includes(searchLower) ||
-      text(a.id).includes(searchLower) ||
-      text(a.name).includes(searchLower) ||
-      text(a.type).includes(searchLower) ||
-      text(a.model).includes(searchLower) ||
-      text(a.manufacturer).includes(searchLower) ||
-      text(a.serialNumber).includes(searchLower) ||
-      text(a.barcode).includes(searchLower) ||
-      text(a.status).includes(searchLower) ||
-      statusLabel.includes(searchLower) ||
-      text(a.unit).includes(searchLower) ||
-      text(a.amount).includes(searchLower) ||
-      text(a.location).includes(searchLower) ||
-      text(a.assignedTo).includes(searchLower) ||
-      text(a.issuedBy).includes(searchLower);
+    const fieldMatches = {
+      identifier: () => text(a.identifier).includes(searchLower),
+      id: () => text(a.id).includes(searchLower),
+      name: () => text(a.name).includes(searchLower),
+      type: () => text(a.type).includes(searchLower),
+      model: () => text(a.model).includes(searchLower),
+      manufacturer: () => text(a.manufacturer).includes(searchLower),
+      serialNumber: () => text(a.serialNumber).includes(searchLower),
+      barcode: () => text(a.barcode).includes(searchLower),
+      unit: () => text(a.unit).includes(searchLower),
+      amount: () => text(a.amount).includes(searchLower),
+      location: () => text(a.location).includes(searchLower),
+      assignedTo: () => text(a.assignedTo).includes(searchLower),
+      issuedBy: () => text(a.issuedBy).includes(searchLower),
+    };
+    const hasAnyFieldSelected = SEARCH_FIELDS.some(({ key }) => searchFields[key]);
+    const matchSearch = !hasAnyFieldSelected
+      ? SEARCH_FIELDS.some(({ key }) => fieldMatches[key]?.())
+      : SEARCH_FIELDS.some(({ key }) => searchFields[key] && fieldMatches[key]?.());
     return (!statusFilter || a.status === statusFilter) && matchSearch;
   });
+
+  // Frontend pagination (kasnije prebaciti na backend)
+  const totalCount = filteredAssets.length;
+  const paginatedAssets = filteredAssets.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage
+  );
+  const handleChangePage = (_, newPage) => setPage(newPage);
+  const handleChangeRowsPerPage = (e) => {
+    setRowsPerPage(parseInt(e.target.value, 10));
+    setPage(0);
+  };
+  useEffect(() => {
+    setPage(0);
+  }, [search, statusFilter, searchFields]);
+
+  const handleSearchFieldToggle = (key) => {
+    setSearchFields((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+  const handleSelectAllSearchFields = (checked) => {
+    setSearchFields(SEARCH_FIELDS.reduce((acc, { key }) => ({ ...acc, [key]: checked }), {}));
+  };
 
   const handleOpen = () => {
     setOpen(true);
@@ -343,27 +401,114 @@ const MovingAssets = () => {
   };
 
   return (
-    <Box>
-      <Box display="flex" flexWrap="wrap" alignItems="center" justifyContent="space-between" mb={2} gap={2}>
-        <Typography variant="h5" color={colors.grey[100]}>
+    <Box sx={{ pb: isMobile ? 10 : 0 }}>
+      <Box
+        display="flex"
+        flexDirection={isMobile ? "column" : "row"}
+        flexWrap="wrap"
+        alignItems={isMobile ? "stretch" : "center"}
+        justifyContent="space-between"
+        mb={2}
+        gap={2}
+      >
+        <Typography
+          variant="h5"
+          color={colors.grey[100]}
+          sx={{
+            fontSize: isMobile ? "1.25rem" : undefined,
+            fontWeight: 600,
+          }}
+        >
           Pokretna imovina
+          {isMobile && (
+            <Typography component="span" sx={{ ml: 0.75, fontSize: "0.875rem", color: colors.grey[300], fontWeight: 500 }}>
+              ({totalCount})
+            </Typography>
+          )}
         </Typography>
-        <Box display="flex" gap={2} alignItems="center">
-          <TextField
-            size="small"
-            placeholder="Pretraga"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon />
-                </InputAdornment>
-              ),
+        <Box display="flex" flexDirection={isMobile ? "column" : "row"} gap={1.5} alignItems="stretch" sx={{ width: isMobile ? "100%" : undefined }}>
+          <Box display="flex" gap={0.5} alignItems="stretch" sx={{ flex: isMobile ? "1 1 100%" : "0 1 auto", minWidth: 0 }}>
+            <TextField
+              size="small"
+              placeholder="Pretraga"
+              fullWidth
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{
+                minWidth: isMobile ? undefined : 220,
+                background: colors.primary[400],
+                borderRadius: 1,
+                "& .MuiInputBase-input": { fontSize: isMobile ? 16 : undefined },
+              }}
+            />
+            <Tooltip title="Polja pretrage">
+              <IconButton
+                onClick={(e) => setSearchFieldsAnchor(e.currentTarget)}
+                sx={{
+                  background: colors.primary[400],
+                  border: `1px solid ${colors.grey[600]}`,
+                  borderRadius: 1,
+                  color: searchFieldsAnchor ? colors.greenAccent[500] : colors.grey[300],
+                  minWidth: 40,
+                  minHeight: 40,
+                }}
+              >
+                <FilterListIcon />
+              </IconButton>
+            </Tooltip>
+          </Box>
+          <Popover
+            open={Boolean(searchFieldsAnchor)}
+            anchorEl={searchFieldsAnchor}
+            onClose={() => setSearchFieldsAnchor(null)}
+            anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+            transformOrigin={{ vertical: "top", horizontal: "right" }}
+            PaperProps={{
+              sx: {
+                p: 2,
+                backgroundColor: colors.primary[400],
+                color: colors.grey[100],
+                minWidth: 260,
+                maxWidth: 320,
+              },
             }}
-            sx={{ minWidth: 220, background: colors.primary[400], borderRadius: 1 }}
-          />
-          <FormControl size="small" sx={{ minWidth: 140 }}>
+          >
+            <Typography variant="subtitle2" sx={{ mb: 1.5, color: colors.grey[200] }}>
+              Pretraži po poljima
+            </Typography>
+            <FormGroup>
+              <Box display="flex" gap={0.5} mb={1}>
+                <Button size="small" onClick={() => handleSelectAllSearchFields(true)} sx={{ color: colors.grey[300], fontSize: "0.75rem" }}>
+                  Sve
+                </Button>
+                <Button size="small" onClick={() => handleSelectAllSearchFields(false)} sx={{ color: colors.grey[300], fontSize: "0.75rem" }}>
+                  Ništa
+                </Button>
+              </Box>
+              {SEARCH_FIELDS.map(({ key, label }) => (
+                <FormControlLabel
+                  key={key}
+                  control={
+                    <Checkbox
+                      checked={!!searchFields[key]}
+                      onChange={() => handleSearchFieldToggle(key)}
+                      size="small"
+                      sx={{ color: colors.grey[400], "&.Mui-checked": { color: colors.greenAccent[500] } }}
+                    />
+                  }
+                  label={<Typography variant="body2" sx={{ color: colors.grey[200] }}>{label}</Typography>}
+                />
+              ))}
+            </FormGroup>
+          </Popover>
+          <FormControl size="small" sx={{ minWidth: isMobile ? "100%" : 140 }}>
             <InputLabel>Status</InputLabel>
             <Select
               label="Status"
@@ -378,30 +523,165 @@ const MovingAssets = () => {
               ))}
             </Select>
           </FormControl>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={handleOpen}
-            sx={{
-              backgroundColor: colors.greenAccent[500],
-              "&:hover": { backgroundColor: colors.greenAccent[600] },
-            }}
-          >
-            Dodaj imovinu
-          </Button>
+          {!isMobile && (
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={handleOpen}
+              sx={{
+                backgroundColor: colors.greenAccent[500],
+                "&:hover": { backgroundColor: colors.greenAccent[600] },
+              }}
+            >
+              Dodaj imovinu
+            </Button>
+          )}
         </Box>
       </Box>
 
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+        <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }} onClose={() => setError(null)}>
           {error}
         </Alert>
       )}
 
       {loading ? (
         <Box display="flex" justifyContent="center" alignItems="center" minHeight={200}>
-          <CircularProgress sx={{ color: colors.greenAccent[500] }} />
+          <CircularProgress sx={{ color: colors.greenAccent[500] }} size={isMobile ? 32 : undefined} />
         </Box>
+      ) : isMobile ? (
+        <>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1.25 }}>
+            {paginatedAssets.length === 0 ? (
+              <Box
+                sx={{
+                  py: 6,
+                  px: 2,
+                  textAlign: "center",
+                  backgroundColor: colors.primary[400],
+                  borderRadius: 2,
+                  border: `1px solid ${colors.grey[700]}`,
+                }}
+              >
+                <Typography variant="body1" sx={{ color: colors.grey[200], fontWeight: 500 }}>
+                  Nema stavki.
+                </Typography>
+                <Typography variant="body2" sx={{ color: colors.grey[400], mt: 1 }}>
+                  Promenite filter ili dodajte imovinu.
+                </Typography>
+              </Box>
+            ) : (
+              paginatedAssets.map((asset) => (
+                <Box
+                  key={asset.id}
+                  onClick={() => handleDetail(asset)}
+                  sx={{
+                    backgroundColor: colors.primary[400],
+                    borderRadius: 2,
+                    p: 2,
+                    borderLeft: `4px solid ${colors.greenAccent?.[500] ?? colors.grey[500]}`,
+                    boxShadow: "0 1px 4px rgba(0,0,0,0.15)",
+                    cursor: "pointer",
+                    transition: "box-shadow 0.2s ease",
+                    "&:active": { transform: "scale(0.99)" },
+                  }}
+                >
+                  <Box display="flex" justifyContent="space-between" alignItems="flex-start" gap={1}>
+                    <Typography
+                      variant="subtitle1"
+                      sx={{
+                        color: colors.grey[100],
+                        fontWeight: 600,
+                        flex: 1,
+                        fontSize: "1rem",
+                      }}
+                    >
+                      {asset.name || asset.identifier || asset.id}
+                    </Typography>
+                    <Box display="flex" alignItems="center" gap={0.5} onClick={(e) => e.stopPropagation()}>
+                      <IconButton
+                        size="small"
+                        onClick={() => setQrDialogAsset(asset)}
+                        sx={{ minWidth: 40, minHeight: 40, color: colors.grey[300] }}
+                      >
+                        <QrCodeIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        onClick={() => handleEdit(asset)}
+                        sx={{ minWidth: 40, minHeight: 40, color: colors.grey[300] }}
+                      >
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        onClick={() => handleDelete(asset)}
+                        sx={{ minWidth: 40, minHeight: 40, color: colors.grey[300] }}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Box>
+                  </Box>
+                  <Box display="flex" alignItems="center" flexWrap="wrap" gap={1} mt={1}>
+                    <Typography variant="caption" sx={{ color: colors.grey[300] }}>
+                      {asset.identifier || asset.id}
+                      {asset.type ? ` · ${asset.type}` : ""}
+                    </Typography>
+                    <Chip
+                      label={translateAssetStatus(asset.status)}
+                      size="small"
+                      color={statusColors[asset.status] || "default"}
+                      sx={{ fontWeight: 600, fontSize: "0.7rem" }}
+                    />
+                  </Box>
+                  {(asset.assignedTo || asset.location) && (
+                    <Typography variant="caption" sx={{ display: "block", mt: 0.5, color: colors.grey[400] }}>
+                      {asset.assignedTo && `Dodeljeno: ${asset.assignedTo}`}
+                      {asset.assignedTo && asset.location && " · "}
+                      {asset.location && `Lokacija: ${asset.location}`}
+                    </Typography>
+                  )}
+                </Box>
+              ))
+            )}
+          </Box>
+          {totalCount > 0 && (
+            <TablePagination
+              component="div"
+              count={totalCount}
+              page={page}
+              onPageChange={handleChangePage}
+              rowsPerPage={rowsPerPage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
+              rowsPerPageOptions={ROWS_PER_PAGE_OPTIONS}
+              labelRowsPerPage="Po stranici:"
+              labelDisplayedRows={({ from, to, count }) => `${from}–${to} od ${count}`}
+              sx={{
+                color: colors.grey[200],
+                borderTop: `1px solid ${colors.grey[700]}`,
+                mt: 2,
+                "& .MuiTablePagination-selectIcon": { color: colors.grey[300] },
+              }}
+            />
+          )}
+          <Fab
+            color="primary"
+            aria-label="Dodaj imovinu"
+            onClick={handleOpen}
+            sx={{
+              position: "fixed",
+              left: "50%",
+              transform: "translateX(-50%)",
+              bottom: "max(80px, calc(env(safe-area-inset-bottom) + 28px))",
+              zIndex: 1100,
+              backgroundColor: colors.greenAccent[500],
+              "&:hover": { backgroundColor: colors.greenAccent[600] },
+              boxShadow: "0 4px 14px rgba(0,0,0,0.25)",
+            }}
+          >
+            <AddIcon sx={{ fontSize: 28 }} />
+          </Fab>
+        </>
       ) : (
         <>
           <TableContainer component={Paper} sx={{ backgroundColor: colors.primary[400] }}>
@@ -423,7 +703,7 @@ const MovingAssets = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {filteredAssets.map((asset) => (
+                {paginatedAssets.map((asset) => (
                   <TableRow key={asset.id} hover>
                     <TableCell>
                       <Tooltip title="Prikaži QR kod">
@@ -483,8 +763,30 @@ const MovingAssets = () => {
               </TableBody>
             </Table>
           </TableContainer>
+          {totalCount > 0 && (
+            <TablePagination
+              component="div"
+              count={totalCount}
+              page={page}
+              onPageChange={handleChangePage}
+              rowsPerPage={rowsPerPage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
+              rowsPerPageOptions={ROWS_PER_PAGE_OPTIONS}
+              labelRowsPerPage="Redova po stranici:"
+              labelDisplayedRows={({ from, to, count }) => `${from}–${to} od ${count}`}
+              sx={{
+                color: colors.grey[200],
+                backgroundColor: colors.primary[400],
+                borderTop: `1px solid ${colors.grey[700]}`,
+                "& .MuiTablePagination-selectIcon": { color: colors.grey[300] },
+              }}
+            />
+          )}
+        </>
+      )}
 
-          <Dialog
+      {/* Dijalozi uvek u DOM-u da FAB/dodavanje rade i na mobilnom */}
+      <Dialog
             open={!!qrDialogAsset}
             onClose={() => setQrDialogAsset(null)}
             maxWidth="xs"
@@ -586,6 +888,7 @@ const MovingAssets = () => {
             onClose={handleDetailClose}
             maxWidth="md"
             fullWidth
+            fullScreen={isMobile}
             PaperProps={{
               sx: {
                 backgroundColor: colors.primary[400],
@@ -594,7 +897,9 @@ const MovingAssets = () => {
               },
             }}
           >
-            <DialogTitle>Detalji imovine: {detailAsset?.name}</DialogTitle>
+            <DialogTitle sx={{ fontSize: isMobile ? "1.25rem" : undefined }}>
+              Detalji imovine: {detailAsset?.name}
+            </DialogTitle>
             <DialogContent>
               <Box display="flex" gap={3} mb={2}>
                 <AssetQRCode
@@ -742,8 +1047,44 @@ const MovingAssets = () => {
                 </Box>
               )}
             </DialogContent>
-            <DialogActions>
-              <Button onClick={handleDetailClose}>Zatvori</Button>
+            <DialogActions sx={{ flexWrap: "wrap", gap: 1 }}>
+              {isMobile && (
+                <>
+                  <Button
+                    startIcon={<QrCodeIcon />}
+                    onClick={() => {
+                      if (detailAsset) setQrDialogAsset(detailAsset);
+                      handleDetailClose();
+                    }}
+                    sx={{ color: colors.grey[200] }}
+                  >
+                    QR
+                  </Button>
+                  <Button
+                    startIcon={<EditIcon />}
+                    onClick={() => {
+                      if (detailAsset) handleEdit(detailAsset);
+                      handleDetailClose();
+                    }}
+                    sx={{ color: colors.grey[200] }}
+                  >
+                    Izmeni
+                  </Button>
+                  <Button
+                    startIcon={<DeleteIcon />}
+                    onClick={() => {
+                      if (detailAsset) handleDelete(detailAsset);
+                      handleDetailClose();
+                    }}
+                    color="error"
+                  >
+                    Obriši
+                  </Button>
+                </>
+              )}
+              <Button onClick={handleDetailClose} variant={isMobile ? "contained" : "text"}>
+                Zatvori
+              </Button>
             </DialogActions>
           </Dialog>
 
@@ -752,6 +1093,7 @@ const MovingAssets = () => {
             onClose={handleClose}
             maxWidth="md"
             fullWidth
+            fullScreen={isMobile}
             PaperProps={{
               sx: {
                 backgroundColor: colors.primary[400],
@@ -952,8 +1294,6 @@ const MovingAssets = () => {
               )}
             </DialogActions>
           </Dialog>
-        </>
-      )}
     </Box>
   );
 };
