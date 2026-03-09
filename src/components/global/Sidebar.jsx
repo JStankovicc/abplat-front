@@ -22,6 +22,7 @@ import DirectionsCarIcon from "@mui/icons-material/DirectionsCar";
 import FolderOutlinedIcon from "@mui/icons-material/FolderOutlined";
 import SidebarItem from "./SidebarItem";
 import SidebarProfile from "./SidebarProfile";
+import { useMobileSidebar } from "../../context/MobileSidebarContext";
 
 const Sidebar = ({ userProfile, companyInfo }) => {
     const theme = useTheme();
@@ -29,7 +30,7 @@ const Sidebar = ({ userProfile, companyInfo }) => {
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [selected, setSelected] = useState("Dashboard");
     const isMobile = useMediaQuery("(max-width:600px)");
-    const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+    const { open: isMobileSidebarOpen, setOpen: setIsMobileSidebarOpen } = useMobileSidebar();
     const [projects, setProjects] = useState([]);
     const navigate = useNavigate();
 
@@ -120,22 +121,20 @@ const Sidebar = ({ userProfile, companyInfo }) => {
 
     return (
         <>
-            {isMobile && (
-                <IconButton
-                    onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
+            {isMobile && isMobileSidebarOpen && (
+                <Box
+                    onClick={() => setIsMobileSidebarOpen(false)}
                     sx={{
-                        position: 'fixed',
-                        top: 10,
-                        left: 10,
-                        zIndex: 9999,
-                        backgroundColor: colors.primary[400],
-                        '&:hover': { backgroundColor: colors.primary[300] }
+                        position: "fixed",
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        backgroundColor: "rgba(0,0,0,0.5)",
+                        zIndex: 9997,
                     }}
-                >
-                    <MenuOutlinedIcon />
-                </IconButton>
+                />
             )}
-
             <Box
                 sx={{
                     "& .pro-sidebar-inner": {
@@ -148,12 +147,13 @@ const Sidebar = ({ userProfile, companyInfo }) => {
                     position: "relative",
                     height: "100vh",
                     ...(isMobile && {
-                        position: 'fixed',
-                        left: isMobileSidebarOpen ? 0 : '-270px',
-                        transition: 'left 0.3s ease-in-out',
+                        position: "fixed",
+                        left: isMobileSidebarOpen ? 0 : "-270px",
+                        transition: "left 0.3s ease-in-out",
                         zIndex: 9998,
-                        width: '270px',
-                        height: '100vh',
+                        width: "270px",
+                        height: "100vh",
+                        top: 0,
                     }),
                 }}
             >

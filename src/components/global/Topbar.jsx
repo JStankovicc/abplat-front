@@ -1,16 +1,19 @@
-import {Box, IconButton, useMediaQuery, useTheme} from "@mui/material";
+import { Box, IconButton, useMediaQuery, useTheme } from "@mui/material";
 import { useContext } from "react";
 import { ColorModeContext } from "../../theme";
+import { useMobileSidebar } from "../../context/MobileSidebarContext";
 import LightModeOutlinedIcon from "@mui/icons-material/LightModeOutlined";
 import DarkModeOutlinedIcon from "@mui/icons-material/DarkModeOutlined";
 import NotificationsOutlinedIcon from "@mui/icons-material/NotificationsOutlined";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
+import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
 
 const Topbar = ({ companyInfo }) => {
   const theme = useTheme();
   const colorMode = useContext(ColorModeContext);
   const isMobile = useMediaQuery("(max-width:600px)");
+  const { setOpen: setMobileSidebarOpen } = useMobileSidebar();
 
   const byteArrayToBase64 = (byteArray) => {
     if (!byteArray) return null;
@@ -45,7 +48,45 @@ const Topbar = ({ companyInfo }) => {
     return "/assets/logoipsum-378.svg";
   };
 
-  if (isMobile) return null;
+  if (isMobile) {
+    return (
+      <Box
+        display="flex"
+        alignItems="center"
+        gap={0.5}
+        px={1.5}
+        py={1}
+        sx={{
+          minHeight: 56,
+          flexShrink: 0,
+          paddingLeft: "max(12px, env(safe-area-inset-left))",
+        }}
+      >
+        <IconButton
+          onClick={() => setMobileSidebarOpen(true)}
+          aria-label="Otvori meni"
+          sx={{
+            minWidth: 44,
+            minHeight: 44,
+            p: 1,
+            mr: 0.25,
+          }}
+        >
+          <MenuOutlinedIcon sx={{ fontSize: 24 }} />
+        </IconButton>
+        <img
+          src={getCompanyLogoUrl()}
+          alt="Logo"
+          style={{
+            height: 26,
+            maxWidth: 120,
+            objectFit: "contain",
+            objectPosition: "left center",
+          }}
+        />
+      </Box>
+    );
+  }
 
   return (
       <Box display="flex" justifyContent="space-between" p={2}>

@@ -54,11 +54,12 @@ const InventoryView = () => {
     return (
         <Box 
             sx={{ 
-                height: "calc(100vh - 74px)",
+                height: { md: "calc(100vh - 74px)" },
+                minHeight: { xs: "calc(100vh - 56px)", md: "calc(100vh - 74px)" },
                 display: "flex",
                 flexDirection: "column",
                 gap: "10px",
-                p: "10px"
+                p: { xs: 1, sm: "10px" }
             }}
         >
             {/* Header with navigation */}
@@ -66,12 +67,14 @@ const InventoryView = () => {
                 sx={{
                     backgroundColor: colors.primary[400],
                     borderRadius: "4px",
-                    p: "2px 10px",
+                    p: { xs: "8px", sm: "2px 10px" },
                     boxShadow: 1,
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center",
-                    minHeight: "25px"
+                    minHeight: "25px",
+                    flexWrap: "wrap",
+                    gap: 1,
                 }}
             >
                 <Typography

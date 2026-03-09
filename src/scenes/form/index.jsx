@@ -12,7 +12,7 @@ const Form = () => {
   };
 
   return (
-    <Box m="20px">
+    <Box m={{ xs: 1.5, sm: 2, md: "20px" }} sx={{ pb: 2 }}>
       <Header title="CREATE USER" subtitle="Create a New User Profile" />
 
       <Formik
@@ -31,10 +31,10 @@ const Form = () => {
           <form onSubmit={handleSubmit}>
             <Box
               display="grid"
-              gap="30px"
-              gridTemplateColumns="repeat(4, minmax(0, 1fr))"
+              gap={{ xs: "20px", md: "30px" }}
+              gridTemplateColumns={{ xs: "1fr", sm: "repeat(2, 1fr)", md: "repeat(4, minmax(0, 1fr))" }}
               sx={{
-                "& > div": { gridColumn: isNonMobile ? undefined : "span 4" },
+                "& > div": { gridColumn: isNonMobile ? undefined : "span 1" },
               }}
             >
               <TextField
@@ -48,7 +48,7 @@ const Form = () => {
                 name="firstName"
                 error={!!touched.firstName && !!errors.firstName}
                 helperText={touched.firstName && errors.firstName}
-                sx={{ gridColumn: "span 2" }}
+                sx={{ gridColumn: { xs: "span 1", sm: "span 2" } }}
               />
               <TextField
                 fullWidth
@@ -116,7 +116,7 @@ const Form = () => {
                 sx={{ gridColumn: "span 4" }}
               />
             </Box>
-            <Box display="flex" justifyContent="end" mt="20px">
+            <Box display="flex" justifyContent={{ xs: "stretch", sm: "end" }} mt={{ xs: 2, md: "20px" }}>
               <Button type="submit" color="secondary" variant="contained">
                 Create New User
               </Button>

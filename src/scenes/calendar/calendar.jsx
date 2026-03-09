@@ -6,7 +6,8 @@ import interactionPlugin from "@fullcalendar/interaction";
 import listPlugin from "@fullcalendar/list";
 import srLocale from "@fullcalendar/core/locales/sr";
 import axios from "axios";
-import { Box, Alert, CircularProgress } from "@mui/material";
+import { Box, Alert, CircularProgress, useMediaQuery, Fab } from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
 import { useTheme } from "@mui/material/styles";
 import { tokens } from "../../theme";
 import { API_BASE_URL } from "../../config/apiConfig";
@@ -17,6 +18,7 @@ import { EventContent, EventDialog, EventsSidebar } from "../../components/calen
 const Calendar = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
   const {
     currentEvents,
@@ -55,6 +57,24 @@ const Calendar = () => {
     });
     setSelectedEvent(null);
     setError(null);
+  };
+
+  const openNewEventDialog = () => {
+    const now = new Date();
+    const end = new Date(now.getTime() + 60 * 60 * 1000);
+    setEventDetails({
+      title: "",
+      description: "",
+      location: "",
+      priority: "NORMAL",
+      start: now.toISOString().slice(0, 16),
+      end: end.toISOString().slice(0, 16),
+      participantUserIds: [],
+      groupParticipants: [],
+    });
+    setIsEditing(false);
+    setSelectedEvent(null);
+    setOpenDialog(true);
   };
 
   const handleDateClick = (selected) => {
@@ -159,16 +179,37 @@ const Calendar = () => {
   );
 
   return (
-    <Box m="20px">
+    <Box
+      m={{ xs: 0, sm: 2, md: "20px" }}
+      px={{ xs: 2, sm: 0 }}
+      sx={{
+        pb: 2,
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        minHeight: 0,
+        paddingBottom: isMobile ? "96px" : 2,
+        paddingLeft: isMobile ? "max(16px, env(safe-area-inset-left))" : undefined,
+        paddingRight: isMobile ? "max(16px, env(safe-area-inset-right))" : undefined,
+      }}
+    >
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+        <Alert
+          severity="error"
+          sx={{
+            mb: 2,
+            borderRadius: 2,
+            "& .MuiAlert-message": { fontSize: "0.875rem" },
+          }}
+          onClose={() => setError(null)}
+        >
           {error}
         </Alert>
       )}
 
       {loading && (
-        <Box display="flex" justifyContent="center" my={2}>
-          <CircularProgress />
+        <Box display="flex" justifyContent="center" alignItems="center" py={3}>
+          <CircularProgress size={32} thickness={3.6} />
         </Box>
       )}
 
@@ -182,40 +223,83 @@ const Calendar = () => {
         onDelete={handleDeleteEvent}
         loading={saveLoading}
         colors={colors}
+        fullScreen={isMobile}
       />
 
-      <Box display="flex" justifyContent="space-between">
-        <EventsSidebar
-          events={currentEvents}
-          loading={loading}
-          colors={colors}
-          onRefresh={debouncedFetch}
-          onEventClick={handleEventClick}
-        />
-
-        <Box flex="1 1 75%" ml="15px">
-          <FullCalendar
-            height="85vh"
-            plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
-            headerToolbar={{
-              left: "prev,next today",
-              center: "title",
-              right: "dayGridMonth,timeGridWeek,timeGridDay,listMonth",
-            }}
-            initialView="dayGridMonth"
-            editable={false}
-            selectable
-            selectMirror
-            dayMaxEvents={3}
-            select={handleDateClick}
-            eventClick={handleEventClick}
-            events={currentEvents}
-            locales={[srLocale]}
-            locale="sr"
-            eventContent={eventContent}
-            eventOrder={(a, b) => (a.end - a.start) - (b.end - b.start)}
-          />
-        </Box>
+      <Box
+        display="flex"
+        flexDirection={{ xs: "column", md: "row" }}
+        gap={{ xs: 1, md: 0 }}
+        sx={{ flex: 1, minHeight: 0, "& > *": { minWidth: 0 } }}
+      >
+        {isMobile ? (
+          <>
+            <EventsSidebar
+              events={currentEvents}
+              loading={loading}
+              colors={colors}
+              onRefresh={debouncedFetch}
+              onEventClick={handleEventClick}
+            />
+            <Fab
+              color="secondary"
+              aria-label="Dodaj događaj"
+              onClick={openNewEventDialog}
+              sx={{
+                position: "fixed",
+                left: "50%",
+                transform: "translateX(-50%)",
+                bottom: "max(80px, calc(env(safe-area-inset-bottom) + 28px))",
+                zIndex: 1100,
+                width: 56,
+                height: 56,
+                boxShadow: "0 4px 14px rgba(0,0,0,0.25)",
+                "&:hover": {
+                  boxShadow: "0 6px 20px rgba(0,0,0,0.3)",
+                },
+                "&:active": {
+                  transform: "translateX(-50%) scale(0.96)",
+                },
+              }}
+            >
+              <AddIcon sx={{ fontSize: 28 }} />
+            </Fab>
+          </>
+        ) : (
+          <>
+            <EventsSidebar
+              events={currentEvents}
+              loading={loading}
+              colors={colors}
+              onRefresh={debouncedFetch}
+              onEventClick={handleEventClick}
+            />
+            <Box flex="1 1 75%" ml="15px" sx={{ minWidth: 0 }}>
+              <FullCalendar
+                height="85vh"
+                plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
+                headerToolbar={{
+                  left: "prev,next today",
+                  center: "title",
+                  right: "dayGridMonth,timeGridWeek,timeGridDay,listMonth",
+                }}
+                initialView="dayGridMonth"
+                editable={false}
+                selectable
+                selectMirror
+                dayMaxEvents={3}
+                select={handleDateClick}
+                eventClick={handleEventClick}
+                events={currentEvents}
+                locales={[srLocale]}
+                locale="sr"
+                eventContent={eventContent}
+                eventOrder={(a, b) => (a.end - a.start) - (b.end - b.start)}
+                fixedWeekCount={false}
+              />
+            </Box>
+          </>
+        )}
       </Box>
     </Box>
   );

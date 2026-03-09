@@ -47,7 +47,7 @@ const ChatInterface = () => {
   );
 
   return (
-    <Box sx={{ height: "calc(100vh - 72px)", display: "flex" }}>
+    <Box sx={{ height: "100%", minHeight: isSmallScreen ? "calc(100vh - 56px)" : 0, flex: 1, display: "flex", overflow: "hidden" }}>
       <CssBaseline />
 
       <NewChatDialog
@@ -61,15 +61,20 @@ const ChatInterface = () => {
       />
 
       {isSmallScreen ? (
-        <Box sx={{ width: "100%", position: "relative", flex: 1 }}>
+        <Box sx={{ width: "100%", position: "relative", flex: 1, minHeight: 0, height: "100%" }}>
           <Box
             sx={{
               width: "100%",
-              height: "100vh",
+              height: "100%",
               position: "absolute",
               left: selectedChatId ? "-100%" : "0",
+              top: 0,
+              bottom: 0,
               transition: "left 0.3s ease",
               zIndex: 1,
+              display: "flex",
+              flexDirection: "column",
+              overflow: "hidden",
             }}
           >
             <ChatList
@@ -89,7 +94,7 @@ const ChatInterface = () => {
           <Box
             sx={{
               width: "100%",
-              height: "100vh",
+              height: "100%",
               position: "absolute",
               left: selectedChatId ? "0" : "100%",
               transition: "left 0.3s ease",

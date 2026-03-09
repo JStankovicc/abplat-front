@@ -71,13 +71,7 @@ const Dashboard = () => {
 
   if (loading) {
     return (
-      <Box
-        m="20px"
-        height="calc(100vh - 120px)"
-        overflow="hidden"
-        display="flex"
-        justifyContent="center"
-      >
+      <Box m={{ xs: 1.5, sm: 2, md: "20px" }} minHeight={200} display="flex" justifyContent="center" alignItems="center">
         <DashboardShimmer colors={colors} />
       </Box>
     );
@@ -85,28 +79,27 @@ const Dashboard = () => {
 
   if (error) {
     return (
-      <Box m="20px">
+      <Box m={{ xs: 1.5, sm: 2, md: "20px" }}>
         <Alert severity="error">{error}</Alert>
       </Box>
     );
   }
 
   return (
-    <Box
-      m="20px"
-      height="calc(100vh - 120px)"
-      overflow="hidden"
-      display="flex"
-      justifyContent="center"
-    >
+    <Box m={{ xs: 1.5, sm: 2, md: "20px" }} pb={2}>
       <Box
         display="grid"
-        gridTemplateColumns="repeat(12, 1fr)"
-        gridTemplateRows="repeat(5, 1fr)"
-        gap="15px"
-        height="100%"
-        width="75%"
-        overflow="hidden"
+        gridTemplateColumns={{ xs: "1fr", sm: "repeat(2, 1fr)", md: "repeat(12, 1fr)" }}
+        gridTemplateRows={{ xs: "auto", md: "repeat(5, 1fr)" }}
+        gap={{ xs: "12px", md: "15px" }}
+        width={{ xs: "100%", sm: "95%", md: "75%" }}
+        maxWidth={1200}
+        sx={{
+          "& > *": {
+            gridColumn: { xs: "1 / -1", sm: "span 1", md: undefined },
+            gridRow: { xs: "auto", md: undefined },
+          },
+        }}
       >
         <NotificationsCard colors={colors} />
         <MiniInboxCard

@@ -45,7 +45,8 @@ const MobileMenu = ({
         sx: {
           backgroundColor: colors.primary[600] || colors.primary[500] || colors.primary[400],
           color: colors.grey[100],
-          width: anchor === "left" ? 240 : 250,
+          width: anchor === "left" ? 240 : "min(280px, 85vw)",
+          maxWidth: "100%",
         },
       }}
     >

@@ -85,9 +85,11 @@ const CompanySettings = () => {
   return (
     <Box
       sx={{
-        m: isMobile ? "10px" : "20px",
-        height: `calc(100vh - ${isMobile ? 80 : 100}px)`,
+        m: { xs: 1.5, sm: 2, md: "20px" },
+        height: { xs: "auto", md: `calc(100vh - 100px)` },
+        minHeight: { xs: "100vh", md: "calc(100vh - 100px)" },
         overflow: "hidden",
+        pb: 2,
       }}
     >
       <Stack

@@ -37,7 +37,6 @@ const ChatWindow = ({
         display="flex"
         alignItems="center"
         mb={isMobile ? 2 : 3}
-        {...(isMobile && { paddingTop: "50px" })}
       >
         {isMobile && (
           <IconButton onClick={onBack} sx={{ mr: 1 }}>

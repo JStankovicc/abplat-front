@@ -40,10 +40,12 @@ const LoginPage = ({ onLogin }) => {
             display="flex"
             justifyContent="center"
             alignItems="center"
-            height="100vh"
+            minHeight="100vh"
             sx={{
                 backgroundColor: "background.default",
-                padding: 3,
+                padding: { xs: 2, sm: 3 },
+                paddingLeft: "max(16px, env(safe-area-inset-left))",
+                paddingRight: "max(16px, env(safe-area-inset-right))",
                 color: "text.primary",
             }}
         >

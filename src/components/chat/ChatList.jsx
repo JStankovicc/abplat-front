@@ -32,12 +32,14 @@ const ChatList = ({
   <Box
     sx={{
       width: isMobile ? "100%" : "300px",
-      height: isMobile ? "100vh" : "auto",
+      flex: isMobile ? 1 : "none",
+      minHeight: 0,
       borderRight: isMobile ? "none" : `1px solid ${colors.grey[700]}`,
       bgcolor: theme.palette.mode === "dark" ? colors.primary[700] : "#f4f4f7",
       p: 2,
       overflowY: "auto",
-      ...(isMobile && { paddingTop: "50px" }),
+      display: "flex",
+      flexDirection: "column",
     }}
   >
     <Typography
@@ -57,7 +59,7 @@ const ChatList = ({
         <AddIcon />
       </IconButton>
     </Typography>
-    <Box mb={2}>
+    <Box mb={2} flexShrink={0}>
       <TextField
         fullWidth
         variant="outlined"
@@ -73,7 +75,7 @@ const ChatList = ({
         }}
       />
     </Box>
-    <List>
+    <List sx={{ flex: 1, overflow: "auto", minHeight: 0 }}>
 {filteredChats.map((chat) => (
           <ListItem
             key={chat.conversationId || chat.id}

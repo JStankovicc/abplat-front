@@ -118,20 +118,22 @@ const UserDetails = () => {
   };
 
   const sectionStyleTopRow = {
-    p: "20px",
+    p: { xs: "12px", md: "20px" },
     borderRadius: "8px",
     bgcolor: colors.primary[400],
-    height: "200px",
+    height: { xs: "auto", md: "200px" },
+    minHeight: { xs: 160, md: "200px" },
     display: "flex",
     flexDirection: "column",
     overflow: "hidden",
   };
 
   const sectionStyleBottomRow = {
-    p: "20px",
+    p: { xs: "12px", md: "20px" },
     borderRadius: "8px",
     bgcolor: colors.primary[400],
-    height: "400px",
+    height: { xs: "auto", md: "400px" },
+    minHeight: { xs: 280, md: "400px" },
     display: "flex",
     flexDirection: "column",
     overflow: "hidden",
@@ -149,7 +151,7 @@ const UserDetails = () => {
   if (!user) return null;
 
   return (
-    <Box m={isMobile ? "10px" : "20px"}>
+    <Box m={{ xs: 1.5, sm: 2, md: "20px" }} sx={{ pb: 2, overflow: "hidden" }}>
       <DeleteUserDialog
         open={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}

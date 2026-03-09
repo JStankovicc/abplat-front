@@ -59,7 +59,7 @@ const Team = () => {
   };
 
   return (
-    <Box m={isMobile ? "10px" : "20px"}>
+    <Box m={{ xs: 1.5, sm: 2, md: "20px" }} sx={{ pb: 2, overflow: "hidden" }}>
       <TeamHeader
         onAddUser={() => setOpenAddDialog(true)}
         userCount={userCount}

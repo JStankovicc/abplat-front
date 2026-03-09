@@ -4,9 +4,9 @@ import LineChart from "../../components/LineChart";
 
 const Line = () => {
   return (
-    <Box m="20px">
+    <Box m={{ xs: 1.5, sm: 2, md: "20px" }} sx={{ pb: 2, overflow: "hidden" }}>
       <Header title="Line Chart" subtitle="Simple Line Chart" />
-      <Box height="75vh">
+      <Box height={{ xs: "50vh", md: "75vh" }} minHeight={280} sx={{ width: "100%" }}>
         <LineChart />
       </Box>
     </Box>

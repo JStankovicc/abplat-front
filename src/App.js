@@ -21,8 +21,9 @@ import Calendar from "./scenes/calendar/calendar";
 import ProductPage from "./scenes/public/product";
 import ContactPage from "./scenes/public/contact";
 import LoginPage from "./scenes/public/login";
-import { CssBaseline, ThemeProvider } from "@mui/material";
+import { Box, CssBaseline, ThemeProvider } from "@mui/material";
 import { ColorModeContext, useMode } from "./theme";
+import { MobileSidebarProvider } from "./context/MobileSidebarContext";
 import ChatInterface from "./scenes/chat/ChatInterface";
 import UserDetails from "./scenes/user";
 import CompanySettings from "./scenes/companySettings";
@@ -117,14 +118,15 @@ function App() {
         <ColorModeContext.Provider value={colorMode}>
             <ThemeProvider theme={theme}>
                 <CssBaseline />
+                <MobileSidebarProvider>
                 <div className="app">
                     {/* Public Navbar for unauthenticated users */}
                     {!token && <PublicNavbar />}
                     {/* Sidebar for authenticated users */}
                     {token && <Sidebar userProfile={userProfile} companyInfo={companyInfo} />}
-                    <main className="content" style={{ paddingTop: token ? '0' : '64px' }}>
-                        {/* Topbar for authenticated users */}
+                    <main className="content" style={{ paddingTop: token ? 0 : 64, paddingLeft: 'env(safe-area-inset-left)', paddingRight: 'env(safe-area-inset-right)' }}>
                         {token && <Topbar companyInfo={companyInfo} />}
+                        <div className="content-scroll" style={{ display: 'flex', flexDirection: 'column' }}>
                         <Routes>
                             {/* Public Routes */}
                             <Route
@@ -333,8 +335,10 @@ function App() {
                             {/* Catch-all Route */}
                             <Route path="*" element={<Navigate to="/login" replace />} />
                         </Routes>
+                        </div>
                     </main>
                 </div>
+                </MobileSidebarProvider>
             </ThemeProvider>
         </ColorModeContext.Provider>
     );

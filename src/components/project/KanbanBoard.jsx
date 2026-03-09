@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
-import { Box, TextField, IconButton, useTheme, Typography, Button, Dialog, DialogTitle, DialogContent, DialogActions, Grid, Divider, Avatar, Checkbox, FormControlLabel, List, ListItem, ListItemText, ListItemIcon, ListItemSecondaryAction, Paper, Chip, CircularProgress, Alert } from '@mui/material';
+import { Box, TextField, IconButton, useTheme, Typography, Button, Dialog, DialogTitle, DialogContent, DialogActions, Grid, Divider, Avatar, Checkbox, FormControlLabel, List, ListItem, ListItemText, ListItemIcon, ListItemSecondaryAction, Paper, Chip, CircularProgress, Alert, useMediaQuery } from '@mui/material';
 import axios from 'axios';
 import { useParams } from 'react-router-dom';
 import { tokens } from '../../theme';
@@ -22,6 +22,7 @@ const COMPANY_API_BASE_URL = `${API_BASE_URL}/company`;
 const KanbanBoard = () => {
     const theme = useTheme();
     const colors = tokens(theme.palette.mode);
+    const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
     const { projectId } = useParams();
     const [columns, setColumns] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -609,7 +610,7 @@ const KanbanBoard = () => {
                 </Alert>
             )}
 
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Box sx={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 1, justifyContent: 'space-between', alignItems: 'stretch', mb: 2 }}>
                 <Button
                     variant="outlined"
                     onClick={() => fetchKanbanData()}
@@ -676,9 +677,9 @@ const KanbanBoard = () => {
                         <Box
                             key={column.id}
                             sx={{
-                                minWidth: '300px',
-                                maxWidth: '300px',
-                                flex: '0 0 300px',
+                                minWidth: isMobile ? '260px' : '300px',
+                                maxWidth: isMobile ? '260px' : '300px',
+                                flex: isMobile ? '0 0 260px' : '0 0 300px',
                                 backgroundColor: theme.palette.mode === 'dark' ? colors.primary[500] : colors.primary[800],
                                 borderRadius: 2,
                                 p: 2,

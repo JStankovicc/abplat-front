@@ -115,11 +115,12 @@ const ProjectView = () => {
     return (
         <Box 
             sx={{ 
-                height: "calc(100vh - 74px)", // 64px je visina topbara
+                height: { md: "calc(100vh - 74px)" },
+                minHeight: { xs: "calc(100vh - 56px)", md: "calc(100vh - 74px)" },
                 display: "flex",
                 flexDirection: "column",
                 gap: "10px",
-                p: "10px"
+                p: { xs: 1, sm: "10px" }
             }}
         >
             {/* Header with navigation */}
@@ -127,22 +128,20 @@ const ProjectView = () => {
                 sx={{
                     backgroundColor: colors.primary[400],
                     borderRadius: "4px",
-                    p: "2px 10px",
+                    p: { xs: "8px", sm: "2px 10px" },
                     boxShadow: 1,
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center",
-                    minHeight: "25px"
+                    minHeight: "25px",
+                    flexWrap: "wrap",
+                    gap: 1,
                 }}
             >
                 <Typography
                     variant="h5"
                     color={colors.grey[100]}
-                    sx={{ 
-                        fontSize: "1.1rem",
-                        fontWeight: "bold",
-                        lineHeight: 1
-                    }}
+                    sx={{ fontSize: { xs: "1rem", sm: "1.1rem" }, fontWeight: "bold", lineHeight: 1 }}
                     title={projectInfo.description || ""}
                 >
                     {projectInfo.name || "Projekat"}

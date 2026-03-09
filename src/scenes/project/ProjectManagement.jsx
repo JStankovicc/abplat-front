@@ -150,7 +150,7 @@ const ProjectManagement = () => {
   };
 
   return (
-    <Box m="20px">
+    <Box m={{ xs: 1.5, sm: 2, md: "20px" }} sx={{ pb: 2, overflow: "hidden" }}>
       <ProjectTable
         projects={projects}
         loading={loading}
