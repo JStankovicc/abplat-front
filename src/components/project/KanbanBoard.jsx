@@ -602,22 +602,33 @@ const KanbanBoard = () => {
     };
 
     return (
-        <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-            {/* Error Alert */}
+        <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
             {error && (
-                <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+                <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }} onClose={() => setError(null)}>
                     {error}
                 </Alert>
             )}
 
-            <Box sx={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 1, justifyContent: 'space-between', alignItems: 'stretch', mb: 2 }}>
+            <Box
+                sx={{
+                    display: 'flex',
+                    flexDirection: isMobile ? 'row' : 'row',
+                    gap: isMobile ? 1 : 1,
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    mb: isMobile ? 1.5 : 2,
+                    flexWrap: 'wrap',
+                }}
+            >
                 <Button
                     variant="outlined"
+                    size={isMobile ? 'medium' : 'medium'}
                     onClick={() => fetchKanbanData()}
                     disabled={loading}
                     sx={{
                         borderColor: colors.greenAccent[500],
                         color: colors.greenAccent[500],
+                        minHeight: isMobile ? 44 : undefined,
                         "&:hover": {
                             borderColor: colors.greenAccent[600],
                             backgroundColor: colors.greenAccent[500] + '20'
@@ -628,10 +639,12 @@ const KanbanBoard = () => {
                 </Button>
                 <Button
                     variant="contained"
+                    size={isMobile ? 'medium' : 'medium'}
                     startIcon={<AddIcon />}
                     onClick={addColumn}
                     sx={{
                         backgroundColor: colors.greenAccent[500],
+                        minHeight: isMobile ? 44 : undefined,
                         '&:hover': {
                             backgroundColor: colors.greenAccent[600],
                         }
@@ -651,22 +664,25 @@ const KanbanBoard = () => {
             <DragDropContext onDragEnd={onDragEnd}>
                 <Box 
                     display="flex" 
-                    gap={2}
+                    gap={isMobile ? 1.5 : 2}
                     sx={{
                         overflowX: 'auto',
-                        pb: 2,
+                        overflowY: 'hidden',
+                        pb: isMobile ? 2 : 2,
                         flex: 1,
-                        maxWidth: 'calc(100vw - 340px)',
+                        minHeight: 0,
+                        maxWidth: isMobile ? '100%' : 'calc(100vw - 340px)',
+                        WebkitOverflowScrolling: 'touch',
                         '&::-webkit-scrollbar': {
-                            height: '8px',
+                            height: isMobile ? 6 : 8,
                         },
                         '&::-webkit-scrollbar-track': {
                             backgroundColor: colors.primary[500],
-                            borderRadius: '4px',
+                            borderRadius: 4,
                         },
                         '&::-webkit-scrollbar-thumb': {
                             backgroundColor: colors.primary[300],
-                            borderRadius: '4px',
+                            borderRadius: 4,
                             '&:hover': {
                                 backgroundColor: colors.primary[200],
                             },
@@ -677,18 +693,19 @@ const KanbanBoard = () => {
                         <Box
                             key={column.id}
                             sx={{
-                                minWidth: isMobile ? '260px' : '300px',
-                                maxWidth: isMobile ? '260px' : '300px',
-                                flex: isMobile ? '0 0 260px' : '0 0 300px',
+                                minWidth: isMobile ? 280 : 300,
+                                maxWidth: isMobile ? 280 : 300,
+                                flex: isMobile ? '0 0 280px' : '0 0 300px',
                                 backgroundColor: theme.palette.mode === 'dark' ? colors.primary[500] : colors.primary[800],
                                 borderRadius: 2,
-                                p: 2,
-                                boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                                p: isMobile ? 1.5 : 2,
+                                boxShadow: isMobile ? '0 2px 8px rgba(0,0,0,0.18)' : '0 2px 4px rgba(0,0,0,0.2)',
                                 display: 'flex',
-                                flexDirection: 'column'
+                                flexDirection: 'column',
+                                border: isMobile ? `1px solid ${colors.grey[700]}` : 'none',
                             }}
                         >
-                            <Box display="flex" alignItems="center" mb={2}>
+                            <Box display="flex" alignItems="center" mb={isMobile ? 1.5 : 2}>
                                 {editingColumnTitle === column.id ? (
                                     <TextField
                                         fullWidth
@@ -742,9 +759,13 @@ const KanbanBoard = () => {
                                     <IconButton
                                         size="small"
                                         onClick={() => deleteColumn(column.id)}
-                                        sx={{ color: colors.grey[100] }}
+                                        sx={{
+                                            color: colors.grey[300],
+                                            minWidth: 40,
+                                            minHeight: 40,
+                                        }}
                                     >
-                                        <DeleteIcon />
+                                        <DeleteIcon fontSize="small" />
                                     </IconButton>
                                 )}
                             </Box>
@@ -788,40 +809,58 @@ const KanbanBoard = () => {
                                                         {...provided.dragHandleProps}
                                                         sx={{
                                                             backgroundColor: snapshot.isDragging ? colors.greenAccent[500] : colors.primary[400],
-                                                            p: 2,
+                                                            p: isMobile ? 1.5 : 2,
                                                             mb: 1,
-                                                            borderRadius: 1,
-                                                            boxShadow: snapshot.isDragging ? 3 : 1,
+                                                            borderRadius: 1.5,
+                                                            boxShadow: snapshot.isDragging ? 3 : '0 1px 3px rgba(0,0,0,0.12)',
                                                             color: colors.grey[100],
                                                             cursor: 'grab',
                                                             transform: snapshot.isDragging ? 'rotate(2deg)' : 'none',
-                                                            transition: 'all 0.3s ease',
+                                                            transition: 'all 0.2s ease',
+                                                            minHeight: isMobile ? 56 : undefined,
                                                             '&:active': {
                                                                 cursor: 'grabbing'
                                                             },
                                                             '&:hover': { 
-                                                                boxShadow: 3,
-                                                                backgroundColor: theme.palette.mode === 'dark' ? colors.primary[800] : colors.primary[300],
-                                                                color: theme.palette.mode === 'dark' ? colors.grey[300] : colors.grey[100]
+                                                                boxShadow: 2,
+                                                                backgroundColor: theme.palette.mode === 'dark' ? colors.primary[600] : colors.primary[300],
+                                                                color: theme.palette.mode === 'dark' ? colors.grey[200] : colors.grey[100]
                                                             }
                                                         }}
                                                     >
-                                                        <Box display="flex" alignItems="center" justifyContent="space-between">
-                                                            <Typography>{task.content}</Typography>
-                                                            <Box>
+                                                        <Box display="flex" alignItems="center" justifyContent="space-between" gap={1}>
+                                                            <Typography
+                                                                sx={{
+                                                                    flex: 1,
+                                                                    minWidth: 0,
+                                                                    fontSize: isMobile ? '0.9375rem' : undefined,
+                                                                    fontWeight: 500,
+                                                                }}
+                                                            >
+                                                                {task.content}
+                                                            </Typography>
+                                                            <Box display="flex" alignItems="center" flexShrink={0}>
                                                                 <IconButton
                                                                     size="small"
-                                                                    onClick={() => handleEditTask(task)}
-                                                                    sx={{ color: colors.grey[100], mr: 1 }}
+                                                                    onClick={(e) => { e.stopPropagation(); handleEditTask(task); }}
+                                                                    sx={{
+                                                                        color: colors.grey[300],
+                                                                        minWidth: 40,
+                                                                        minHeight: 40,
+                                                                    }}
                                                                 >
-                                                                    <EditIcon />
+                                                                    <EditIcon sx={{ fontSize: isMobile ? 20 : undefined }} />
                                                                 </IconButton>
                                                                 <IconButton
                                                                     size="small"
-                                                                    onClick={() => handleDeleteTask(column.id, task.id)}
-                                                                    sx={{ color: colors.grey[100] }}
+                                                                    onClick={(e) => { e.stopPropagation(); handleDeleteTask(column.id, task.id); }}
+                                                                    sx={{
+                                                                        color: colors.grey[300],
+                                                                        minWidth: 40,
+                                                                        minHeight: 40,
+                                                                    }}
                                                                 >
-                                                                    <DeleteIcon />
+                                                                    <DeleteIcon sx={{ fontSize: isMobile ? 20 : undefined }} />
                                                                 </IconButton>
                                                             </Box>
                                                         </Box>
@@ -834,10 +873,11 @@ const KanbanBoard = () => {
                                 )}
                             </Droppable>
 
-                            <Box mt={2}>
+                            <Box mt={isMobile ? 1.5 : 2}>
                                 <TextField
                                     fullWidth
                                     variant="outlined"
+                                    size={isMobile ? 'medium' : 'medium'}
                                     placeholder="Dodaj novi task"
                                     value={newTaskInputs[column.id] || ''}
                                     onChange={(e) => handleInputChange(column.id, e.target.value)}
@@ -859,6 +899,9 @@ const KanbanBoard = () => {
                                             },
                                             color: colors.grey[100],
                                         },
+                                        '& .MuiOutlinedInput-input': {
+                                            fontSize: isMobile ? '16px' : undefined,
+                                        },
                                         '& .MuiOutlinedInput-input::placeholder': {
                                             color: colors.grey[300],
                                         },
@@ -869,13 +912,15 @@ const KanbanBoard = () => {
                                                 onClick={() => addTask(column.id)}
                                                 sx={{ 
                                                     color: colors.greenAccent[500],
+                                                    minWidth: 44,
+                                                    minHeight: 44,
                                                     '&:hover': {
                                                         backgroundColor: colors.greenAccent[500],
                                                         color: colors.grey[100]
                                                     }
                                                 }}
                                             >
-                                                <AddIcon sx={{ fontSize: 30, fontWeight: 'bold' }} />
+                                                <AddIcon sx={{ fontSize: isMobile ? 24 : 30 }} />
                                             </IconButton>
                                         )
                                     }}
@@ -890,29 +935,36 @@ const KanbanBoard = () => {
                 open={editDialogOpen} 
                 onClose={() => setEditDialogOpen(false)}
                 fullWidth
-                maxWidth={false}
+                fullScreen={isMobile}
+                maxWidth={isMobile ? false : false}
                 PaperProps={{
                     sx: {
                         backgroundColor: colors.primary[500],
                         color: colors.grey[100],
-                        width: 'calc(100vw - 250px)',
-                        maxWidth: 'calc(100vw - 250px)'
+                        ...(isMobile ? { borderRadius: 0 } : {
+                            width: 'calc(100vw - 250px)',
+                            maxWidth: 'calc(100vw - 250px)',
+                        })
                     }
                 }}
             >
                 <DialogTitle sx={{
                     backgroundColor: colors.primary[400],
                     color: colors.grey[100],
-                    borderBottom: `1px solid ${colors.grey[700]}`
+                    borderBottom: `1px solid ${colors.grey[700]}`,
+                    fontWeight: 600,
+                    fontSize: isMobile ? '1.25rem' : undefined,
+                    py: isMobile ? 2 : undefined,
                 }}>
-                    Uredi Task
+                    Uredi task
                 </DialogTitle>
                 <DialogContent sx={{
                     backgroundColor: colors.primary[400],
-                    padding: "10px",
+                    padding: isMobile ? 2.5 : 2,
+                    pt: isMobile ? 3 : 2,
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '20px'
+                    gap: 2.5,
                 }}>
                     <Grid container spacing={3} sx={{ mt: 0.02 }}>
                         {/* Left panel - basic info */}
@@ -1312,20 +1364,23 @@ const KanbanBoard = () => {
                 <DialogActions sx={{
                     backgroundColor: colors.primary[400],
                     borderTop: `1px solid ${colors.grey[700]}`,
-                    padding: "10px 20px"
+                    padding: isMobile ? 2 : "10px 20px",
+                    gap: 1,
                 }}>
                     <Button 
                         onClick={() => setEditDialogOpen(false)}
-                        sx={{ color: colors.grey[100] }}
+                        sx={{ color: colors.grey[300] }}
                     >
                         Otkaži
                     </Button>
                     <Button 
+                        variant="contained"
                         onClick={handleSaveEdit}
                         sx={{ 
-                            color: colors.greenAccent[500],
+                            backgroundColor: colors.greenAccent[500],
+                            color: '#fff',
                             '&:hover': {
-                                color: colors.greenAccent[600],
+                                backgroundColor: colors.greenAccent[600],
                             }
                         }}
                     >

@@ -2,8 +2,7 @@ import { useState } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import axios from "axios";
-import { Box } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
+import { Box, useTheme, useMediaQuery } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { tokens } from "../../theme";
 import { API_BASE_URL } from "../../config/apiConfig";
@@ -149,8 +148,20 @@ const ProjectManagement = () => {
     setOpenTeamManagement(false);
   };
 
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+
   return (
-    <Box m={{ xs: 1.5, sm: 2, md: "20px" }} sx={{ pb: 2, overflow: "hidden" }}>
+    <Box
+      m={{ xs: 0, sm: 2, md: "20px" }}
+      px={{ xs: 2, sm: 0 }}
+      sx={{
+        pb: 2,
+        overflow: "hidden",
+        paddingBottom: isMobile ? 10 : 2,
+        paddingLeft: isMobile ? "max(16px, env(safe-area-inset-left))" : undefined,
+        paddingRight: isMobile ? "max(16px, env(safe-area-inset-right))" : undefined,
+      }}
+    >
       <ProjectTable
         projects={projects}
         loading={loading}

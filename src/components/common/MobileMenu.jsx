@@ -11,10 +11,11 @@ import { Close as CloseIcon } from "@mui/icons-material";
 
 /**
  * Shared mobile menu for sections (inventory, sales, project, fleet, assets).
+ * Sections with disabled: true are shown grayed out and not clickable (same as desktop).
  * @param {Object} props
  * @param {boolean} props.open - Whether menu is open
  * @param {function} props.onClose - Close callback
- * @param {Array} props.sections - Array of sections { id, label, icon }
+ * @param {Array} props.sections - Array of sections { id, label, icon, disabled? }
  * @param {string} props.activeSection - Active section ID
  * @param {function} props.onChangeSection - Section change callback
  * @param {Object} props.colors - tokens object for colors
@@ -31,8 +32,9 @@ const MobileMenu = ({
   anchor = "right",
   showCloseButton = false,
 }) => {
-  const handleSectionClick = (sectionId) => {
-    onChangeSection(sectionId);
+  const handleSectionClick = (section) => {
+    if (section.disabled) return;
+    onChangeSection(section.id);
     onClose();
   };
 
@@ -58,34 +60,45 @@ const MobileMenu = ({
         </Box>
       )}
       <List>
-        {sections.map((section) => (
-          <ListItem
-            key={section.id}
-            button
-            onClick={() => handleSectionClick(section.id)}
-            selected={activeSection === section.id}
-            sx={{
-              "&.Mui-selected": {
-                backgroundColor: colors.primary[500] || colors.primary[600],
-                "&:hover": {
+        {sections.map((section) => {
+          const isDisabled = Boolean(section.disabled);
+          return (
+            <ListItem
+              key={section.id}
+              button
+              disabled={isDisabled}
+              onClick={() => handleSectionClick(section)}
+              selected={!isDisabled && activeSection === section.id}
+              sx={{
+                opacity: isDisabled ? 0.6 : 1,
+                cursor: isDisabled ? "not-allowed" : "pointer",
+                color: isDisabled ? colors.grey[500] : colors.grey[100],
+                "&.Mui-selected": {
                   backgroundColor: colors.primary[500] || colors.primary[600],
+                  "&:hover": {
+                    backgroundColor: colors.primary[500] || colors.primary[600],
+                  },
                 },
-              },
-              "&:hover": {
-                backgroundColor: colors.primary[500],
-              },
-            }}
-          >
-            <ListItemIcon sx={{ color: colors.grey[100] }}>
-              {section.icon}
-            </ListItemIcon>
-            <ListItemText
-              primary={section.label}
-              primaryTypographyProps={{ variant: "body1" }}
-              sx={{ color: colors.grey[100] }}
-            />
-          </ListItem>
-        ))}
+                "&:hover": !isDisabled ? {
+                  backgroundColor: colors.primary[500],
+                } : {},
+                "&.Mui-disabled": {
+                  opacity: 0.6,
+                  color: colors.grey[500],
+                },
+              }}
+            >
+              <ListItemIcon sx={{ color: "inherit", minWidth: 40 }}>
+                {section.icon}
+              </ListItemIcon>
+              <ListItemText
+                primary={section.label}
+                primaryTypographyProps={{ variant: "body1" }}
+                sx={{ color: "inherit" }}
+              />
+            </ListItem>
+          );
+        })}
       </List>
     </Drawer>
   );
