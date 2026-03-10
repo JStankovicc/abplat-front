@@ -2,6 +2,7 @@ import { Box, Checkbox, IconButton } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import { useNavigate } from "react-router-dom";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
+import { getRoleLabel } from "../../config/permissions";
 
 /**
  * Team members data grid with role checkboxes.
@@ -12,6 +13,7 @@ const TeamDataGrid = ({
   colors,
   rolesList,
   isMobile,
+  pageSize = 10,
 }) => {
   const navigate = useNavigate();
 
@@ -23,16 +25,9 @@ const TeamDataGrid = ({
       minWidth: 150,
       cellClassName: "name-column--cell",
     },
-    {
-      field: "email",
-      headerName: "Email",
-      flex: 1,
-      minWidth: 200,
-      hide: isMobile,
-    },
     ...rolesList.map((role) => ({
       field: role,
-      headerName: role.toUpperCase(),
+      headerName: getRoleLabel(role),
       flex: 0.8,
       minWidth: 100,
       renderCell: ({ row }) => (
@@ -70,8 +65,10 @@ const TeamDataGrid = ({
   return (
     <Box
       mt={isMobile ? "20px" : "40px"}
-      height="75vh"
       sx={{
+        flex: 1,
+        minHeight: 0,
+        height: "100%",
         "& .MuiDataGrid-root": { border: "none" },
         "& .MuiDataGrid-cell": {
           borderBottom: "none",
@@ -103,9 +100,15 @@ const TeamDataGrid = ({
         rows={users}
         columns={columns}
         disableRowSelectionOnClick
-        autoPageSize
         density={isMobile ? "compact" : "standard"}
         disableColumnMenu
+        pagination
+        initialState={{
+          pagination: {
+            paginationModel: { pageSize, page: 0 },
+          },
+        }}
+        pageSizeOptions={[5, 10, 25, 50]}
       />
     </Box>
   );

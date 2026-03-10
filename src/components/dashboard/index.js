@@ -7,3 +7,4 @@ export { default as UpcomingEventsCard } from "./UpcomingEventsCard";
 export { default as SalesQuickCard } from "./SalesQuickCard";
 export { default as InventoryQuickCard } from "./InventoryQuickCard";
 export { default as AssetsApprovalCard } from "./AssetsApprovalCard";
+export { default as FleetQuickCard } from "./FleetQuickCard";

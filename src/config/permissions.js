@@ -1,9 +1,17 @@
 /**
- * Role iz backend-a (JWT authorities).
- * Backend šalje npr. ["ROLE_ADMIN", "ROLE_SALES"] – provera radi preko .includes().
+ * Role iz backend-a (JWT). Mapiranje na sidebar i dashboard:
+ *
+ * SVI:                  Dashboard, Inbox, Kalendar, Podešavanja
+ * ADMIN:                Upravljanje korisnicima, Podešavanja kompanije, Pregled kompanije
+ * SALES_MANAGEMENT:     Upravljanje prodajom, Prodaja
+ * SALES:                Prodaja
+ * PROJECT_MANAGEMENT:   Upravljanje projektima, Projekti
+ * PROJECT:              Projekti
+ * INVENTORY_MANAGEMENT: Inventar
+ * ASSET_MANAGEMENT:     Imovina
+ * VEHICLE_MANAGEMENT:   Vozila
  */
 
-/** Sve moguće role (za referencu / debug) */
 export const ROLES = [
   "ADMIN",
   "SALES_MANAGEMENT",
@@ -15,25 +23,16 @@ export const ROLES = [
   "VEHICLE_MANAGEMENT",
 ];
 
-/**
- * Mapiranje role → frontend flag (useUserPermissions).
- * Svaki flag je true ako korisnik ima bilo koju od navedenih role.
- */
-export const PERMISSION_KEYWORDS = {
-  /** Admin – podešavanja kompanije, upravljanje korisnicima */
-  ADMIN: ["ADMIN"],
-
-  /** Prodaja – dashboard sekcija Prodaja, sales flow */
-  SALES: ["SALES_MANAGEMENT", "SALES"],
-
-  /** Projekti – dashboard kartice projekata, project-management */
-  PROJECT_MANAGER: ["PROJECT_MANAGEMENT", "PROJECT"],
-
-  /** Inventar + Imovina – dashboard sekcije zahteva/povrata/odobrenja */
-  WAREHOUSE: ["INVENTORY_MANAGEMENT", "ASSET_MANAGEMENT"],
-
-  /** Vozila – fleet (sidebar / buduće sekcije) */
-  VEHICLE: ["VEHICLE_MANAGEMENT"],
+export const ROLE_LABELS = {
+  ADMIN: "Admin",
+  SALES_MANAGEMENT: "Upravljanje prodajom",
+  SALES: "Prodaja",
+  PROJECT_MANAGEMENT: "Upravljanje projektima",
+  PROJECT: "Projekat",
+  INVENTORY_MANAGEMENT: "Upravljanje inventarom",
+  ASSET_MANAGEMENT: "Upravljanje imovinom",
+  VEHICLE_MANAGEMENT: "Upravljanje vozilima",
 };
 
-export const ALL_PERMISSION_KEYWORDS = Object.values(PERMISSION_KEYWORDS).flat();
+export const getRoleLabel = (roleKey) =>
+  ROLE_LABELS[roleKey] ?? roleKey;

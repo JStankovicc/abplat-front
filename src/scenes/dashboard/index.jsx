@@ -13,6 +13,7 @@ import {
   SalesQuickCard,
   InventoryQuickCard,
   AssetsApprovalCard,
+  FleetQuickCard,
 } from "../../components/dashboard";
 import { useDashboardData } from "../../hooks/useDashboardData";
 import { useUserPermissions } from "../../hooks/useUserPermissions";
@@ -174,7 +175,7 @@ const Dashboard = () => {
     displayName,
   } = useDashboardData();
 
-  const { isSales, isWarehouse } = useUserPermissions();
+  const { hasProject, hasProjectManagement, hasSales, hasInventory, hasAssets, hasVehicle } = useUserPermissions();
 
   /* ── Loading state ── */
   if (loading) {
@@ -257,45 +258,49 @@ const Dashboard = () => {
         <UpcomingEventsCard colors={colors} />
       </Box>
 
-      {/* ── Projects ── */}
-      <SectionHeader
-        title="Moji projekti"
-        count={projects.length || null}
-        onLinkClick={projects.length > 0 ? () => navigate("/project-management") : undefined}
-        colors={colors}
-      />
-
-      {projects.length > 0 ? (
-        <Box
-          display="grid"
-          gridTemplateColumns={threeColGrid}
-          gap={{ xs: 1.5, md: 2 }}
-          mb={{ xs: 2.5, md: 3 }}
-        >
-          {projects.map((project) => (
-            <ProjectCard
-              key={project.id}
-              project={project}
-              tasks={projectTasks[project.id] || []}
-              colors={colors}
-              onProjectClick={(id) => navigate(`/project/${id}`)}
-              getStatusColor={getStatusColor}
-              getStatusName={getStatusName}
-              formatDate={formatDate}
-            />
-          ))}
-        </Box>
-      ) : (
-        <Box mb={{ xs: 2.5, md: 3 }}>
-          <NoProjectsEmptyState
+      {/* ── Projects (PROJECT ili PROJECT_MANAGEMENT) ── */}
+      {hasProject && (
+        <>
+          <SectionHeader
+            title="Moji projekti"
+            count={projects.length || null}
+            onLinkClick={hasProjectManagement && projects.length > 0 ? () => navigate("/project-management") : undefined}
+            linkLabel={hasProjectManagement ? "Upravljanje projektima" : undefined}
             colors={colors}
-            onNavigate={() => navigate("/project-management")}
           />
-        </Box>
+          {projects.length > 0 ? (
+            <Box
+              display="grid"
+              gridTemplateColumns={threeColGrid}
+              gap={{ xs: 1.5, md: 2 }}
+              mb={{ xs: 2.5, md: 3 }}
+            >
+              {projects.map((project) => (
+                <ProjectCard
+                  key={project.id}
+                  project={project}
+                  tasks={projectTasks[project.id] || []}
+                  colors={colors}
+                  onProjectClick={(id) => navigate(`/project/${id}`)}
+                  getStatusColor={getStatusColor}
+                  getStatusName={getStatusName}
+                  formatDate={formatDate}
+                />
+              ))}
+            </Box>
+          ) : (
+            <Box mb={{ xs: 2.5, md: 3 }}>
+              <NoProjectsEmptyState
+                colors={colors}
+                onNavigate={() => navigate("/project-management")}
+              />
+            </Box>
+          )}
+        </>
       )}
 
-      {/* ── Sales section (role-gated) ── */}
-      {isSales && (
+      {/* ── Sales (SALES_MANAGEMENT ili SALES) ── */}
+      {hasSales && (
         <>
           <SectionHeader
             title="Prodaja"
@@ -316,11 +321,11 @@ const Dashboard = () => {
         </>
       )}
 
-      {/* ── Inventory / Assets section (role-gated) ── */}
-      {isWarehouse && (
+      {/* ── Inventar (INVENTORY_MANAGEMENT) ── */}
+      {hasInventory && (
         <>
           <SectionHeader
-            title="Imovina i inventar"
+            title="Inventar"
             onLinkClick={() => navigate("/inventory")}
             linkLabel="Otvori inventar"
             colors={colors}
@@ -333,7 +338,46 @@ const Dashboard = () => {
           >
             <InventoryQuickCard colors={colors} type="requests" />
             <InventoryQuickCard colors={colors} type="returns" />
+          </Box>
+        </>
+      )}
+
+      {/* ── Imovina (ASSET_MANAGEMENT) ── */}
+      {hasAssets && (
+        <>
+          <SectionHeader
+            title="Imovina"
+            onLinkClick={() => navigate("/assets")}
+            linkLabel="Otvori imovinu"
+            colors={colors}
+          />
+          <Box
+            display="grid"
+            gridTemplateColumns={threeColGrid}
+            gap={{ xs: 1.5, md: 2 }}
+            mb={{ xs: 2.5, md: 3 }}
+          >
             <AssetsApprovalCard colors={colors} />
+          </Box>
+        </>
+      )}
+
+      {/* ── Vozni park (VEHICLE_MANAGEMENT) ── */}
+      {hasVehicle && (
+        <>
+          <SectionHeader
+            title="Vozni park"
+            onLinkClick={() => navigate("/fleet")}
+            linkLabel="Otvori vožni park"
+            colors={colors}
+          />
+          <Box
+            display="grid"
+            gridTemplateColumns={threeColGrid}
+            gap={{ xs: 1.5, md: 2 }}
+            mb={{ xs: 2.5, md: 3 }}
+          >
+            <FleetQuickCard colors={colors} />
           </Box>
         </>
       )}

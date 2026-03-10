@@ -1,54 +1,62 @@
 import { useMemo } from "react";
 import { jwtDecode } from "jwt-decode";
-import { PERMISSION_KEYWORDS } from "../config/permissions";
+
+/** Normalizuje vrednost role iz JWT (string ili objekat) u velika slova, bez prefiksa ROLE_ */
+const normalizeRole = (a) => {
+  const s = typeof a === "string" ? a : a?.authority ?? a?.name ?? a?.role ?? "";
+  const trimmed = String(s).trim().toUpperCase();
+  return trimmed.startsWith("ROLE_") ? trimmed.slice(5) : trimmed;
+};
 
 /**
- * Uzima permisije iz JWT tokena (polja authorities / roles / role).
- * Koristi role: ADMIN, SALES_MANAGEMENT, SALES, PROJECT_MANAGEMENT, PROJECT,
- * INVENTORY_MANAGEMENT, ASSET_MANAGEMENT, VEHICLE_MANAGEMENT.
+ * Mapiranje (sidebar/dashboard):
+ * SVI: Dashboard, Inbox, Kalendar, Podešavanja
+ * ADMIN: Upravljanje korisnicima, Podešavanja kompanije, Pregled kompanije
+ * SALES_MANAGEMENT: Upravljanje prodajom, Prodaja
+ * SALES: Prodaja
+ * PROJECT_MANAGEMENT: Upravljanje projektima, Projekti
+ * PROJECT: Projekti
+ * INVENTORY_MANAGEMENT: Inventar
+ * ASSET_MANAGEMENT: Imovina
+ * VEHICLE_MANAGEMENT: Vozila
  */
 export const useUserPermissions = () => {
   return useMemo(() => {
     const token = localStorage.getItem("token");
-    if (!token) {
-      return {
-        isAdmin: false,
-        isSales: false,
-        isWarehouse: false,
-        isProjectManager: false,
-        isVehicle: false,
-        raw: [],
-      };
-    }
+    const empty = {
+      isAdmin: false,
+      hasSalesManagement: false,
+      hasSales: false,
+      hasProjectManagement: false,
+      hasProject: false,
+      hasInventory: false,
+      hasAssets: false,
+      hasVehicle: false,
+      raw: [],
+    };
+    if (!token) return empty;
 
     try {
       const decoded = jwtDecode(token);
-      const auths = decoded.authorities || decoded.roles || decoded.role || [];
+      const auths = decoded.authorities ?? decoded.roles ?? decoded.role ?? [];
       const authArr = Array.isArray(auths) ? auths : [auths];
+      const userRoles = new Set(authArr.map(normalizeRole).filter(Boolean));
 
-      const check = (keywords) =>
-        authArr.some((a) => {
-          const s = typeof a === "string" ? a : a?.authority || a?.name || "";
-          return keywords.some((k) => s.toUpperCase().includes(k.toUpperCase()));
-        });
+      const has = (role) => userRoles.has(role);
 
       return {
-        isAdmin: check(PERMISSION_KEYWORDS.ADMIN),
-        isSales: check(PERMISSION_KEYWORDS.SALES),
-        isWarehouse: check(PERMISSION_KEYWORDS.WAREHOUSE),
-        isProjectManager: check(PERMISSION_KEYWORDS.PROJECT_MANAGER),
-        isVehicle: check(PERMISSION_KEYWORDS.VEHICLE),
+        isAdmin: has("ADMIN"),
+        hasSalesManagement: has("SALES_MANAGEMENT"),
+        hasSales: has("SALES_MANAGEMENT") || has("SALES"),
+        hasProjectManagement: has("PROJECT_MANAGEMENT"),
+        hasProject: has("PROJECT_MANAGEMENT") || has("PROJECT"),
+        hasInventory: has("INVENTORY_MANAGEMENT"),
+        hasAssets: has("ASSET_MANAGEMENT"),
+        hasVehicle: has("VEHICLE_MANAGEMENT"),
         raw: authArr,
       };
     } catch {
-      return {
-        isAdmin: false,
-        isSales: false,
-        isWarehouse: false,
-        isProjectManager: false,
-        isVehicle: false,
-        raw: [],
-      };
+      return empty;
     }
   }, []);
 };
