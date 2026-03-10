@@ -2,3 +2,8 @@ export { default as DashboardShimmer } from "./DashboardShimmer";
 export { default as NotificationsCard } from "./NotificationsCard";
 export { default as MiniInboxCard } from "./MiniInboxCard";
 export { default as ProjectCard } from "./ProjectCard";
+export { default as DashboardGreeting } from "./DashboardGreeting";
+export { default as UpcomingEventsCard } from "./UpcomingEventsCard";
+export { default as SalesQuickCard } from "./SalesQuickCard";
+export { default as InventoryQuickCard } from "./InventoryQuickCard";
+export { default as AssetsApprovalCard } from "./AssetsApprovalCard";

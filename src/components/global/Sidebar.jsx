@@ -23,6 +23,7 @@ import FolderOutlinedIcon from "@mui/icons-material/FolderOutlined";
 import SidebarItem from "./SidebarItem";
 import SidebarProfile from "./SidebarProfile";
 import { useMobileSidebar } from "../../context/MobileSidebarContext";
+import { useUserPermissions } from "../../hooks/useUserPermissions";
 
 const Sidebar = ({ userProfile, companyInfo }) => {
     const theme = useTheme();
@@ -33,6 +34,7 @@ const Sidebar = ({ userProfile, companyInfo }) => {
     const { open: isMobileSidebarOpen, setOpen: setIsMobileSidebarOpen } = useMobileSidebar();
     const [projects, setProjects] = useState([]);
     const navigate = useNavigate();
+    const { isAdmin, isSales, isProjectManager, isWarehouse, isVehicle } = useUserPermissions();
 
     const handleLogout = () => {
         localStorage.removeItem("token");
@@ -243,111 +245,125 @@ const Sidebar = ({ userProfile, companyInfo }) => {
                                 onClick={() => isMobile && setIsMobileSidebarOpen(false)}
                             />
 
-                            <Typography variant="h6" color={colors.grey[300]} sx={{ m: "15px 0 5px 20px" }}>
-                                Admin
-                            </Typography>
-                            <SidebarItem
-                                title="Upravljanje korisnicima"
-                                to="/team"
-                                icon={<PeopleOutlinedIcon />}
-                                selected={selected}
-                                setSelected={setSelected}
-                                onClick={() => isMobile && setIsMobileSidebarOpen(false)}
-                                disabled={true}
-                            />
-                            <SidebarItem
-                                title="Podesavanja kompanije"
-                                to="/companySettings"
-                                icon={<SettingsOutlinedIcon />}
-                                selected={selected}
-                                setSelected={setSelected}
-                                onClick={() => isMobile && setIsMobileSidebarOpen(false)}
-                                disabled={true}
-                            />
-                            <SidebarItem
-                                title="Pregled kompanije"
-                                to="/team"
-                                icon={<ReceiptOutlinedIcon />}
-                                selected={selected}
-                                setSelected={setSelected}
-                                onClick={() => isMobile && setIsMobileSidebarOpen(false)}
-                                disabled={true}
-                            />
+                            {isAdmin && (
+                                <>
+                                    <Typography variant="h6" color={colors.grey[300]} sx={{ m: "15px 0 5px 20px" }}>
+                                        Admin
+                                    </Typography>
+                                    <SidebarItem
+                                        title="Upravljanje korisnicima"
+                                        to="/team"
+                                        icon={<PeopleOutlinedIcon />}
+                                        selected={selected}
+                                        setSelected={setSelected}
+                                        onClick={() => isMobile && setIsMobileSidebarOpen(false)}
+                                    />
+                                    <SidebarItem
+                                        title="Podesavanja kompanije"
+                                        to="/companySettings"
+                                        icon={<SettingsOutlinedIcon />}
+                                        selected={selected}
+                                        setSelected={setSelected}
+                                        onClick={() => isMobile && setIsMobileSidebarOpen(false)}
+                                    />
+                                    <SidebarItem
+                                        title="Pregled kompanije"
+                                        to="/team"
+                                        icon={<ReceiptOutlinedIcon />}
+                                        selected={selected}
+                                        setSelected={setSelected}
+                                        onClick={() => isMobile && setIsMobileSidebarOpen(false)}
+                                    />
+                                </>
+                            )}
 
-                            <Typography variant="h6" color={colors.grey[300]} sx={{ m: "15px 0 5px 20px" }}>
-                                Prodaja
-                            </Typography>
-                            <SidebarItem
-                                title="Upravljanje prodajom"
-                                to="/sales-management"
-                                icon={<StorefrontOutlinedIcon />}
-                                selected={selected}
-                                setSelected={setSelected}
-                                onClick={() => isMobile && setIsMobileSidebarOpen(false)}
-                                disabled={true}
-                            />
-                            <SidebarItem
-                                title="Prodaja"
-                                to="/sales"
-                                icon={<TrendingUpOutlinedIcon />}
-                                selected={selected}
-                                setSelected={setSelected}
-                                onClick={() => isMobile && setIsMobileSidebarOpen(false)}
-                                disabled={true}
-                            />
+                            {isSales && (
+                                <>
+                                    <Typography variant="h6" color={colors.grey[300]} sx={{ m: "15px 0 5px 20px" }}>
+                                        Prodaja
+                                    </Typography>
+                                    <SidebarItem
+                                        title="Upravljanje prodajom"
+                                        to="/sales-management"
+                                        icon={<StorefrontOutlinedIcon />}
+                                        selected={selected}
+                                        setSelected={setSelected}
+                                        onClick={() => isMobile && setIsMobileSidebarOpen(false)}
+                                    />
+                                    <SidebarItem
+                                        title="Prodaja"
+                                        to="/sales"
+                                        icon={<TrendingUpOutlinedIcon />}
+                                        selected={selected}
+                                        setSelected={setSelected}
+                                        onClick={() => isMobile && setIsMobileSidebarOpen(false)}
+                                    />
+                                </>
+                            )}
 
-                            <Typography variant="h6" color={colors.grey[300]} sx={{ m: "15px 0 5px 20px" }}>
-                                Projekti
-                            </Typography>
-                            <SidebarItem
-                                title="Upravljanje projektima"
-                                to="/project-management"
-                                icon={<PersonOutlinedIcon />}
-                                selected={selected}
-                                setSelected={setSelected}
-                                onClick={() => isMobile && setIsMobileSidebarOpen(false)}
-                            />
-                            {projects.map((project) => (
-                                <SidebarItem
-                                    key={project.id}
-                                    title={project.name}
-                                    icon={<FolderOutlinedIcon />}
-                                    selected={selected}
-                                    setSelected={setSelected}
-                                    onClick={() => handleProjectClick(project.id)}
-                                />
-                            ))}
+                            {isProjectManager && (
+                                <>
+                                    <Typography variant="h6" color={colors.grey[300]} sx={{ m: "15px 0 5px 20px" }}>
+                                        Projekti
+                                    </Typography>
+                                    <SidebarItem
+                                        title="Upravljanje projektima"
+                                        to="/project-management"
+                                        icon={<PersonOutlinedIcon />}
+                                        selected={selected}
+                                        setSelected={setSelected}
+                                        onClick={() => isMobile && setIsMobileSidebarOpen(false)}
+                                    />
+                                    {projects.map((project) => (
+                                        <SidebarItem
+                                            key={project.id}
+                                            title={project.name}
+                                            icon={<FolderOutlinedIcon />}
+                                            selected={selected}
+                                            setSelected={setSelected}
+                                            onClick={() => handleProjectClick(project.id)}
+                                        />
+                                    ))}
+                                </>
+                            )}
 
-                            <Typography variant="h6" color={colors.grey[300]} sx={{ m: "15px 0 5px 20px" }}>
-                                Imovina
-                            </Typography>
-                            <SidebarItem
-                                title="Inventar"
-                                to="/inventory"
-                                icon={<StorefrontOutlinedIcon />}
-                                selected={selected}
-                                setSelected={setSelected}
-                                onClick={() => isMobile && setIsMobileSidebarOpen(false)}
-                                disabled={true}
-                            />
-                            <SidebarItem
-                                title="Imovina"
-                                to="/assets"
-                                icon={<DashboardOutlinedIcon />}
-                                selected={selected}
-                                setSelected={setSelected}
-                                onClick={() => isMobile && setIsMobileSidebarOpen(false)}
-                                disabled={false}
-                            />
-                            <SidebarItem
-                                title="Vozila"
-                                to="/fleet"
-                                icon={<DirectionsCarIcon />}
-                                selected={selected}
-                                setSelected={setSelected}
-                                onClick={() => isMobile && setIsMobileSidebarOpen(false)}
-                                disabled={true}
-                            />
+                            {(isWarehouse || isVehicle) && (
+                                <>
+                                    <Typography variant="h6" color={colors.grey[300]} sx={{ m: "15px 0 5px 20px" }}>
+                                        Imovina
+                                    </Typography>
+                                    {isWarehouse && (
+                                        <>
+                                            <SidebarItem
+                                                title="Inventar"
+                                                to="/inventory"
+                                                icon={<StorefrontOutlinedIcon />}
+                                                selected={selected}
+                                                setSelected={setSelected}
+                                                onClick={() => isMobile && setIsMobileSidebarOpen(false)}
+                                            />
+                                            <SidebarItem
+                                                title="Imovina"
+                                                to="/assets"
+                                                icon={<DashboardOutlinedIcon />}
+                                                selected={selected}
+                                                setSelected={setSelected}
+                                                onClick={() => isMobile && setIsMobileSidebarOpen(false)}
+                                            />
+                                        </>
+                                    )}
+                                    {isVehicle && (
+                                        <SidebarItem
+                                            title="Vozila"
+                                            to="/fleet"
+                                            icon={<DirectionsCarIcon />}
+                                            selected={selected}
+                                            setSelected={setSelected}
+                                            onClick={() => isMobile && setIsMobileSidebarOpen(false)}
+                                        />
+                                    )}
+                                </>
+                            )}
 
                             {isMobile && (
                                 <SidebarItem

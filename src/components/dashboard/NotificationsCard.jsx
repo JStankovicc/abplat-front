@@ -1,40 +1,70 @@
-import { Box, Typography, Chip } from "@mui/material";
-import NotificationsIcon from "@mui/icons-material/Notifications";
-import { Lock as LockIcon } from "@mui/icons-material";
+import { Box, Typography, Chip, keyframes } from "@mui/material";
+import NotificationsOutlinedIcon from "@mui/icons-material/NotificationsOutlined";
+import CircleIcon from "@mui/icons-material/Circle";
 
-/**
- * Locked notifications section with "Coming soon" overlay.
- */
+const shimmerAnim = keyframes`
+  0% { transform: translateX(-100%) skewX(-15deg); }
+  100% { transform: translateX(200%) skewX(-15deg); }
+`;
+
+const ShimmerBlock = ({ colors, width = "100%", height = "12px", borderRadius = "6px", sx = {} }) => (
+  <Box
+    sx={{
+      width,
+      height,
+      borderRadius,
+      backgroundColor: colors.primary[600],
+      position: "relative",
+      overflow: "hidden",
+      "&::before": {
+        content: '""',
+        position: "absolute",
+        top: 0, left: 0, width: "100%", height: "100%",
+        background: `linear-gradient(90deg, transparent, ${colors.primary[400]}70, transparent)`,
+        animation: `${shimmerAnim} 1.8s infinite`,
+      },
+      ...sx,
+    }}
+  />
+);
+
+const MOCK_NOTIF_WIDTHS = [
+  { avatar: true, title: "72%", body: "55%" },
+  { avatar: true, title: "60%", body: "80%" },
+  { avatar: true, title: "85%", body: "65%" },
+  { avatar: false, title: "68%", body: "50%" },
+];
+
 const NotificationsCard = ({ colors }) => (
   <Box
     sx={{
-      gridColumn: "span 8",
-      gridRow: "span 3",
       backgroundColor: colors.primary[400],
       borderRadius: "12px",
       p: "15px",
       background: `linear-gradient(135deg, ${colors.primary[400]} 0%, ${colors.primary[500]} 100%)`,
-      overflow: "hidden",
-      position: "relative",
+      display: "flex",
+      flexDirection: "column",
       height: "100%",
+      minHeight: { xs: 200, md: 240 },
     }}
   >
-    <Box display="flex" alignItems="center" justifyContent="space-between" mb="15px">
-      <Box display="flex" alignItems="center">
+    {/* Header */}
+    <Box display="flex" alignItems="center" justifyContent="space-between" mb="12px">
+      <Box display="flex" alignItems="center" gap={1.5}>
         <Box
           sx={{
-            backgroundColor: colors.grey[600],
+            backgroundColor: `${colors.grey[600]}80`,
             borderRadius: "50%",
-            p: 1,
-            mr: 2,
+            p: 0.9,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
+            border: `1px solid ${colors.grey[600]}50`,
           }}
         >
-          <NotificationsIcon sx={{ color: colors.grey[400], fontSize: "1.2rem" }} />
+          <NotificationsOutlinedIcon sx={{ color: colors.grey[300], fontSize: "1.1rem" }} />
         </Box>
-        <Typography variant="h6" fontWeight="600" color={colors.grey[400]}>
+        <Typography variant="h6" fontWeight="600" color={colors.grey[300]} sx={{ fontSize: "0.9rem" }}>
           Obaveštenja
         </Typography>
       </Box>
@@ -42,114 +72,57 @@ const NotificationsCard = ({ colors }) => (
         label="Uskoro"
         size="small"
         sx={{
-          bgcolor: colors.grey[700],
-          color: colors.grey[300],
-          fontSize: "0.7rem",
+          bgcolor: `${colors.grey[700]}80`,
+          color: colors.grey[400],
+          fontSize: "0.63rem",
+          height: "18px",
+          border: `1px solid ${colors.grey[600]}50`,
         }}
       />
     </Box>
 
-    <Box
-      sx={{
-        height: "calc(100% - 60px)",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        position: "relative",
-      }}
-    >
-      {/* Blurred background content */}
-      <Box
-        sx={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          opacity: 0.15,
-          filter: "blur(2px)",
-        }}
-      >
-        {[1, 2, 3, 4].map((item) => (
-          <Box
-            key={item}
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              p: 2,
-              mb: 1,
-              borderRadius: "8px",
-              bgcolor: colors.primary[500],
-            }}
-          >
-            <Box
-              sx={{
-                width: 40,
-                height: 40,
-                borderRadius: "50%",
-                bgcolor: colors.grey[600],
-                mr: 2,
-              }}
-            />
-            <Box flex={1}>
-              <Box
-                sx={{
-                  height: 12,
-                  width: "60%",
-                  bgcolor: colors.grey[600],
-                  borderRadius: 1,
-                  mb: 1,
-                }}
-              />
-              <Box
-                sx={{
-                  height: 8,
-                  width: "80%",
-                  bgcolor: colors.grey[700],
-                  borderRadius: 1,
-                }}
-              />
-            </Box>
-          </Box>
-        ))}
-      </Box>
-
-      {/* Lock icon and text */}
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          zIndex: 1,
-          bgcolor: `${colors.primary[500]}E0`,
-          borderRadius: 3,
-          p: 4,
-          backdropFilter: "blur(4px)",
-        }}
-      >
+    {/* Shimmer notification items */}
+    <Box flex={1} sx={{ opacity: 0.5 }}>
+      {MOCK_NOTIF_WIDTHS.map((item, i) => (
         <Box
+          key={i}
+          display="flex"
+          alignItems="flex-start"
+          gap={1.5}
+          mb={1.2}
           sx={{
-            width: 64,
-            height: 64,
-            borderRadius: "50%",
-            bgcolor: colors.grey[700],
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            mb: 2,
+            p: "8px 10px",
+            borderRadius: "8px",
+            bgcolor: `${colors.primary[600]}40`,
           }}
         >
-          <LockIcon sx={{ fontSize: 32, color: colors.grey[400] }} />
+          {item.avatar && (
+            <ShimmerBlock
+              colors={colors}
+              width="30px"
+              height="30px"
+              borderRadius="50%"
+              sx={{ flexShrink: 0 }}
+            />
+          )}
+          {!item.avatar && (
+            <Box sx={{ width: 30, height: 30, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <CircleIcon sx={{ fontSize: "0.5rem", color: colors.grey[600] }} />
+            </Box>
+          )}
+          <Box flex={1}>
+            <ShimmerBlock colors={colors} width={item.title} height="11px" sx={{ mb: 0.7 }} />
+            <ShimmerBlock colors={colors} width={item.body} height="9px" />
+          </Box>
         </Box>
-        <Typography variant="h6" color={colors.grey[300]} fontWeight="500" mb={1}>
-          Funkcionalnost u izradi
-        </Typography>
-        <Typography variant="body2" color={colors.grey[500]} textAlign="center">
-          Obaveštenja će biti dostupna uskoro
-        </Typography>
-      </Box>
+      ))}
+    </Box>
+
+    {/* Footer lock notice */}
+    <Box mt={1.5} pt={1.2} borderTop={`1px solid ${colors.primary[600]}80`}>
+      <Typography variant="caption" color={colors.grey[500]} sx={{ fontSize: "0.72rem" }}>
+        Funkcionalnost u izradi
+      </Typography>
     </Box>
   </Box>
 );

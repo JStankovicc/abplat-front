@@ -3,6 +3,7 @@ import axios from "axios";
 import chatService from "../services/chatService";
 import { API_BASE_URL } from "../config/apiConfig";
 import { getAuthHeaders } from "../lib/api";
+import { jwtDecode } from "jwt-decode";
 
 /**
  * Hook for fetching dashboard data: projects, tasks, and last message.
@@ -15,6 +16,24 @@ export const useDashboardData = () => {
   const [lastMessage, setLastMessage] = useState(null);
   const [conversations, setConversations] = useState([]);
   const [contacts, setContacts] = useState([]);
+  const [displayName, setDisplayName] = useState("");
+
+  const fetchUserInfo = async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/userProfile/getUserProfile`, {
+        headers: getAuthHeaders(),
+      });
+      setDisplayName(response.data.displayName || response.data.firstName || "");
+    } catch {
+      try {
+        const token = localStorage.getItem("token");
+        if (token) {
+          const decoded = jwtDecode(token);
+          setDisplayName(decoded.name || decoded.displayName || "");
+        }
+      } catch {}
+    }
+  };
 
   const fetchProjects = async () => {
     try {
@@ -170,6 +189,7 @@ export const useDashboardData = () => {
   };
 
   useEffect(() => {
+    fetchUserInfo();
     fetchProjects();
     fetchLastMessage();
   }, []);
@@ -182,5 +202,6 @@ export const useDashboardData = () => {
     lastMessage,
     conversations,
     contacts,
+    displayName,
   };
 };

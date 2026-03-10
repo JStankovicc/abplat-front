@@ -1,36 +1,38 @@
-import { Box, keyframes } from '@mui/material';
+import { Box, keyframes, useTheme } from "@mui/material";
+import { tokens } from "../theme";
 
-const shimmer = keyframes`
-  0% {
-    transform: translateX(-100%) skewX(-15deg);
-  }
-  100% {
-    transform: translateX(200%) skewX(-15deg);
-  }
+const shimmerAnim = keyframes`
+  0% { transform: translateX(-100%) skewX(-15deg); }
+  100% { transform: translateX(200%) skewX(-15deg); }
 `;
 
-const Shimmer = ({ width = '100%', height = '20px', borderRadius = '4px', sx = {} }) => {
+const Shimmer = ({ width = "100%", height = "20px", borderRadius = "4px", sx = {} }) => {
+  const theme = useTheme();
+  const colors = tokens(theme.palette.mode);
+  const isDark = theme.palette.mode === "dark";
+
   return (
     <Box
       sx={{
         width,
         height,
         borderRadius,
-        backgroundColor: '#f0f0f0',
-        position: 'relative',
-        overflow: 'hidden',
-        '&::before': {
+        backgroundColor: isDark ? colors.primary[600] : colors.grey[800],
+        position: "relative",
+        overflow: "hidden",
+        "&::before": {
           content: '""',
-          position: 'absolute',
+          position: "absolute",
           top: 0,
           left: 0,
-          width: '100%',
-          height: '100%',
-          background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent)',
-          transform: 'skewX(-15deg)',
-          animation: `${shimmer} 2.5s infinite`,
+          width: "100%",
+          height: "100%",
+          background: isDark
+            ? `linear-gradient(90deg, transparent, ${colors.primary[400]}70, transparent)`
+            : "linear-gradient(90deg, transparent, rgba(255,255,255,0.7), transparent)",
+          animation: `${shimmerAnim} 1.8s infinite`,
         },
-        ...sx
+        ...sx,
       }}
     />
   );

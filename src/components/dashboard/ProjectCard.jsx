@@ -1,10 +1,9 @@
-import { Box, Typography, List, ListItem, ListItemAvatar, ListItemText, Avatar, Chip, LinearProgress } from "@mui/material";
-import FolderIcon from "@mui/icons-material/Folder";
-import TaskIcon from "@mui/icons-material/Task";
+import { Box, Typography, LinearProgress } from "@mui/material";
+import FolderOpenOutlinedIcon from "@mui/icons-material/FolderOpenOutlined";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
+import AssignmentLateOutlinedIcon from "@mui/icons-material/AssignmentLateOutlined";
 
-/**
- * Single project card with tasks and progress.
- */
 const ProjectCard = ({
   project,
   tasks,
@@ -14,160 +13,209 @@ const ProjectCard = ({
   getStatusName,
   formatDate,
 }) => {
-  const completedTasks = tasks.filter((task) => task.statusId === 3).length;
+  const completedTasks = tasks.filter((t) => t.statusId === 3).length;
+  const inProgressTasks = tasks.filter((t) => t.statusId === 2).length;
   const totalTasks = tasks.length;
-  const progressPercentage = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+  const progress = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+
+  const statusColorMap = {
+    warning: "#f5a623",
+    primary: colors.blueAccent[400],
+    success: colors.greenAccent[400],
+    secondary: colors.grey[400],
+  };
 
   return (
     <Box
       sx={{
-        gridColumn: "span 4",
-        gridRow: "span 1",
         backgroundColor: colors.primary[400],
         borderRadius: "12px",
-        p: "12px",
+        p: "14px",
         cursor: "pointer",
-        transition: "all 0.3s ease",
+        transition: "all 0.25s ease",
         "&:hover": {
           backgroundColor: colors.primary[300],
-          transform: "translateY(-2px)",
-          boxShadow: 6,
+          transform: "translateY(-3px)",
+          boxShadow: "0 8px 24px rgba(0,0,0,0.3)",
         },
         background: `linear-gradient(135deg, ${colors.primary[400]} 0%, ${colors.primary[500]} 100%)`,
+        display: "flex",
+        flexDirection: "column",
+        gap: 1,
       }}
       onClick={() => onProjectClick(project.id)}
     >
-      <Box display="flex" alignItems="center" mb="8px">
+      {/* Project title row */}
+      <Box display="flex" alignItems="flex-start" gap={1.2}>
         <Box
           sx={{
-            backgroundColor: colors.greenAccent[500],
-            borderRadius: "50%",
-            p: 0.8,
-            mr: 1.5,
+            backgroundColor: `${colors.greenAccent[700]}50`,
+            borderRadius: "8px",
+            p: 0.7,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
+            border: `1px solid ${colors.greenAccent[600]}40`,
+            flexShrink: 0,
+            mt: 0.2,
           }}
         >
-          <FolderIcon sx={{ color: colors.grey[100], fontSize: "1rem" }} />
+          <FolderOpenOutlinedIcon sx={{ color: colors.greenAccent[400], fontSize: "1rem" }} />
         </Box>
-        <Box flex={1}>
+        <Box flex={1} minWidth={0}>
           <Typography
-            variant="subtitle1"
-            fontWeight="600"
+            fontWeight="700"
             color={colors.grey[100]}
-            sx={{ fontSize: "0.9rem" }}
+            sx={{
+              fontSize: "0.88rem",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              lineHeight: 1.3,
+            }}
           >
             {project.name}
           </Typography>
-          <Typography variant="caption" color={colors.grey[300]} sx={{ fontSize: "0.7rem" }}>
-            {totalTasks} zadataka
+          <Typography variant="caption" color={colors.grey[400]} sx={{ fontSize: "0.7rem" }}>
+            {totalTasks} {totalTasks === 1 ? "zadatak" : "zadataka"}
           </Typography>
         </Box>
       </Box>
 
+      {/* Progress bar */}
       {totalTasks > 0 && (
-        <Box mb="6px">
+        <Box>
+          <Box display="flex" justifyContent="space-between" mb={0.4}>
+            <Typography variant="caption" color={colors.grey[400]} sx={{ fontSize: "0.65rem" }}>
+              Napredak
+            </Typography>
+            <Typography
+              variant="caption"
+              color={colors.greenAccent[400]}
+              fontWeight="700"
+              sx={{ fontSize: "0.65rem" }}
+            >
+              {Math.round(progress)}%
+            </Typography>
+          </Box>
           <LinearProgress
             variant="determinate"
-            value={progressPercentage}
+            value={progress}
             sx={{
-              height: 4,
-              borderRadius: 2,
-              backgroundColor: colors.grey[700],
+              height: 5,
+              borderRadius: 3,
+              backgroundColor: colors.primary[600],
               "& .MuiLinearProgress-bar": {
-                backgroundColor: colors.greenAccent[500],
-                borderRadius: 2,
+                backgroundColor:
+                  progress === 100 ? colors.greenAccent[500] : colors.blueAccent[400],
+                borderRadius: 3,
               },
             }}
           />
+          <Box display="flex" gap={1.5} mt={0.6}>
+            <Box display="flex" alignItems="center" gap={0.4}>
+              <CheckCircleOutlineIcon sx={{ fontSize: "0.7rem", color: colors.greenAccent[500] }} />
+              <Typography variant="caption" color={colors.grey[400]} sx={{ fontSize: "0.65rem" }}>
+                {completedTasks} završ.
+              </Typography>
+            </Box>
+            <Box display="flex" alignItems="center" gap={0.4}>
+              <RadioButtonUncheckedIcon sx={{ fontSize: "0.7rem", color: colors.blueAccent[400] }} />
+              <Typography variant="caption" color={colors.grey[400]} sx={{ fontSize: "0.65rem" }}>
+                {inProgressTasks} u toku
+              </Typography>
+            </Box>
+          </Box>
         </Box>
       )}
 
+      {/* Task list */}
       <Box
         sx={{
-          maxHeight: "120px",
+          maxHeight: "100px",
           overflowY: "auto",
-          "&::-webkit-scrollbar": { width: "4px" },
-          "&::-webkit-scrollbar-track": {
-            backgroundColor: "rgba(0,0,0,0.1)",
-            borderRadius: "2px",
-          },
-          "&::-webkit-scrollbar-thumb": {
-            backgroundColor: "rgba(0,0,0,0.3)",
-            borderRadius: "2px",
-            "&:hover": { backgroundColor: "rgba(0,0,0,0.5)" },
-          },
+          "&::-webkit-scrollbar": { width: "3px" },
+          "&::-webkit-scrollbar-track": { bgcolor: "transparent" },
+          "&::-webkit-scrollbar-thumb": { bgcolor: colors.grey[700], borderRadius: "2px" },
         }}
       >
         {tasks.length > 0 ? (
-          <List dense sx={{ p: 0 }}>
-            {tasks.map((task) => (
-              <ListItem key={task.id} sx={{ p: 0, mb: 0.5 }}>
-                <ListItemAvatar>
-                  <Avatar
-                    sx={{
-                      bgcolor: colors.greenAccent[500],
-                      width: 20,
-                      height: 20,
-                      fontSize: "0.6rem",
-                    }}
-                  >
-                    <TaskIcon sx={{ fontSize: "0.6rem" }} />
-                  </Avatar>
-                </ListItemAvatar>
-                <ListItemText
-                  primary={
-                    <Typography
-                      variant="body2"
-                      color={colors.grey[100]}
-                      sx={{
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                        fontWeight: 500,
-                        fontSize: "0.7rem",
-                      }}
-                    >
-                      {task.name}
-                    </Typography>
-                  }
-                  secondary={
-                    <Box display="flex" alignItems="center" gap={0.5}>
-                      <Chip
-                        label={getStatusName(task.statusId)}
-                        size="small"
-                        color={getStatusColor(task.statusId)}
-                        sx={{ fontSize: "0.6rem", height: "14px" }}
-                      />
-                      {task.dateDue && (
-                        <Typography variant="caption" color={colors.grey[400]} sx={{ fontSize: "0.6rem" }}>
-                          {formatDate(task.dateDue)}
-                        </Typography>
-                      )}
-                    </Box>
-                  }
+          tasks.slice(0, 4).map((task) => {
+            const sc = getStatusColor(task.statusId);
+            const dotColor = statusColorMap[sc] || colors.grey[400];
+            return (
+              <Box
+                key={task.id}
+                display="flex"
+                alignItems="center"
+                gap={1}
+                mb={0.6}
+                sx={{
+                  p: "5px 7px",
+                  borderRadius: "6px",
+                  bgcolor: `${colors.primary[600]}50`,
+                }}
+              >
+                <Box
+                  sx={{
+                    width: 6,
+                    height: 6,
+                    borderRadius: "50%",
+                    bgcolor: dotColor,
+                    flexShrink: 0,
+                  }}
                 />
-              </ListItem>
-            ))}
-          </List>
+                <Typography
+                  variant="body2"
+                  color={colors.grey[200]}
+                  sx={{
+                    fontSize: "0.72rem",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                    flex: 1,
+                    fontWeight: task.statusId === 2 ? 600 : 400,
+                  }}
+                >
+                  {task.name}
+                </Typography>
+                {task.dateDue && (
+                  <Typography
+                    variant="caption"
+                    color={colors.grey[500]}
+                    sx={{ fontSize: "0.62rem", flexShrink: 0 }}
+                  >
+                    {formatDate(task.dateDue)}
+                  </Typography>
+                )}
+              </Box>
+            );
+          })
         ) : (
-          <Box textAlign="center" py={1}>
-            <Typography color={colors.grey[400]} variant="body2" sx={{ fontSize: "0.7rem" }}>
-              Nema zadataka
+          <Box
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+            py={1}
+            gap={0.5}
+          >
+            <AssignmentLateOutlinedIcon sx={{ fontSize: "0.9rem", color: colors.grey[500] }} />
+            <Typography color={colors.grey[500]} variant="caption" sx={{ fontSize: "0.72rem" }}>
+              Nema dodeljenih zadataka
             </Typography>
           </Box>
         )}
       </Box>
 
-      <Box mt={1} textAlign="center">
+      {/* Footer */}
+      <Box pt={0.8} borderTop={`1px solid ${colors.primary[600]}60`} mt={0.2}>
         <Typography
           variant="caption"
-          color={colors.greenAccent[500]}
-          fontWeight="500"
+          color={colors.greenAccent[400]}
+          fontWeight="600"
           sx={{ fontSize: "0.7rem" }}
         >
-          Kliknite da otvorite projekat →
+          Otvori projekat →
         </Typography>
       </Box>
     </Box>
