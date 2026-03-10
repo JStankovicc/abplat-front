@@ -17,7 +17,7 @@ import { tokens } from "../../theme";
 import { AddUserDialog, TeamDataGrid, TeamHeader } from "../../components/team";
 import { ROLES, getRoleLabel } from "../../config/permissions";
 import { useCompanyUsersWithPermissions } from "../../hooks/useCompanyUsersWithPermissions";
-import { changeUserRole } from "../../services/userService";
+import { changeUserRole, addUser } from "../../services/userService";
 
 const Team = () => {
   const theme = useTheme();
@@ -37,6 +37,8 @@ const Team = () => {
   const [roleFilter, setRoleFilter] = useState("");
   const [roleChangeError, setRoleChangeError] = useState(null);
   const [openAddDialog, setOpenAddDialog] = useState(false);
+  const [addUserLoading, setAddUserLoading] = useState(false);
+  const [addUserError, setAddUserError] = useState(null);
   const [newUser, setNewUser] = useState({
     firstName: "",
     lastName: "",
@@ -84,17 +86,28 @@ const Team = () => {
     }
   };
 
-  const handleAddUser = () => {
-    const addedUser = {
-      id: users.length + 1,
-      name: `${newUser.firstName} ${newUser.lastName}`,
-      email: newUser.email,
-      profilePic: null,
-      roles: ROLES.reduce((acc, r) => ({ ...acc, [r]: false }), {}),
-    };
-    setUsers((prev) => [...prev, addedUser]);
-    setOpenAddDialog(false);
-    setNewUser({ firstName: "", lastName: "", email: "", password: "" });
+  const handleAddUser = async () => {
+    setAddUserError(null);
+    setAddUserLoading(true);
+    try {
+      await addUser({
+        firstName: newUser.firstName,
+        lastName: newUser.lastName,
+        email: newUser.email,
+        password: newUser.password,
+        role: [],
+      });
+      setOpenAddDialog(false);
+      setNewUser({ firstName: "", lastName: "", email: "", password: "" });
+      refetch();
+    } catch (err) {
+      setAddUserError(
+        err.response?.data?.message ??
+          "Greška pri dodavanju korisnika. Pokušajte ponovo."
+      );
+    } finally {
+      setAddUserLoading(false);
+    }
   };
 
   return (
@@ -118,12 +131,17 @@ const Team = () => {
 
       <AddUserDialog
         open={openAddDialog}
-        onClose={() => setOpenAddDialog(false)}
+        onClose={() => {
+          setOpenAddDialog(false);
+          setAddUserError(null);
+        }}
         newUser={newUser}
         onChange={setNewUser}
         onSubmit={handleAddUser}
         colors={colors}
         isMobile={isMobile}
+        loading={addUserLoading}
+        error={addUserError}
       />
 
       {error && (

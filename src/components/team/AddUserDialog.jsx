@@ -6,10 +6,12 @@ import {
   Button,
   TextField,
   Grid,
+  Alert,
+  CircularProgress,
 } from "@mui/material";
 
 /**
- * Dialog for adding a new team member.
+ * Dialog for adding a new team member. Šalje POST /user/add (UserRequest).
  */
 const AddUserDialog = ({
   open,
@@ -19,6 +21,8 @@ const AddUserDialog = ({
   onSubmit,
   colors,
   isMobile,
+  loading = false,
+  error = null,
 }) => (
   <Dialog
     open={open}
@@ -33,6 +37,11 @@ const AddUserDialog = ({
   >
     <DialogTitle>Dodaj novog korisnika</DialogTitle>
     <DialogContent>
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      )}
       <Grid container spacing={2} sx={{ mt: 1 }}>
         <Grid item xs={12} sm={6}>
           <TextField
@@ -86,7 +95,7 @@ const AddUserDialog = ({
       </Grid>
     </DialogContent>
     <DialogActions>
-      <Button onClick={onClose} color="secondary">
+      <Button onClick={onClose} color="secondary" disabled={loading}>
         Otkaži
       </Button>
       <Button
@@ -94,13 +103,14 @@ const AddUserDialog = ({
         color="secondary"
         variant="contained"
         disabled={
-          !newUser.firstName ||
-          !newUser.lastName ||
-          !newUser.email ||
+          loading ||
+          !newUser.firstName?.trim() ||
+          !newUser.lastName?.trim() ||
+          !newUser.email?.trim() ||
           !newUser.password
         }
       >
-        Dodaj
+        {loading ? <CircularProgress size={24} color="inherit" /> : "Dodaj"}
       </Button>
     </DialogActions>
   </Dialog>
