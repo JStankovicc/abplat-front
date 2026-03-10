@@ -1,5 +1,7 @@
 import { Box, Typography, Chip, keyframes } from "@mui/material";
 import DirectionsCarIcon from "@mui/icons-material/DirectionsCar";
+import PeopleOutlineIcon from "@mui/icons-material/PeopleOutline";
+import BuildOutlinedIcon from "@mui/icons-material/BuildOutlined";
 import { useNavigate } from "react-router-dom";
 
 const shimmerAnim = keyframes`
@@ -28,8 +30,33 @@ const ShimmerBlock = ({ colors, width = "100%", height = "14px", borderRadius = 
   />
 );
 
-const FleetQuickCard = ({ colors }) => {
+const CONFIGS = {
+  fleet: {
+    title: "Vozni park",
+    subtitle: "Vozila i vozači",
+    icon: DirectionsCarIcon,
+  },
+  vehicles: {
+    title: "Vozila",
+    subtitle: "Evidencija i status",
+    icon: DirectionsCarIcon,
+  },
+  drivers: {
+    title: "Vozači",
+    subtitle: "Dodela i raspored",
+    icon: PeopleOutlineIcon,
+  },
+  maintenance: {
+    title: "Održavanje",
+    subtitle: "Servisi i rezervni delovi",
+    icon: BuildOutlinedIcon,
+  },
+};
+
+const FleetQuickCard = ({ colors, type = "fleet" }) => {
   const navigate = useNavigate();
+  const cfg = CONFIGS[type];
+  const Icon = cfg.icon;
 
   return (
     <Box
@@ -60,7 +87,7 @@ const FleetQuickCard = ({ colors }) => {
             border: `1px solid ${colors.greenAccent[600]}50`,
           }}
         >
-          <DirectionsCarIcon sx={{ color: colors.greenAccent[400], fontSize: "1.15rem" }} />
+          <Icon sx={{ color: colors.greenAccent[400], fontSize: "1.15rem" }} />
         </Box>
         <Chip
           label="U pripremi"
@@ -75,10 +102,10 @@ const FleetQuickCard = ({ colors }) => {
         />
       </Box>
       <Typography variant="body2" color={colors.grey[100]} mb={0.3} fontWeight="600" sx={{ fontSize: "0.85rem" }}>
-        Vozni park
+        {cfg.title}
       </Typography>
       <Typography variant="caption" color={colors.grey[400]} mb={1.5} sx={{ fontSize: "0.72rem", display: "block" }}>
-        Vozila i vozači
+        {cfg.subtitle}
       </Typography>
       <ShimmerBlock colors={colors} height="26px" width="75%" sx={{ mb: 0.8 }} />
       <ShimmerBlock colors={colors} height="11px" width="55%" />

@@ -20,6 +20,7 @@ const getFormattedDate = () =>
 const DashboardGreeting = ({ displayName, colors }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const firstName = displayName?.trim().split(/\s+/)[0] ?? displayName ?? "";
 
   return (
     <Box
@@ -60,7 +61,7 @@ const DashboardGreeting = ({ displayName, colors }) => {
             color={colors.grey[100]}
             sx={{ fontSize: { xs: "1.05rem", md: "1.3rem" }, lineHeight: 1.25 }}
           >
-            {getGreeting()}{displayName ? `, ${displayName}` : ""}!
+            {getGreeting()}{firstName ? `, ${firstName}` : ""}!
           </Typography>
           <Box display="flex" alignItems="center" gap={0.6} mt={0.3}>
             <CalendarTodayOutlinedIcon sx={{ fontSize: "0.75rem", color: colors.grey[400] }} />

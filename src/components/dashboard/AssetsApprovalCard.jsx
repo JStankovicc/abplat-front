@@ -1,5 +1,7 @@
 import { Box, Typography, Chip, keyframes } from "@mui/material";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import DashboardOutlinedIcon from "@mui/icons-material/DashboardOutlined";
+import SwapHorizOutlinedIcon from "@mui/icons-material/SwapHorizOutlined";
 import { useNavigate } from "react-router-dom";
 
 const shimmerAnim = keyframes`
@@ -27,8 +29,31 @@ const ShimmerRow = ({ colors, width = "100%" }) => (
   />
 );
 
-const AssetsApprovalCard = ({ colors }) => {
+const CONFIGS = {
+  approval: {
+    title: "Zahtevi za odobrenje",
+    subtitle: "Čekaju vašu akciju",
+    icon: CheckCircleOutlineIcon,
+    dotWidths: ["72%", "58%", "80%"],
+  },
+  overview: {
+    title: "Pregled imovine",
+    subtitle: "Katalog i stanje",
+    icon: DashboardOutlinedIcon,
+    dotWidths: ["65%", "90%", "50%"],
+  },
+  transfer: {
+    title: "Prenos imovine",
+    subtitle: "Zahtevi za premeštaj",
+    icon: SwapHorizOutlinedIcon,
+    dotWidths: ["55%", "70%", "60%"],
+  },
+};
+
+const AssetsApprovalCard = ({ colors, type = "approval" }) => {
   const navigate = useNavigate();
+  const cfg = CONFIGS[type];
+  const Icon = cfg.icon;
 
   return (
     <Box
@@ -59,7 +84,7 @@ const AssetsApprovalCard = ({ colors }) => {
             border: `1px solid ${colors.blueAccent[600]}50`,
           }}
         >
-          <CheckCircleOutlineIcon sx={{ color: colors.blueAccent[400], fontSize: "1.15rem" }} />
+          <Icon sx={{ color: colors.blueAccent[400], fontSize: "1.15rem" }} />
         </Box>
         <Chip
           label="U pripremi"
@@ -81,7 +106,7 @@ const AssetsApprovalCard = ({ colors }) => {
         fontWeight="600"
         sx={{ fontSize: "0.85rem" }}
       >
-        Zahtevi za odobrenje imovine
+        {cfg.title}
       </Typography>
       <Typography
         variant="caption"
@@ -89,10 +114,10 @@ const AssetsApprovalCard = ({ colors }) => {
         mb={1.5}
         sx={{ fontSize: "0.72rem", display: "block" }}
       >
-        Čekaju vašu akciju
+        {cfg.subtitle}
       </Typography>
 
-      {["72%", "58%", "80%"].map((w, i) => (
+      {cfg.dotWidths.map((w, i) => (
         <Box key={i} display="flex" alignItems="center" gap={1} mb={1}>
           <Box
             sx={{

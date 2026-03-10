@@ -338,6 +338,7 @@ const Dashboard = () => {
           >
             <InventoryQuickCard colors={colors} type="requests" />
             <InventoryQuickCard colors={colors} type="returns" />
+            <InventoryQuickCard colors={colors} type="stock" />
           </Box>
         </>
       )}
@@ -357,7 +358,9 @@ const Dashboard = () => {
             gap={{ xs: 1.5, md: 2 }}
             mb={{ xs: 2.5, md: 3 }}
           >
-            <AssetsApprovalCard colors={colors} />
+            <AssetsApprovalCard colors={colors} type="approval" />
+            <AssetsApprovalCard colors={colors} type="overview" />
+            <AssetsApprovalCard colors={colors} type="transfer" />
           </Box>
         </>
       )}
@@ -377,7 +380,9 @@ const Dashboard = () => {
             gap={{ xs: 1.5, md: 2 }}
             mb={{ xs: 2.5, md: 3 }}
           >
-            <FleetQuickCard colors={colors} />
+            <FleetQuickCard colors={colors} type="vehicles" />
+            <FleetQuickCard colors={colors} type="drivers" />
+            <FleetQuickCard colors={colors} type="maintenance" />
           </Box>
         </>
       )}

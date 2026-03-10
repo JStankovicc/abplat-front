@@ -1,6 +1,7 @@
 import { Box, Typography, Chip, keyframes } from "@mui/material";
 import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
 import AssignmentReturnOutlinedIcon from "@mui/icons-material/AssignmentReturnOutlined";
+import AssessmentOutlinedIcon from "@mui/icons-material/AssessmentOutlined";
 import { useNavigate } from "react-router-dom";
 
 const shimmerAnim = keyframes`
@@ -42,6 +43,13 @@ const CONFIGS = {
     icon: AssignmentReturnOutlinedIcon,
     accentKey: "redAccent",
     dotWidths: ["65%", "75%", "50%"],
+  },
+  stock: {
+    title: "Stanje zaliha",
+    subtitle: "Pregled nivoa zaliha",
+    icon: AssessmentOutlinedIcon,
+    accentKey: "blueAccent",
+    dotWidths: ["60%", "85%", "45%"],
   },
 };
 
