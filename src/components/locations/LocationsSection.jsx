@@ -4,6 +4,7 @@
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  Autocomplete,
   Box,
   Button,
   Dialog,
@@ -35,8 +36,9 @@ import {
   Search as SearchIcon,
 } from "@mui/icons-material";
 import { tokens } from "../../theme";
-import locationsService, { LOCATION_TYPES, ZONE_TYPES, COUNTRIES } from "../../services/locationsService";
+import locationsService, { LOCATION_TYPES, ZONE_TYPES } from "../../services/locationsService";
 import wmsService from "../../services/wmsService";
+import geoService from "../../services/geoService";
 import { useCompanyUsersWithPermissions } from "../../hooks/useCompanyUsersWithPermissions";
 
 /** Redosled tabova po tipu lokacije; mora da odgovara LOCATION_TYPES. */
@@ -47,7 +49,9 @@ const initialForm = {
   code: "",
   name: "",
   parentId: "",
-  country: "Srbija",
+  countryId: "",
+  regionId: "",
+  districtId: "",
   city: "",
   address: "",
   warehouseId: "",
@@ -100,6 +104,11 @@ const LocationsSection = () => {
   const [form, setForm] = useState(initialForm);
   const [deleteConfirm, setDeleteConfirm] = useState({ open: false, id: null, name: "" });
   const [snack, setSnack] = useState({ open: false, message: "", severity: "success" });
+  const [countries, setCountries] = useState([]);
+  const [regions, setRegions] = useState([]);
+  const [districts, setDistricts] = useState([]);
+  const [cityOptions, setCityOptions] = useState([]);
+  const [cityLoading, setCityLoading] = useState(false);
 
   const currentType = TAB_KEYS[tab];
   const showWarehouseZoneFields = form.type === "warehouse_zone";
@@ -149,6 +158,53 @@ const LocationsSection = () => {
     loadWarehouses();
   }, [loadWarehouses]);
 
+  /** Učitaj države kad se dijalog otvori (za adresu) – GET /api/v1/location/getAllCountries. */
+  useEffect(() => {
+    if (!dialogOpen || !showAddressFields) return;
+    geoService
+      .listCountries()
+      .then((res) => setCountries(Array.isArray(res.data) ? res.data : []))
+      .catch(() => setCountries([]));
+  }, [dialogOpen, showAddressFields]);
+
+  /** Učitaj regione kad je izabrana država – GET /api/v1/location/getRegionsByCountry?country=. */
+  useEffect(() => {
+    if (!form.countryId) {
+      setRegions([]);
+      return;
+    }
+    geoService
+      .listRegions(form.countryId)
+      .then((res) => setRegions(Array.isArray(res.data) ? res.data : []))
+      .catch(() => setRegions([]));
+  }, [form.countryId]);
+
+  /** Učitaj okruge kad je izabran region – GET /api/v1/location/getDistrictsByRegion?regionId=. */
+  useEffect(() => {
+    if (!form.regionId) {
+      setDistricts([]);
+      return;
+    }
+    geoService
+      .listDistricts(form.regionId)
+      .then((res) => setDistricts(Array.isArray(res.data) ? res.data : []))
+      .catch(() => setDistricts([]));
+  }, [form.regionId]);
+
+  /** Učitaj gradove kad je izabran okrug – GET /api/v1/location/getCitiesByDistrictId?districtId=. */
+  useEffect(() => {
+    if (!form.districtId) {
+      setCityOptions([]);
+      return;
+    }
+    setCityLoading(true);
+    geoService
+      .listCitySuggestions(form.districtId)
+      .then((res) => setCityOptions(Array.isArray(res.data) ? res.data : []))
+      .catch(() => setCityOptions([]))
+      .finally(() => setCityLoading(false));
+  }, [form.districtId]);
+
   const filteredByTab = useMemo(() => {
     if (currentType === "all") return locations;
     return locations.filter((l) => l.type === currentType);
@@ -189,22 +245,25 @@ const LocationsSection = () => {
   };
 
   const parseAddressParts = (fullAddress) => {
-    if (!fullAddress?.trim()) return { country: "Srbija", city: "", address: "" };
+    if (!fullAddress?.trim()) return { city: "", address: "" };
     const parts = fullAddress.split(",").map((s) => s.trim()).filter(Boolean);
-    if (parts.length >= 3) return { country: parts[0], city: parts[1], address: parts.slice(2).join(", ") };
-    if (parts.length === 2) return { country: "Srbija", city: parts[0], address: parts[1] || "" };
-    if (parts.length === 1) return { country: "Srbija", city: "", address: parts[0] };
-    return { country: "Srbija", city: "", address: "" };
+    if (parts.length >= 3) return { city: parts[1], address: parts.slice(2).join(", ") };
+    if (parts.length === 2) return { city: parts[0], address: parts[1] || "" };
+    if (parts.length === 1) return { city: "", address: parts[0] };
+    return { city: "", address: "" };
   };
 
   const handleOpenEdit = (row) => {
-    const { country, city, address } = parseAddressParts(row.address);
+    const hasGeo = row.countryId != null || row.regionId != null || row.districtId != null;
+    const { city, address } = hasGeo ? { city: row.city ?? "", address: row.address ?? "" } : parseAddressParts(row.address);
     setForm({
       type: row.type,
       code: row.code,
       name: row.name,
       parentId: row.parentId || "",
-      country: country || "Srbija",
+      countryId: row.countryId ?? "",
+      regionId: row.regionId ?? "",
+      districtId: row.districtId ?? "",
       city: city || "",
       address: address || "",
       warehouseId: row.warehouseId || "",
@@ -223,9 +282,13 @@ const LocationsSection = () => {
     setForm(initialForm);
   };
 
-  /** Adresa za backend: država, grad i ulica u jedan string (npr. "Srbija, Beograd, Ulica 5"). */
-  const buildFullAddress = () =>
-    [form.country, form.city, form.address].filter(Boolean).join(", ") || "";
+  /** Adresa za backend: država, region, okrug, mesto i ulica u jedan string; za payload šaljemo i id-eve. */
+  const buildFullAddress = () => {
+    const countryName = countries.find((c) => String(c.id) === String(form.countryId))?.name ?? "";
+    const regionName = regions.find((r) => String(r.id) === String(form.regionId))?.name ?? "";
+    const districtName = districts.find((d) => String(d.id) === String(form.districtId))?.name ?? "";
+    return [countryName, regionName, districtName, form.city, form.address].filter(Boolean).join(", ") || "";
+  };
 
   const handleSave = async () => {
     if (!form.code?.trim() || !form.name?.trim()) {
@@ -271,6 +334,10 @@ const LocationsSection = () => {
           name: form.name,
           address: fullAddress,
           parentId: form.type === "workstation" ? form.parentId || null : null,
+          countryId: form.countryId || undefined,
+          regionId: form.regionId || undefined,
+          districtId: form.districtId || undefined,
+          city: form.city || undefined,
         });
       }
       setSnack({ open: true, message: "Lokacija je sačuvana.", severity: "success" });
@@ -610,8 +677,16 @@ const LocationsSection = () => {
                   select
                   fullWidth
                   label="Država"
-                  value={form.country}
-                  onChange={(e) => setForm((p) => ({ ...p, country: e.target.value }))}
+                  value={form.countryId}
+                  onChange={(e) =>
+                    setForm((p) => ({
+                      ...p,
+                      countryId: e.target.value,
+                      regionId: "",
+                      districtId: "",
+                      city: "",
+                    }))
+                  }
                   sx={dialogInputSx(theme, colors)}
                   SelectProps={{
                     MenuProps: {
@@ -620,19 +695,94 @@ const LocationsSection = () => {
                     },
                   }}
                 >
-                  {COUNTRIES.map((c) => (
-                    <MenuItem key={c.value} value={c.value}>
-                      {c.label}
+                  <MenuItem value="">— Izaberi državu —</MenuItem>
+                  {countries.map((c) => (
+                    <MenuItem key={c.id} value={c.id}>
+                      {c.name}
                     </MenuItem>
                   ))}
                 </TextField>
                 <TextField
+                  select
                   fullWidth
-                  label="Grad"
-                  value={form.city}
-                  onChange={(e) => setForm((p) => ({ ...p, city: e.target.value }))}
-                  placeholder="npr. Beograd"
+                  label="Region"
+                  value={form.regionId}
+                  onChange={(e) =>
+                    setForm((p) => ({
+                      ...p,
+                      regionId: e.target.value,
+                      districtId: "",
+                      city: "",
+                    }))
+                  }
+                  disabled={!form.countryId}
                   sx={dialogInputSx(theme, colors)}
+                  SelectProps={{
+                    MenuProps: {
+                      PaperProps: { sx: menuPaperSx(theme, colors) },
+                      MenuListProps: { sx: { py: 0 } },
+                    },
+                  }}
+                >
+                  <MenuItem value="">— Izaberi region —</MenuItem>
+                  {regions.map((r) => (
+                    <MenuItem key={r.id} value={r.id}>
+                      {r.name}
+                    </MenuItem>
+                  ))}
+                </TextField>
+                <TextField
+                  select
+                  fullWidth
+                  label="Okrug"
+                  value={form.districtId}
+                  onChange={(e) =>
+                    setForm((p) => ({
+                      ...p,
+                      districtId: e.target.value,
+                      city: "",
+                    }))
+                  }
+                  disabled={!form.regionId}
+                  sx={dialogInputSx(theme, colors)}
+                  SelectProps={{
+                    MenuProps: {
+                      PaperProps: { sx: menuPaperSx(theme, colors) },
+                      MenuListProps: { sx: { py: 0 } },
+                    },
+                  }}
+                >
+                  <MenuItem value="">— Izaberi okrug —</MenuItem>
+                  {districts.map((d) => (
+                    <MenuItem key={d.id} value={d.id}>
+                      {d.name}
+                    </MenuItem>
+                  ))}
+                </TextField>
+                <Autocomplete
+                  freeSolo
+                  options={cityOptions.map((c) => (typeof c === "string" ? c : c.name))}
+                  value={form.city}
+                  onInputChange={(_, value) => setForm((p) => ({ ...p, city: value ?? "" }))}
+                  onOpen={() => {
+                    if (form.districtId && cityOptions.length === 0) {
+                      setCityLoading(true);
+                      geoService
+                        .listCitySuggestions(form.districtId)
+                        .then((res) => setCityOptions(Array.isArray(res.data) ? res.data : []))
+                        .catch(() => setCityOptions([]))
+                        .finally(() => setCityLoading(false));
+                    }
+                  }}
+                  loading={cityLoading}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Mesto"
+                      placeholder="npr. Beograd ili unesite slobodno"
+                      sx={dialogInputSx(theme, colors)}
+                    />
+                  )}
                 />
                 <TextField
                   fullWidth

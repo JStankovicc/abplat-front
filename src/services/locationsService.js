@@ -39,9 +39,6 @@ export const ZONE_TYPES = {
   packing: "Pakovanje",
 };
 
-/** Države za adresu (proširivo) */
-export const COUNTRIES = [{ value: "Srbija", label: "Srbija" }];
-
 export const locationsService = {
   /** Sve lokacije (kancelarije, radna mesta, magacini, zone) */
   listLocations: async (filters = {}) =>
@@ -79,7 +76,18 @@ export const locationsService = {
         capacity: payload.maxUnits ? { maxUnits: Number(payload.maxUnits) } : undefined,
       });
     }
-    return axios.post(`${API_BASE_URL}/api/v1/locations`, payload, {
+    const body = {
+      type: payload.type,
+      code: payload.code,
+      name: payload.name,
+      parentId: payload.parentId ?? null,
+      address: payload.address,
+      countryId: payload.countryId ?? undefined,
+      regionId: payload.regionId ?? undefined,
+      districtId: payload.districtId ?? undefined,
+      city: payload.city ?? undefined,
+    };
+    return axios.post(`${API_BASE_URL}/api/v1/locations`, body, {
       headers: getAuthHeaders(),
     });
   },
