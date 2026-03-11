@@ -22,7 +22,7 @@ const withFallback = async (request, fallbackValue) => {
   }
 };
 
-/** Tipovi lokacija za sidebar (kancelarije, radna mesta, zone u magacinu itd.) */
+/** Tipovi lokacija (kancelarije, radna mesta, magacini, zone, ostalo) */
 export const LOCATION_TYPES = {
   office: "Kancelarija",
   workstation: "Radno mesto",
@@ -30,6 +30,17 @@ export const LOCATION_TYPES = {
   warehouse_zone: "Zona u magacinu",
   other: "Ostalo",
 };
+
+/** Tipovi zone u magacinu – za zone (skladištenje, prijem, komisioniranje, pakovanje) */
+export const ZONE_TYPES = {
+  storage: "Skladište",
+  receiving: "Prijem",
+  pick: "Komisioniranje",
+  packing: "Pakovanje",
+};
+
+/** Države za adresu (proširivo) */
+export const COUNTRIES = [{ value: "Srbija", label: "Srbija" }];
 
 export const locationsService = {
   /** Sve lokacije (kancelarije, radna mesta, magacini, zone) */
