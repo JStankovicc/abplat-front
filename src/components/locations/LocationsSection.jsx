@@ -182,14 +182,6 @@ const LocationsSection = () => {
     return loc.address || "—";
   };
 
-  const countsByType = useMemo(() => {
-    const c = { office: 0, workstation: 0, warehouse: 0, warehouse_zone: 0, other: 0 };
-    locations.forEach((l) => {
-      if (c[l.type] !== undefined) c[l.type]++;
-    });
-    return c;
-  }, [locations]);
-
   const handleOpenCreate = () => {
     setForm({ ...initialForm, type: currentType });
     setDialogMode("create");
@@ -325,6 +317,7 @@ const LocationsSection = () => {
       <Tabs
         value={tab}
         onChange={(_, v) => setTab(v)}
+        textColor="inherit"
         variant="scrollable"
         scrollButtons="auto"
         sx={{
@@ -334,10 +327,10 @@ const LocationsSection = () => {
             minHeight: 48,
             textTransform: "none",
             fontWeight: 600,
-            color: colors.grey[400],
+            color: colors.grey[100],
+            "&.Mui-selected": { color: colors.greenAccent[500] },
           },
-          "& .Mui-selected": { color: colors.greenAccent[500] },
-          "& .MuiTabs-indicator": { backgroundColor: colors.greenAccent[500], height: 3 },
+          "& .MuiTabs-indicator": { backgroundColor: colors.greenAccent[500], height: 2 },
         }}
       >
         <Tab label="Kancelarije" />
@@ -348,44 +341,6 @@ const LocationsSection = () => {
       </Tabs>
 
       <Box sx={{ px: 2, py: 2 }}>
-        {/* Brojači po tipu – uvek čitljivi u oba tema: neaktivni primary[400] + theme tekst, aktivni zelena nijansa + tamni tekst. */}
-        <Box
-          sx={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: 1,
-            mb: 2,
-          }}
-        >
-          {TAB_KEYS.map((key, idx) => (
-            <Box
-              key={key}
-              sx={{
-                px: 1.5,
-                py: 0.75,
-                borderRadius: 1,
-                bgcolor: tab === idx ? colors.greenAccent[500] : colors.primary[400],
-                border: `1px solid ${tab === idx ? colors.greenAccent[500] : "transparent"}`,
-                color: tab === idx ? "#fff" : theme.palette.text.primary,
-              }}
-            >
-              <Typography
-                variant="caption"
-                sx={{
-                  mr: 0.5,
-                  opacity: tab === idx ? 1 : 0.9,
-                  color: tab === idx ? "inherit" : theme.palette.text.secondary,
-                }}
-              >
-                {LOCATION_TYPES[key]}:
-              </Typography>
-              <Typography component="span" variant="body2" fontWeight={700} sx={{ color: "inherit" }}>
-                {countsByType[key] ?? 0}
-              </Typography>
-            </Box>
-          ))}
-        </Box>
-
         <Box
           sx={{
             display: "flex",
