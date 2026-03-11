@@ -15,6 +15,10 @@ import {
     Inventory as InventoryIcon,
     ShoppingCart as OrderIcon,
     LocalShipping as SupplierIcon,
+    MoveDown as PutawayIcon,
+    Place as LocationIcon,
+    Task as TaskIcon,
+    History as AuditIcon,
     AssignmentReturn as ReturnsIcon,
     BarChart as AnalyticsIcon
 } from "@mui/icons-material";
@@ -26,11 +30,21 @@ import OrdersSection from "../../components/inventory/OrdersSection";
 import SuppliersSection from "../../components/inventory/SuppliersSection";
 import ReturnsSection from "../../components/inventory/ReturnsSection";
 import AnalyticsSection from "../../components/inventory/AnalyticsSection";
+import MagaciniSection from "../../components/inventory/MagaciniSection";
+import ReceivingSection from "../../components/inventory/ReceivingSection";
+import PutawaySection from "../../components/inventory/PutawaySection";
+import WarehouseTasksSection from "../../components/inventory/WarehouseTasksSection";
+import AuditLogSection from "../../components/inventory/AuditLogSection";
 
 const sections = [
     { id: "dashboard", label: "Pregled", icon: <DashboardIcon />, component: <DashboardSection /> },
     { id: "stock", label: "Stanje", icon: <InventoryIcon />, component: <StockTrackingSection /> },
-    { id: "orders", label: "Porudžbine", icon: <OrderIcon />, component: <OrdersSection /> },
+    { id: "magacini", label: "Magacini", icon: <LocationIcon />, component: <MagaciniSection /> },
+    { id: "receiving", label: "Receiving", icon: <SupplierIcon />, component: <ReceivingSection /> },
+    { id: "putaway", label: "Putaway", icon: <PutawayIcon />, component: <PutawaySection /> },
+    { id: "tasks", label: "Taskovi", icon: <TaskIcon />, component: <WarehouseTasksSection /> },
+    { id: "orders", label: "Sales Orders", icon: <OrderIcon />, component: <OrdersSection /> },
+    { id: "audit", label: "Audit log", icon: <AuditIcon />, component: <AuditLogSection /> },
     { id: "suppliers", label: "Dobavljači", icon: <SupplierIcon />, component: <SuppliersSection /> },
     { id: "returns", label: "Povrati", icon: <ReturnsIcon />, component: <ReturnsSection /> },
     { id: "analytics", label: "Analitika", icon: <AnalyticsIcon />, component: <AnalyticsSection /> },

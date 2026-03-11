@@ -336,9 +336,10 @@ const Dashboard = () => {
             gap={{ xs: 1.5, md: 2 }}
             mb={{ xs: 2.5, md: 3 }}
           >
-            <InventoryQuickCard colors={colors} type="requests" />
-            <InventoryQuickCard colors={colors} type="returns" />
             <InventoryQuickCard colors={colors} type="stock" />
+            <InventoryQuickCard colors={colors} type="lowStock" />
+            <InventoryQuickCard colors={colors} type="tasks" />
+            <InventoryQuickCard colors={colors} type="processing" />
           </Box>
         </>
       )}

@@ -34,6 +34,7 @@ import SalesManagement from "./scenes/sales/SalesManagement";
 import InventoryView from "./scenes/inventory/InventoryView";
 import AssetsView from "./scenes/assets/AssetsView";
 import FleetView from "./scenes/fleet/FleetView";
+import LocationsView from "./scenes/locations/LocationsView";
 function App() {
     const [theme, colorMode] = useMode();
     const [token, setToken] = useState(localStorage.getItem("token"));
@@ -226,6 +227,18 @@ function App() {
                                         <InventoryView />
                                     </PrivateRoute>
                                 }
+                            />
+                            <Route
+                                path="/locations"
+                                element={
+                                    <PrivateRoute>
+                                        <LocationsView />
+                                    </PrivateRoute>
+                                }
+                            />
+                            <Route
+                                path="/warehouse-locations"
+                                element={<Navigate to="/locations" replace />}
                             />
                             <Route
                                 path="/assets"

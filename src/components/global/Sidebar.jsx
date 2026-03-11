@@ -20,6 +20,7 @@ import StorefrontOutlinedIcon from "@mui/icons-material/StorefrontOutlined";
 import TrendingUpOutlinedIcon from "@mui/icons-material/TrendingUpOutlined";
 import DirectionsCarIcon from "@mui/icons-material/DirectionsCar";
 import FolderOutlinedIcon from "@mui/icons-material/FolderOutlined";
+import WarehouseOutlinedIcon from "@mui/icons-material/WarehouseOutlined";
 import SidebarItem from "./SidebarItem";
 import SidebarProfile from "./SidebarProfile";
 import { useMobileSidebar } from "../../context/MobileSidebarContext";
@@ -151,8 +152,24 @@ const Sidebar = ({ userProfile, companyInfo }) => {
                     "& .pro-sidebar-inner": {
                         background: `${colors.primary[400]} !important`,
                     },
+                    "& .pro-sidebar-layout": {
+                        "&::-webkit-scrollbar": { width: "5px" },
+                        "&::-webkit-scrollbar-track": { bgcolor: "transparent" },
+                        "&::-webkit-scrollbar-thumb": {
+                            bgcolor: colors.grey[700],
+                            borderRadius: "3px",
+                            "&:hover": { bgcolor: colors.grey[600] },
+                        },
+                    },
                     "& .pro-icon-wrapper": { backgroundColor: "transparent !important" },
-                    "& .pro-inner-item": { padding: "5px 35px 5px 20px !important" },
+                    "& .pro-inner-item": {
+                        padding: "5px 35px 5px 20px !important",
+                        ...(isCollapsed && !isMobile && {
+                            justifyContent: "center !important",
+                            paddingLeft: "18px !important",
+                            paddingRight: "8px !important",
+                        }),
+                    },
                     "& .pro-inner-item:hover": { color: "#868dfb !important" },
                     "& .pro-menu-item.active": { color: "#6870fa !important" },
                     position: "relative",
@@ -226,37 +243,96 @@ const Sidebar = ({ userProfile, companyInfo }) => {
                             </Box>
                         )}
 
-                        <Box paddingLeft={isCollapsed && !isMobile ? undefined : "10%"}>
-                            <SidebarItem
-                                title="Dashboard"
-                                to="/"
-                                icon={<HomeOutlinedIcon />}
-                                selected={selected}
-                                setSelected={setSelected}
-                                onClick={() => isMobile && setIsMobileSidebarOpen(false)}
-                            />
-
-                            <SidebarItem
-                                title="Inbox"
-                                to="/messages"
-                                icon={<EmailOutlinedIcon />}
-                                selected={selected}
-                                setSelected={setSelected}
-                                onClick={() => isMobile && setIsMobileSidebarOpen(false)}
-                            />
-
-                            <SidebarItem
-                                title="Kalendar"
-                                to="/calendar"
-                                icon={<CalendarTodayOutlinedIcon />}
-                                selected={selected}
-                                setSelected={setSelected}
-                                onClick={() => isMobile && setIsMobileSidebarOpen(false)}
-                            />
+                        <Box
+                            sx={{
+                                ...(isCollapsed && !isMobile
+                                    ? { px: "6px", "& > div": { px: "4px", minWidth: 0 } }
+                                    : { paddingLeft: "10px", paddingRight: "10px" }),
+                            }}
+                        >
+                            <Box
+                                sx={{
+                                    mt: 0,
+                                    mb: 1,
+                                    px: 1.5,
+                                    py: 1,
+                                    borderRadius: 1,
+                                    bgcolor: `${colors.primary[500]}80`,
+                                    borderLeft: `3px solid ${colors.blueAccent[500]}`,
+                                }}
+                            >
+                                <Typography
+                                    variant="caption"
+                                    sx={{
+                                        display: "block",
+                                        color: colors.grey[400],
+                                        fontWeight: 700,
+                                        letterSpacing: "0.08em",
+                                        textTransform: "uppercase",
+                                        mb: 1,
+                                        pl: 0.5,
+                                        ...(isCollapsed && !isMobile && { display: "none" }),
+                                    }}
+                                >
+                                    Pregled
+                                </Typography>
+                                <SidebarItem
+                                    title="Dashboard"
+                                    to="/"
+                                    icon={<HomeOutlinedIcon />}
+                                    selected={selected}
+                                    setSelected={setSelected}
+                                    onClick={() => isMobile && setIsMobileSidebarOpen(false)}
+                                    isCollapsed={isCollapsed}
+                                    isMobile={isMobile}
+                                />
+                                <SidebarItem
+                                    title="Inbox"
+                                    to="/messages"
+                                    icon={<EmailOutlinedIcon />}
+                                    selected={selected}
+                                    setSelected={setSelected}
+                                    onClick={() => isMobile && setIsMobileSidebarOpen(false)}
+                                    isCollapsed={isCollapsed}
+                                    isMobile={isMobile}
+                                />
+                                <SidebarItem
+                                    title="Kalendar"
+                                    to="/calendar"
+                                    icon={<CalendarTodayOutlinedIcon />}
+                                    selected={selected}
+                                    setSelected={setSelected}
+                                    onClick={() => isMobile && setIsMobileSidebarOpen(false)}
+                                    isCollapsed={isCollapsed}
+                                    isMobile={isMobile}
+                                />
+                            </Box>
 
                             {isAdmin && (
-                                <>
-                                    <Typography variant="h6" color={colors.grey[300]} sx={{ m: "15px 0 5px 20px" }}>
+                                <Box
+                                    sx={{
+                                        mt: 2,
+                                        mb: 1,
+                                        px: 1.5,
+                                        py: 1,
+                                        borderRadius: 1,
+                                        bgcolor: `${colors.primary[500]}80`,
+                                        borderLeft: `3px solid ${colors.greenAccent[500]}`,
+                                    }}
+                                >
+                                    <Typography
+                                        variant="caption"
+                                        sx={{
+                                            display: "block",
+                                            color: colors.grey[400],
+                                            fontWeight: 700,
+                                            letterSpacing: "0.08em",
+                                            textTransform: "uppercase",
+                                            mb: 1,
+                                            pl: 0.5,
+                                            ...(isCollapsed && !isMobile && { display: "none" }),
+                                        }}
+                                    >
                                         Admin
                                     </Typography>
                                     <SidebarItem
@@ -266,14 +342,18 @@ const Sidebar = ({ userProfile, companyInfo }) => {
                                         selected={selected}
                                         setSelected={setSelected}
                                         onClick={() => isMobile && setIsMobileSidebarOpen(false)}
+                                        isCollapsed={isCollapsed}
+                                        isMobile={isMobile}
                                     />
                                     <SidebarItem
-                                        title="Podesavanja kompanije"
+                                        title="Podešavanja kompanije"
                                         to="/companySettings"
                                         icon={<SettingsOutlinedIcon />}
                                         selected={selected}
                                         setSelected={setSelected}
                                         onClick={() => isMobile && setIsMobileSidebarOpen(false)}
+                                        isCollapsed={isCollapsed}
+                                        isMobile={isMobile}
                                     />
                                     <SidebarItem
                                         title="Pregled kompanije"
@@ -282,13 +362,47 @@ const Sidebar = ({ userProfile, companyInfo }) => {
                                         selected={selected}
                                         setSelected={setSelected}
                                         onClick={() => isMobile && setIsMobileSidebarOpen(false)}
+                                        isCollapsed={isCollapsed}
+                                        isMobile={isMobile}
                                     />
-                                </>
+                                    <SidebarItem
+                                        title="Lokacije"
+                                        to="/locations"
+                                        icon={<WarehouseOutlinedIcon />}
+                                        selected={selected}
+                                        setSelected={setSelected}
+                                        onClick={() => isMobile && setIsMobileSidebarOpen(false)}
+                                        isCollapsed={isCollapsed}
+                                        isMobile={isMobile}
+                                    />
+                                </Box>
                             )}
 
                             {(hasSalesManagement || hasSales) && (
-                                <>
-                                    <Typography variant="h6" color={colors.grey[300]} sx={{ m: "15px 0 5px 20px" }}>
+                                <Box
+                                    sx={{
+                                        mt: 2,
+                                        mb: 1,
+                                        px: 1.5,
+                                        py: 1,
+                                        borderRadius: 1,
+                                        bgcolor: `${colors.primary[500]}80`,
+                                        borderLeft: `3px solid ${colors.redAccent[500]}`,
+                                    }}
+                                >
+                                    <Typography
+                                        variant="caption"
+                                        sx={{
+                                            display: "block",
+                                            color: colors.grey[400],
+                                            fontWeight: 700,
+                                            letterSpacing: "0.08em",
+                                            textTransform: "uppercase",
+                                            mb: 1,
+                                            pl: 0.5,
+                                            ...(isCollapsed && !isMobile && { display: "none" }),
+                                        }}
+                                    >
                                         Prodaja
                                     </Typography>
                                     {hasSalesManagement && (
@@ -299,6 +413,8 @@ const Sidebar = ({ userProfile, companyInfo }) => {
                                             selected={selected}
                                             setSelected={setSelected}
                                             onClick={() => isMobile && setIsMobileSidebarOpen(false)}
+                                            isCollapsed={isCollapsed}
+                                            isMobile={isMobile}
                                         />
                                     )}
                                     {hasSales && (
@@ -309,14 +425,38 @@ const Sidebar = ({ userProfile, companyInfo }) => {
                                             selected={selected}
                                             setSelected={setSelected}
                                             onClick={() => isMobile && setIsMobileSidebarOpen(false)}
+                                            isCollapsed={isCollapsed}
+                                            isMobile={isMobile}
                                         />
                                     )}
-                                </>
+                                </Box>
                             )}
 
                             {(hasProjectManagement || hasProject) && (
-                                <>
-                                    <Typography variant="h6" color={colors.grey[300]} sx={{ m: "15px 0 5px 20px" }}>
+                                <Box
+                                    sx={{
+                                        mt: 2,
+                                        mb: 1,
+                                        px: 1.5,
+                                        py: 1,
+                                        borderRadius: 1,
+                                        bgcolor: `${colors.primary[500]}80`,
+                                        borderLeft: `3px solid #e6b800`,
+                                    }}
+                                >
+                                    <Typography
+                                        variant="caption"
+                                        sx={{
+                                            display: "block",
+                                            color: colors.grey[400],
+                                            fontWeight: 700,
+                                            letterSpacing: "0.08em",
+                                            textTransform: "uppercase",
+                                            mb: 1,
+                                            pl: 0.5,
+                                            ...(isCollapsed && !isMobile && { display: "none" }),
+                                        }}
+                                    >
                                         Projekti
                                     </Typography>
                                     {hasProjectManagement && (
@@ -327,6 +467,8 @@ const Sidebar = ({ userProfile, companyInfo }) => {
                                             selected={selected}
                                             setSelected={setSelected}
                                             onClick={() => isMobile && setIsMobileSidebarOpen(false)}
+                                            isCollapsed={isCollapsed}
+                                            isMobile={isMobile}
                                         />
                                     )}
                                     {hasProject && projects.map((project) => (
@@ -337,14 +479,38 @@ const Sidebar = ({ userProfile, companyInfo }) => {
                                             selected={selected}
                                             setSelected={setSelected}
                                             onClick={() => handleProjectClick(project.id)}
+                                            isCollapsed={isCollapsed}
+                                            isMobile={isMobile}
                                         />
                                     ))}
-                                </>
+                                </Box>
                             )}
 
                             {(hasInventory || hasAssets || hasVehicle) && (
-                                <>
-                                    <Typography variant="h6" color={colors.grey[300]} sx={{ m: "15px 0 5px 20px" }}>
+                                <Box
+                                    sx={{
+                                        mt: 2,
+                                        mb: 1,
+                                        px: 1.5,
+                                        py: 1,
+                                        borderRadius: 1,
+                                        bgcolor: `${colors.primary[500]}80`,
+                                        borderLeft: `3px solid #ed6c02`,
+                                    }}
+                                >
+                                    <Typography
+                                        variant="caption"
+                                        sx={{
+                                            display: "block",
+                                            color: colors.grey[400],
+                                            fontWeight: 700,
+                                            letterSpacing: "0.08em",
+                                            textTransform: "uppercase",
+                                            mb: 1,
+                                            pl: 0.5,
+                                            ...(isCollapsed && !isMobile && { display: "none" }),
+                                        }}
+                                    >
                                         Imovina
                                     </Typography>
                                     {hasInventory && (
@@ -355,6 +521,8 @@ const Sidebar = ({ userProfile, companyInfo }) => {
                                             selected={selected}
                                             setSelected={setSelected}
                                             onClick={() => isMobile && setIsMobileSidebarOpen(false)}
+                                            isCollapsed={isCollapsed}
+                                            isMobile={isMobile}
                                         />
                                     )}
                                     {hasAssets && (
@@ -365,6 +533,8 @@ const Sidebar = ({ userProfile, companyInfo }) => {
                                             selected={selected}
                                             setSelected={setSelected}
                                             onClick={() => isMobile && setIsMobileSidebarOpen(false)}
+                                            isCollapsed={isCollapsed}
+                                            isMobile={isMobile}
                                         />
                                     )}
                                     {hasVehicle && (
@@ -375,12 +545,39 @@ const Sidebar = ({ userProfile, companyInfo }) => {
                                             selected={selected}
                                             setSelected={setSelected}
                                             onClick={() => isMobile && setIsMobileSidebarOpen(false)}
+                                            isCollapsed={isCollapsed}
+                                            isMobile={isMobile}
                                         />
                                     )}
-                                </>
+                                </Box>
                             )}
 
-                            <Box mt="30px">
+                            <Box
+                                sx={{
+                                    mt: 2,
+                                    mb: 1,
+                                    px: 1.5,
+                                    py: 1,
+                                    borderRadius: 1,
+                                    bgcolor: `${colors.primary[500]}80`,
+                                    borderLeft: `3px solid ${colors.grey[600]}`,
+                                }}
+                            >
+                                <Typography
+                                    variant="caption"
+                                    sx={{
+                                        display: "block",
+                                        color: colors.grey[400],
+                                        fontWeight: 700,
+                                        letterSpacing: "0.08em",
+                                        textTransform: "uppercase",
+                                        mb: 1,
+                                        pl: 0.5,
+                                        ...(isCollapsed && !isMobile && { display: "none" }),
+                                    }}
+                                >
+                                    Nalog
+                                </Typography>
                                 <SidebarItem
                                     title="Podešavanja"
                                     to="/companySettings"
@@ -388,6 +585,8 @@ const Sidebar = ({ userProfile, companyInfo }) => {
                                     selected={selected}
                                     setSelected={setSelected}
                                     onClick={() => isMobile && setIsMobileSidebarOpen(false)}
+                                    isCollapsed={isCollapsed}
+                                    isMobile={isMobile}
                                 />
                                 <SidebarItem
                                     title="Logout"
@@ -398,6 +597,8 @@ const Sidebar = ({ userProfile, companyInfo }) => {
                                         handleLogout();
                                         isMobile && setIsMobileSidebarOpen(false);
                                     }}
+                                    isCollapsed={isCollapsed}
+                                    isMobile={isMobile}
                                 />
                             </Box>
                         </Box>

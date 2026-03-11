@@ -1,8 +1,11 @@
-import { Box, Typography, Chip, keyframes } from "@mui/material";
+import { Box, Typography, keyframes } from "@mui/material";
 import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
-import AssignmentReturnOutlinedIcon from "@mui/icons-material/AssignmentReturnOutlined";
-import AssessmentOutlinedIcon from "@mui/icons-material/AssessmentOutlined";
+import AssignmentTurnedInOutlinedIcon from "@mui/icons-material/AssignmentTurnedInOutlined";
+import WarningAmberOutlinedIcon from "@mui/icons-material/WarningAmberOutlined";
+import LocalShippingOutlinedIcon from "@mui/icons-material/LocalShippingOutlined";
 import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import wmsService from "../../services/wmsService";
 
 const shimmerAnim = keyframes`
   0% { transform: translateX(-100%) skewX(-15deg); }
@@ -30,34 +33,39 @@ const ShimmerRow = ({ colors, width = "100%" }) => (
 );
 
 const CONFIGS = {
-  requests: {
-    title: "Zahtevi za inventar",
-    subtitle: "Zahtevi na čekanju",
-    icon: Inventory2OutlinedIcon,
-    accentKey: "greenAccent",
-    dotWidths: ["70%", "55%", "80%"],
-  },
-  returns: {
-    title: "Povrati inventara",
-    subtitle: "Povrati na obradi",
-    icon: AssignmentReturnOutlinedIcon,
-    accentKey: "redAccent",
-    dotWidths: ["65%", "75%", "50%"],
-  },
-  stock: {
-    title: "Stanje zaliha",
-    subtitle: "Pregled nivoa zaliha",
-    icon: AssessmentOutlinedIcon,
-    accentKey: "blueAccent",
-    dotWidths: ["60%", "85%", "45%"],
-  },
+  stock: { title: "Stanje zaliha", subtitle: "Ukupne jedinice", icon: Inventory2OutlinedIcon, accentKey: "blueAccent" },
+  lowStock: { title: "Niske zalihe", subtitle: "SKU ispod praga", icon: WarningAmberOutlinedIcon, accentKey: "redAccent" },
+  tasks: { title: "Aktivni taskovi", subtitle: "WMS operacije", icon: AssignmentTurnedInOutlinedIcon, accentKey: "greenAccent" },
+  processing: { title: "Orders u obradi", subtitle: "Čekaju fulfillment", icon: LocalShippingOutlinedIcon, accentKey: "orangeAccent" },
 };
 
-const InventoryQuickCard = ({ colors, type = "requests" }) => {
+const InventoryQuickCard = ({ colors, type = "stock" }) => {
   const navigate = useNavigate();
-  const cfg = CONFIGS[type];
+  const cfg = CONFIGS[type] || CONFIGS.stock;
   const Icon = cfg.icon;
-  const accent = colors[cfg.accentKey];
+  const accentPalette = colors?.[cfg.accentKey] || {};
+  const accent = {
+    400: accentPalette[400] || colors?.greenAccent?.[400] || "#4cceac",
+    500: accentPalette[500] || colors?.greenAccent?.[500] || "#4cceac",
+    600: accentPalette[600] || accentPalette[500] || "#4cceac",
+    700: accentPalette[700] || accentPalette[600] || accentPalette[500] || "#4cceac",
+  };
+  const [value, setValue] = useState("-");
+
+  useEffect(() => {
+    const load = async () => {
+      const response = await wmsService.getDashboard();
+      const data = response.data;
+      const mappedValue = {
+        stock: data.inventory?.totalUnits ?? 0,
+        lowStock: data.inventory?.lowStockSkus ?? 0,
+        tasks: data.tasks?.active ?? 0,
+        processing: data.orders?.inProcessing ?? 0,
+      }[type];
+      setValue(mappedValue);
+    };
+    load();
+  }, [type]);
 
   return (
     <Box
@@ -90,17 +98,7 @@ const InventoryQuickCard = ({ colors, type = "requests" }) => {
         >
           <Icon sx={{ color: accent[400], fontSize: "1.15rem" }} />
         </Box>
-        <Chip
-          label="U pripremi"
-          size="small"
-          sx={{
-            bgcolor: `${colors.grey[700]}80`,
-            color: colors.grey[400],
-            fontSize: "0.63rem",
-            height: "18px",
-            border: `1px solid ${colors.grey[600]}50`,
-          }}
-        />
+        <Typography variant="caption" color={colors.grey[300]}>{cfg.subtitle}</Typography>
       </Box>
 
       <Typography
@@ -112,16 +110,9 @@ const InventoryQuickCard = ({ colors, type = "requests" }) => {
       >
         {cfg.title}
       </Typography>
-      <Typography
-        variant="caption"
-        color={colors.grey[400]}
-        mb={1.5}
-        sx={{ fontSize: "0.72rem", display: "block" }}
-      >
-        {cfg.subtitle}
-      </Typography>
+      <Typography variant="h4" color={colors.grey[100]} sx={{ mb: 1.5 }}>{value}</Typography>
 
-      {cfg.dotWidths.map((w, i) => (
+      {["72%", "55%", "80%"].map((w, i) => (
         <Box key={i} display="flex" alignItems="center" gap={1} mb={1}>
           <Box
             sx={{
