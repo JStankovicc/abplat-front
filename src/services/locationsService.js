@@ -22,6 +22,19 @@ const withFallback = async (request, fallbackValue) => {
   }
 };
 
+/**
+ * GET /api/v1/location/getLocationString?locationId= – puna adresa (adresa, grad, okrug, region, država) za lokaciju.
+ * @param {number} locationId
+ * @returns {Promise<string>}
+ */
+export const getLocationString = async (locationId) => {
+  const response = await axios.get(
+    `${API_BASE_URL}/location/getLocationString`,
+    { params: { locationId }, headers: getAuthHeaders() }
+  );
+  return typeof response.data === "string" ? response.data : "";
+};
+
 /** Tipovi lokacija (kancelarije, radna mesta, magacini, zone, ostalo) */
 export const LOCATION_TYPES = {
   office: "Kancelarija",
@@ -82,6 +95,7 @@ export const locationsService = {
       name: payload.name,
       parentId: payload.parentId ?? null,
       address: payload.address,
+      headquarters: payload.headquarters ?? undefined,
       countryId: payload.countryId ?? undefined,
       regionId: payload.regionId ?? undefined,
       districtId: payload.districtId ?? undefined,

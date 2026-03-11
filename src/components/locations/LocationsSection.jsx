@@ -4,13 +4,16 @@
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  Alert,
   Autocomplete,
   Box,
   Button,
+  Checkbox,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
+  FormControlLabel,
   IconButton,
   InputAdornment,
   MenuItem,
@@ -36,9 +39,10 @@ import {
   Search as SearchIcon,
 } from "@mui/icons-material";
 import { tokens } from "../../theme";
-import locationsService, { LOCATION_TYPES, ZONE_TYPES } from "../../services/locationsService";
+import locationsService, { getLocationString, LOCATION_TYPES, ZONE_TYPES } from "../../services/locationsService";
 import wmsService from "../../services/wmsService";
 import geoService from "../../services/geoService";
+import facilityService from "../../services/facilityService";
 import { useCompanyUsersWithPermissions } from "../../hooks/useCompanyUsersWithPermissions";
 
 /** Redosled tabova po tipu lokacije; mora da odgovara LOCATION_TYPES. */
@@ -49,6 +53,11 @@ const initialForm = {
   code: "",
   name: "",
   parentId: "",
+  headquarters: false,
+  openAt: "09:00",
+  closedAt: "17:00",
+  maxDeskCapacity: "",
+  locationId: "",
   countryId: "",
   regionId: "",
   districtId: "",
@@ -93,6 +102,9 @@ const LocationsSection = () => {
   const colors = useMemo(() => tokens(theme.palette.mode), [theme.palette.mode]);
 
   const [locations, setLocations] = useState([]);
+  const [officesFromFacility, setOfficesFromFacility] = useState([]);
+  const [officeLocationStrings, setOfficeLocationStrings] = useState({});
+  const [officesLoadError, setOfficesLoadError] = useState(null);
   const [warehouses, setWarehouses] = useState([]);
   const [tab, setTab] = useState(0);
   const [search, setSearch] = useState("");
@@ -130,11 +142,10 @@ const LocationsSection = () => {
     [companyUsers]
   );
 
-  // Kancelarije kao zaseban tip – radna mesta mogu „živeti“ u kancelariji,
-  // ali i u magacinu (radno mesto viljuškariste u zoni skladišta itd.).
+  // Kancelarije: učitavamo iz FacilityController GET /facility/office/all; radna mesta biraju parent iz ove liste.
   const offices = useMemo(
-    () => (locations || []).filter((l) => l.type === "office"),
-    [locations]
+    () => (officesFromFacility?.length > 0 ? officesFromFacility : (locations || []).filter((l) => l.type === "office")),
+    [officesFromFacility, locations]
   );
 
   const loadLocations = useCallback(async () => {
@@ -150,6 +161,24 @@ const LocationsSection = () => {
     setWarehouses(res.data?.items || []);
   }, []);
 
+  const loadOffices = useCallback(async () => {
+    setOfficesLoadError(null);
+    try {
+      const list = await facilityService.getOfficesForCompany();
+      setOfficesFromFacility(Array.isArray(list) ? list : []);
+    } catch (err) {
+      setOfficesFromFacility([]);
+      const status = err.response?.status;
+      const msg = err.response?.data?.message ?? err.response?.data?.error;
+      setOfficesLoadError({
+        status,
+        message: status === 403
+          ? "Backend vraća 403 za GET /api/v1/facility/office/all. U Spring Security dozvolite ovaj endpoint za ulogovanog korisnika (npr. .requestMatchers(GET, \"/api/v1/facility/office/all\").authenticated())."
+          : (msg || "Nije moguće učitati kancelarije."),
+      });
+    }
+  }, []);
+
   useEffect(() => {
     loadLocations();
   }, [loadLocations]);
@@ -157,6 +186,35 @@ const LocationsSection = () => {
   useEffect(() => {
     loadWarehouses();
   }, [loadWarehouses]);
+
+  useEffect(() => {
+    loadOffices();
+  }, [loadOffices]);
+
+  /** Za svaku kancelariju sa locationId učitaj punu adresu – GET /api/v1/location/getLocationString?locationId=. */
+  useEffect(() => {
+    const ids = (officesFromFacility || [])
+      .map((o) => o.locationId)
+      .filter((id) => id != null && id !== "");
+    if (ids.length === 0) {
+      setOfficeLocationStrings({});
+      return;
+    }
+    const load = async () => {
+      const entries = await Promise.all(
+        ids.map(async (id) => {
+          try {
+            const str = await getLocationString(Number(id));
+            return [id, str || ""];
+          } catch {
+            return [id, ""];
+          }
+        })
+      );
+      setOfficeLocationStrings(Object.fromEntries(entries));
+    };
+    load();
+  }, [officesFromFacility]);
 
   /** Učitaj države kad se dijalog otvori (za adresu) – GET /api/v1/location/getAllCountries. */
   useEffect(() => {
@@ -206,9 +264,19 @@ const LocationsSection = () => {
   }, [form.districtId]);
 
   const filteredByTab = useMemo(() => {
+    if (currentType === "office") {
+      return (officesFromFacility || []).map((o) => ({
+        ...o,
+        type: "office",
+        address:
+          (o.locationId != null && o.locationId in officeLocationStrings)
+            ? (officeLocationStrings[o.locationId] || "—")
+            : (o.locationId != null ? `Lokacija #${o.locationId}` : "—"),
+      }));
+    }
     if (currentType === "all") return locations;
     return locations.filter((l) => l.type === currentType);
-  }, [locations, currentType]);
+  }, [currentType, officesFromFacility, officeLocationStrings, locations]);
 
   const filteredBySearch = useMemo(() => {
     if (!search.trim()) return filteredByTab;
@@ -254,16 +322,26 @@ const LocationsSection = () => {
   };
 
   const handleOpenEdit = (row) => {
-    const hasGeo = row.countryId != null || row.regionId != null || row.districtId != null;
-    const { city, address } = hasGeo ? { city: row.city ?? "", address: row.address ?? "" } : parseAddressParts(row.address);
+    const loc = row.location || {};
+    const hasGeo = row.countryId != null || row.regionId != null || (loc && (loc.countryId != null || loc.regionId != null));
+    const { city, address } = hasGeo
+      ? { city: row.city ?? loc.city ?? "", address: row.address ?? loc.address ?? "" }
+      : parseAddressParts(row.address || (loc.city || loc.address ? [loc.city, loc.address].filter(Boolean).join(", ") : ""));
+    const openAt = row.openAt != null ? (typeof row.openAt === "string" ? row.openAt.slice(0, 5) : "") : "09:00";
+    const closedAt = row.closedAt != null ? (typeof row.closedAt === "string" ? row.closedAt.slice(0, 5) : "") : "17:00";
     setForm({
       type: row.type,
-      code: row.code,
-      name: row.name,
+      code: row.code ?? "",
+      name: row.name ?? "",
       parentId: row.parentId || "",
-      countryId: row.countryId ?? "",
-      regionId: row.regionId ?? "",
-      districtId: row.districtId ?? "",
+      headquarters: Boolean(row.headquarters ?? loc.headquarters),
+      openAt,
+      closedAt,
+      maxDeskCapacity: row.maxDeskCapacity != null ? String(row.maxDeskCapacity) : "",
+      locationId: row.locationId ?? "",
+      countryId: row.countryId ?? loc.countryId ?? "",
+      regionId: row.regionId ?? loc.regionId ?? "",
+      districtId: row.districtId ?? loc.districtId ?? "",
       city: city || "",
       address: address || "",
       warehouseId: row.warehouseId || "",
@@ -295,6 +373,14 @@ const LocationsSection = () => {
       setSnack({ open: true, message: "Kod i naziv su obavezni.", severity: "warning" });
       return;
     }
+    if (dialogMode === "edit" && form.type === "office") {
+      setSnack({ open: true, message: "Izmena kancelarije će biti dostupna kada backend podrži PUT /facility/office.", severity: "info" });
+      return;
+    }
+    if (form.type === "office" && !form.countryId) {
+      setSnack({ open: true, message: "Za kancelariju je obavezna država (countryId).", severity: "warning" });
+      return;
+    }
     // Radno mesto mora biti vezano za konkretnu lokaciju:
     // danas podržavamo kancelarije i magacine, a kasnije možemo dodati i druge tipove (npr. proizvodne linije).
     if (form.type === "workstation" && !form.parentId) {
@@ -312,7 +398,22 @@ const LocationsSection = () => {
     }
     const fullAddress = buildFullAddress();
     try {
-      if (form.type === "warehouse") {
+      if (form.type === "office") {
+        await facilityService.createOffice({
+          name: form.name,
+          code: form.code,
+          openAt: form.openAt || "09:00",
+          closedAt: form.closedAt || "17:00",
+          maxDeskCapacity: form.maxDeskCapacity !== "" ? Number(form.maxDeskCapacity) : null,
+          newHeadquarters: Boolean(form.headquarters),
+          countryId: form.countryId,
+          regionId: form.regionId || null,
+          districtId: form.districtId || null,
+          city: form.city || null,
+          address: form.address?.trim() || null,
+        });
+        loadOffices();
+      } else if (form.type === "warehouse") {
         await wmsService.createWarehouse({
           code: form.code,
           name: form.name,
@@ -334,6 +435,7 @@ const LocationsSection = () => {
           name: form.name,
           address: fullAddress,
           parentId: form.type === "workstation" ? form.parentId || null : null,
+          headquarters: form.type === "office" ? form.headquarters : undefined,
           countryId: form.countryId || undefined,
           regionId: form.regionId || undefined,
           districtId: form.districtId || undefined,
@@ -343,6 +445,7 @@ const LocationsSection = () => {
       setSnack({ open: true, message: "Lokacija je sačuvana.", severity: "success" });
       handleCloseDialog();
       loadLocations();
+      if (form.type === "office") loadOffices();
       if (form.type === "warehouse" || form.type === "warehouse_zone") loadWarehouses();
     } catch {
       setSnack({
@@ -458,6 +561,16 @@ const LocationsSection = () => {
             Dodaj lokaciju
           </Button>
         </Box>
+
+        {currentType === "office" && officesLoadError && (
+          <Alert
+            severity="warning"
+            onClose={() => setOfficesLoadError(null)}
+            sx={{ mb: 2 }}
+          >
+            {officesLoadError.message}
+          </Alert>
+        )}
 
         {loading ? (
           <Box sx={{ py: 2 }}>
@@ -627,6 +740,52 @@ const LocationsSection = () => {
               placeholder="npr. Kancelarija glavna, Zona A red 1"
               sx={dialogInputSx(theme, colors)}
             />
+            {form.type === "office" && (
+              <>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={Boolean(form.headquarters)}
+                      onChange={(e) => setForm((p) => ({ ...p, headquarters: e.target.checked }))}
+                      sx={{ color: colors.primary[300], "&.Mui-checked": { color: colors.greenAccent[500] } }}
+                    />
+                  }
+                  label="Sedište kompanije (headquarters)"
+                  sx={{ color: theme.palette.text.primary }}
+                />
+                <TextField
+                  fullWidth
+                  type="time"
+                  label="Otvaranje (openAt)"
+                  value={form.openAt || "09:00"}
+                  onChange={(e) => setForm((p) => ({ ...p, openAt: e.target.value || "09:00" }))}
+                  InputLabelProps={{ shrink: true }}
+                  helperText="Vreme otvaranja kancelarije (LocalTime na backendu)"
+                  sx={dialogInputSx(theme, colors)}
+                />
+                <TextField
+                  fullWidth
+                  type="time"
+                  label="Zatvaranje (closedAt)"
+                  value={form.closedAt || "17:00"}
+                  onChange={(e) => setForm((p) => ({ ...p, closedAt: e.target.value || "17:00" }))}
+                  InputLabelProps={{ shrink: true }}
+                  helperText="Vreme zatvaranja kancelarije (LocalTime na backendu)"
+                  sx={dialogInputSx(theme, colors)}
+                />
+                <TextField
+                  fullWidth
+                  type="number"
+                  inputProps={{ min: 0, step: 1 }}
+                  label="Maks. kapacitet radnih mesta (maxDeskCapacity)"
+                  value={form.maxDeskCapacity}
+                  onChange={(e) => setForm((p) => ({ ...p, maxDeskCapacity: e.target.value }))}
+                  placeholder="npr. 20"
+                  helperText="Opciono – maksimalan broj radnih mesta u kancelariji"
+                  sx={dialogInputSx(theme, colors)}
+                />
+              </>
+            )}
             {showWorkstationFields && (
               <TextField
                 select

@@ -1,10 +1,33 @@
 import { Box, Typography, TextField, Grid, FormControl, InputLabel, Select, MenuItem, Button } from "@mui/material";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 
+const byteArrayToBase64 = (byteArray) => {
+  if (!byteArray) return null;
+  try {
+    if (typeof byteArray === "string") return byteArray;
+    if (Array.isArray(byteArray)) {
+      const binary = String.fromCharCode.apply(null, byteArray);
+      return btoa(binary);
+    }
+    if (byteArray.constructor === Uint8Array || byteArray.buffer) {
+      const binary = String.fromCharCode.apply(null, new Uint8Array(byteArray));
+      return btoa(binary);
+    }
+    return null;
+  } catch {
+    return null;
+  }
+};
+
 /**
  * Basic company information section (logo, name, address).
+ * Podaci iz CompanySettingsInfoResponse: companyName, registrationNumber, address, logoPic, country, region, district, city.
  */
-const BasicInfoSection = ({ formData, onChange, onFileChange, colors, isMobile }) => (
+const BasicInfoSection = ({ formData, onChange, onFileChange, colors, isMobile }) => {
+  const logoUrl = formData.logoPic
+    ? `data:image/jpeg;base64,${byteArrayToBase64(formData.logoPic) || ""}`
+    : "/assets/logoipsum-378.svg";
+  return (
   <Box
     p="20px"
     borderRadius="4px"
@@ -16,7 +39,7 @@ const BasicInfoSection = ({ formData, onChange, onFileChange, colors, isMobile }
     <Grid container spacing={2}>
       <Grid item xs={12} md={4} sx={{ textAlign: "center" }}>
         <img
-          src="/assets/logoipsum-378.svg"
+          src={logoUrl}
           alt="Company Logo"
           style={{
             maxWidth: "200px",
@@ -75,26 +98,47 @@ const BasicInfoSection = ({ formData, onChange, onFileChange, colors, isMobile }
             </FormControl>
           </Grid>
           <Grid item xs={12} md={6}>
-            <FormControl fullWidth sx={{ mb: 2 }}>
-              <InputLabel style={{ color: colors.grey[100] }}>Grad</InputLabel>
-              <Select
-                name="city"
-                value={formData.city}
-                onChange={onChange}
-                sx={{ color: colors.grey[100] }}
-              >
-                <MenuItem value="beograd">Beograd</MenuItem>
-                <MenuItem value="novi-sad">Novi Sad</MenuItem>
-                <MenuItem value="banja-luka">Banja Luka</MenuItem>
-              </Select>
-            </FormControl>
+            <TextField
+              fullWidth
+              label="Region"
+              name="region"
+              value={formData.region || ""}
+              onChange={onChange}
+              sx={{ mb: 2 }}
+              InputProps={{ style: { color: colors.grey[100] } }}
+              InputLabelProps={{ style: { color: colors.grey[100] } }}
+            />
           </Grid>
           <Grid item xs={12} md={6}>
             <TextField
               fullWidth
               label="Okrug"
               name="district"
-              value={formData.district}
+              value={formData.district || ""}
+              onChange={onChange}
+              sx={{ mb: 2 }}
+              InputProps={{ style: { color: colors.grey[100] } }}
+              InputLabelProps={{ style: { color: colors.grey[100] } }}
+            />
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <TextField
+              fullWidth
+              label="Grad"
+              name="city"
+              value={formData.city || ""}
+              onChange={onChange}
+              sx={{ mb: 2 }}
+              InputProps={{ style: { color: colors.grey[100] } }}
+              InputLabelProps={{ style: { color: colors.grey[100] } }}
+            />
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <TextField
+              fullWidth
+              label="Matični broj"
+              name="registrationNumber"
+              value={formData.registrationNumber || ""}
               onChange={onChange}
               sx={{ mb: 2 }}
               InputProps={{ style: { color: colors.grey[100] } }}
@@ -117,6 +161,7 @@ const BasicInfoSection = ({ formData, onChange, onFileChange, colors, isMobile }
       </Grid>
     </Grid>
   </Box>
-);
+  );
+};
 
 export default BasicInfoSection;

@@ -62,3 +62,16 @@ export const getAllCompanyUsers = async () => {
     profilePic: u.profilePic,
   }));
 };
+
+/**
+ * Odgovor backend-a CompanySettingsInfoResponse – podaci o kompaniji za postavke i header/sidebar.
+ * Trenutno backend vraća ovaj DTO preko GET /company/getCompanyInfo.
+ * Polja: companyName, registrationNumber, address, logoPic (byte[]), country, region, district, city,
+ * supportTypes (string[]), packagesNumber (number).
+ */
+export const getCompanySettingsInfo = async () => {
+  const response = await axios.get(`${API_BASE_URL}/company/getCompanyInfo`, {
+    headers: getAuthHeaders(),
+  });
+  return response.data;
+};

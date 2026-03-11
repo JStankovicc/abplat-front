@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 import axios from "axios";
 import { API_BASE_URL } from "./config/apiConfig";
+import { getCompanySettingsInfo } from "./services/companyService";
 import HomePage from "./scenes/public/homepage";
 import PublicNavbar from "./components/global/PublicNavbar";
 import Sidebar from "./components/global/Sidebar";
@@ -55,17 +56,12 @@ function App() {
         }
     };
 
-    const fetchCompanyInfo = async (token) => {
+    const fetchCompanyInfo = async () => {
         try {
-            const response = await axios.get(`${API_BASE_URL}/company/getCompanyInfo`, {
-                headers: {
-                    "Authorization": `Bearer ${token}`
-                }
-            });
-            console.log('Company info response:', response.data);
-            setCompanyInfo(response.data);
+            const data = await getCompanySettingsInfo();
+            setCompanyInfo(data);
         } catch (error) {
-            console.error("Failed to fetch company info:", error);
+            console.error("Failed to fetch company settings info:", error);
         }
     };
 
@@ -76,7 +72,7 @@ function App() {
             
             await Promise.all([
                 fetchUserProfile(jwt),
-                fetchCompanyInfo(jwt)
+                fetchCompanyInfo()
             ]);
         } catch (error) {
             console.error("Invalid token:", error);
@@ -98,7 +94,7 @@ function App() {
                     handleLogout();
                 } else {
                     fetchUserProfile(token);
-                    fetchCompanyInfo(token);
+                    fetchCompanyInfo();
                 }
             } catch (error) {
                 console.error("Error decoding token:", error);

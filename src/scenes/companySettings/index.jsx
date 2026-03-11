@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Box, Typography, Button, Stack } from "@mui/material";
 import { useTheme, useMediaQuery } from "@mui/material";
 import { tokens } from "../../theme";
@@ -9,6 +9,7 @@ import {
   SubscriptionSection,
   PaymentMethodsSection,
 } from "../../components/company-settings";
+import { getCompanySettingsInfo } from "../../services/companyService";
 
 const CompanySettings = () => {
   const theme = useTheme();
@@ -16,24 +17,58 @@ const CompanySettings = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   const [addingPayment, setAddingPayment] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     companyName: "",
     country: "",
-    city: "",
+    region: "",
     district: "",
+    city: "",
     address: "",
+    registrationNumber: "",
     taxId: "",
     email: "",
     phone: "",
     currency: "RSD",
     supportType: "standard",
+    supportTypes: [],
     numProfiles: 1,
+    packagesNumber: 0,
     packageSize: "medium",
+    logoPic: null,
     paymentMethods: [
       { id: 1, type: "bank", details: "Bank: 123-4567812345678", isDefault: true },
     ],
     newPayment: { type: "bank", details: "" },
   });
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    getCompanySettingsInfo()
+      .then((data) => {
+        if (cancelled) return;
+        setFormData((prev) => ({
+          ...prev,
+          companyName: data.companyName ?? "",
+          registrationNumber: data.registrationNumber ?? "",
+          address: data.address ?? "",
+          country: data.country ?? "",
+          region: data.region ?? "",
+          district: data.district ?? "",
+          city: data.city ?? "",
+          supportTypes: Array.isArray(data.supportTypes) ? data.supportTypes : [],
+          packagesNumber: typeof data.packagesNumber === "number" ? data.packagesNumber : data.packagesNumber ?? 0,
+          numProfiles: typeof data.packagesNumber === "number" ? data.packagesNumber : prev.numProfiles,
+          logoPic: data.logoPic ?? null,
+        }));
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, []);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
