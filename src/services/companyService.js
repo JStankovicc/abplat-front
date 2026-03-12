@@ -75,3 +75,22 @@ export const getCompanySettingsInfo = async () => {
   });
   return response.data;
 };
+
+/**
+ * Lista korisnika sa zadatom rolom u kompaniji – GET /company/getCompanyUsersWithRole?role=.
+ * Backend vraća UserResponse { id, displayName, profilePic }.
+ * @param {string} role npr. "INVENTORY_MANAGEMENT"
+ * @returns {Promise<Array<{ id: number, name: string, profilePic?: any }>>}
+ */
+export const getCompanyUsersWithRole = async (role) => {
+  const response = await axios.get(`${API_BASE_URL}/company/getCompanyUsersWithRole`, {
+    params: { role },
+    headers: getAuthHeaders(),
+  });
+  const list = Array.isArray(response.data) ? response.data : [];
+  return list.map((u) => ({
+    id: u.id != null ? Number(u.id) : null,
+    name: u.displayName ?? "",
+    profilePic: u.profilePic,
+  }));
+};

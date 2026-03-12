@@ -22,14 +22,31 @@ const withFallback = async (request, fallbackValue) => {
 };
 
 export const wmsService = {
-  listWarehouses: async () =>
-    withFallback(
-      () => axios.get(`${API_BASE_URL}/api/v1/warehouses`, { headers: getAuthHeaders() }),
-      {
-        items: [{ id: "wh-1", code: "WH-BG-01", name: "Centralni magacin", managerName: "Nenad Ilic" }],
-        total: 1,
-      }
-    ),
+  /**
+   * Lista magacina za kompaniju.
+   * Prethodno je koristio mock podatke; sada poziva FacilityController:
+   * GET /api/v1/facility/warehouse/all → WarehouseResponse[].
+   * Vraća oblik { data: { items, total }, isFallback, error } kompatibilan sa postojećim kodom.
+   */
+  listWarehouses: async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/facility/warehouse/all`, {
+        headers: getAuthHeaders(),
+      });
+      const items = Array.isArray(response.data) ? response.data : [];
+      return {
+        data: { items, total: items.length },
+        isFallback: false,
+        error: null,
+      };
+    } catch (error) {
+      return {
+        data: { items: [], total: 0 },
+        isFallback: true,
+        error,
+      };
+    }
+  },
 
   createWarehouse: async (payload) =>
     axios.post(`${API_BASE_URL}/api/v1/warehouses`, payload, { headers: getAuthHeaders() }),

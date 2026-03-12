@@ -35,6 +35,20 @@ export const getLocationString = async (locationId) => {
   return typeof response.data === "string" ? response.data : "";
 };
 
+/**
+ * GET /api/v1/location?locationId= – vraća Location entitet (id, countryId, regionId, districtId, city, address).
+ * Koristimo ga pri editovanju da popunimo dropdown-e po ID-jevima.
+ * @param {number} locationId
+ * @returns {Promise<{ id: number, countryId: number, regionId: number, districtId: number, city: string, address: string }>}
+ */
+export const getLocationById = async (locationId) => {
+  const response = await axios.get(`${API_BASE_URL}/location`, {
+    params: { locationId },
+    headers: getAuthHeaders(),
+  });
+  return response.data;
+};
+
 /** Tipovi lokacija (kancelarije, radna mesta, magacini, zone, ostalo) */
 export const LOCATION_TYPES = {
   office: "Kancelarija",
@@ -53,23 +67,26 @@ export const ZONE_TYPES = {
 };
 
 export const locationsService = {
-  /** Sve lokacije (kancelarije, radna mesta, magacini, zone) */
-  listLocations: async (filters = {}) =>
-    withFallback(
-      () =>
-        axios.get(`${API_BASE_URL}/api/v1/locations?${buildQuery(filters)}`, {
-          headers: getAuthHeaders(),
-        }),
-      {
-        items: [
-          { id: "loc-o1", type: "office", code: "KANC-01", name: "Kancelarija 1", parentId: null },
-          { id: "loc-o2", type: "office", code: "KANC-02", name: "Kancelarija 2", parentId: null },
-          { id: "loc-w1", type: "workstation", code: "RM-101", name: "Radno mesto 101", parentId: "loc-o1" },
-          { id: "loc-wh1", type: "warehouse", code: "WH-BG-01", name: "Centralni magacin", parentId: null },
-        ],
-        total: 4,
-      }
-    ),
+  /**
+   * Sve lokacije (kancelarije, radna mesta, magacini, zone).
+   *
+   * Backend /locations API još ne postoji – zato OVDE NAMERNO NE RADIMO nikakav HTTP poziv,
+   * već vraćamo čisto fallback stanje. Ovo sprečava GET na /locations? koji vidiš u network tabu.
+   */
+  listLocations: async (filters = {}) => {
+    const fallback = {
+      items: [
+        { id: "loc-o1", type: "office", code: "KANC-01", name: "Kancelarija 1", parentId: null },
+        { id: "loc-o2", type: "office", code: "KANC-02", name: "Kancelarija 2", parentId: null },
+        { id: "loc-w1", type: "workstation", code: "RM-101", name: "Radno mesto 101", parentId: "loc-o1" },
+        { id: "loc-wh1", type: "warehouse", code: "WH-BG-01", name: "Centralni magacin", parentId: null },
+      ],
+      total: 4,
+    };
+    // Ako želiš, ovde možeš kasnije dodati pravi axios.get,
+    // ali za sada ne šaljemo nikakav zahtev ka /locations.
+    return { data: fallback, isFallback: true, error: null };
+  },
 
   createLocation: async (payload) => {
     if (payload.type === "warehouse") {
@@ -101,7 +118,7 @@ export const locationsService = {
       districtId: payload.districtId ?? undefined,
       city: payload.city ?? undefined,
     };
-    return axios.post(`${API_BASE_URL}/api/v1/locations`, body, {
+    return axios.post(`${API_BASE_URL}/locations`, body, {
       headers: getAuthHeaders(),
     });
   },
